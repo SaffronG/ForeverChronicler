@@ -32,12 +32,14 @@ Anything else is a free-form goal you tick off yourself.
 
 Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal here` or `/chron goal 45.2 63.1`.
 The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
+Every open location goal appears as a gold star on the world map. Click a star to point the arrow at it.
 
 ## Files
 - `Core.lua` – SavedVariables (persistence), event dispatch
 - `Chronicle.lua` – automatic event logging
 - `Goals.lua` – goal parsing / auto-completion
 - `MapGoals.lua` – location goals, world map menu, waypoint arrow
+- `MapPins.lua` / `MapPins.xml` – world map pins for open location goals
 - `Settings.lua` – options page (Settings API)
 - `UI.lua` – window and slash commands
 

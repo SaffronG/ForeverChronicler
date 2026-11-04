@@ -14,6 +14,12 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
   - The waypoint is cleared when its goal is completed (automatically or by hand) or deleted. It's only cleared if it's still the one this addon placed.
   - Open world only: the game doesn't report your position inside instances. If reading position ever errors (for example because of Midnight-style restrictions), polling stops with a single message and goals can still be ticked off by hand.
   - Not yet tested in game.
+- World map pins for every open location goal (new `MapPins.lua` + `MapPins.xml`):
+  - A gold star marks each open location goal on the map you're viewing, including parent maps such as the continent view. Goals outside the viewed map are hidden.
+  - Hovering shows the goal text. Left-clicking points the waypoint arrow at that goal.
+  - Pins update straight away when goals are added, completed or deleted while the map is open.
+  - Built as a world map data provider with an XML pin template. Not yet tested in game; the pin template is the part most likely to need adjusting.
+- `FC:WhenWorldMap(fn)` helper in `MapGoals.lua` to run code once the world map has loaded.
 - "Location goal arrival distance" slider (5–100 yards) on the options page.
 
 ### Changed

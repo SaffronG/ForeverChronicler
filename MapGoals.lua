@@ -154,6 +154,7 @@ end
 FC:On("READY", updateTicker)
 FC:On("GOALS_CHANGED", updateTicker)
 FC.CheckLocations = safeCheck -- exposed for testing
+FC.WorldPos = worldPos
 
 -- World map: Ctrl + right-click menu ----------------------------------------
 -- Right-click normally zooms the map out, so we remember the map and cursor
@@ -206,10 +207,15 @@ local function hookWorldMap()
     end)
 end
 
-if WorldMapFrame then
-    hookWorldMap()
-else
-    FC:RegisterEvent("ADDON_LOADED", function(name)
-        if name == "Blizzard_WorldMap" then hookWorldMap() end
-    end)
+-- Run fn once the world map exists (it may load after this addon).
+function FC:WhenWorldMap(fn)
+    if WorldMapFrame then
+        fn()
+    else
+        self:RegisterEvent("ADDON_LOADED", function(name)
+            if name == "Blizzard_WorldMap" then fn() end
+        end)
+    end
 end
+
+FC:WhenWorldMap(hookWorldMap)

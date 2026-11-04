@@ -15,16 +15,17 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 3. **Every commit updates `Changelog.md`.** Add an entry under `## [Unreleased]` (Added / Changed / Fixed / Removed) in the same commit as the change. When a version is released, move Unreleased under a version heading with the date.
 4. **Update `TODO.md` in the same commit** as the change it relates to.
 5. **Keep `README.md` current** when commands, features or install steps change.
-6. **Verify before committing.** At minimum run `luac -p` on every changed `.lua` file. Exercise logic with a stub-API harness where practical, and note in the changelog anything that still needs testing in game.
+6. **Verify before committing.** At minimum run `luac -p` on every changed `.lua` file, and check that `.xml` files are well-formed. Exercise logic with a stub-API harness where practical, and note in the changelog anything that still needs testing in game.
 7. **Commit messages:** a short imperative summary line, then a blank line and details if needed.
 8. **Don't** delete user files, rewrite history or push to a remote unless the user asks.
 
 ## Layout
-- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → Settings → UI.
+- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Settings → UI.
 - `Core.lua`: saved data (`ForeverChronicallerDB`), event dispatch, internal message system (`FC:On` / `FC:Fire`).
 - `Chronicle.lua`: automatic logging (`FC:AddEntry`).
 - `Goals.lua`: goal parsing and auto-completion (`FC:CreateGoal`, `FC:AddGoal`). Fires `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED` and `GOALS_CHANGED`.
 - `MapGoals.lua`: location goals (`kind = "location"`), world map Ctrl + right-click menu, waypoint/super-track, arrival polling.
+- `MapPins.lua` / `MapPins.xml`: world map data provider and pin template. The pin mixin global (`ForeverChronicallerGoalPinMixin`) must be defined in the `.lua`, which loads before the `.xml`.
 - `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `UI.lua`: window and slash commands (`/chron`, `/fc`).
 - `main.lua`, `persistance.lua`: original prototype. Not loaded, can be deleted.
