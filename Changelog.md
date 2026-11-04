@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-03
+
+Adds the companion app: installer, Discord/phone notifications and auto-update. Give friends the **Installer** zip.
+
 ### Added
 - Companion app (new `companion/fcompanion.py`, Python 3.8+, standard library only) for things addons can't do:
   - `watch` posts new chronicle entries to a **Discord webhook** and/or **ntfy** (phone push notifications). It reads the addon's SavedVariables files with a Lua-table parser that never executes anything, and remembers what it already posted, so it doesn't repeat and doesn't flood the channel with old history on first run.
