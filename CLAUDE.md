@@ -1,6 +1,6 @@
 # Forever Chronicaller: rules for contributors (Claude and humans)
 
-A World of Warcraft addon that chronicles adventures and tracks goals. Read `README.md` for features, `TODO.md` for what's next and `Changelog.md` for history.
+A World of Warcraft addon that chronicles adventures and tracks goals. Read `README.md` for features, `Topology.md` for the architecture (diagrams, event/message flow, component map), `TODO.md` for what's next and `Changelog.md` for history.
 
 ## Target client
 - **WoW: Forever 1.60.1**: interface and APIs match **retail 12.1.5**. Addon restrictions are similar to **Midnight**.
@@ -15,7 +15,7 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 2. **One change = one commit.** Each finished, self-contained change (one TODO item or one fix) gets its own commit. Don't bundle unrelated changes.
 3. **Every commit updates `Changelog.md`.** Add an entry under `## [Unreleased]` (Added / Changed / Fixed / Removed) in the same commit as the change. When a version is released, move Unreleased under a version heading with the date.
 4. **Update `TODO.md` in the same commit** as the change it relates to.
-5. **Keep `README.md` current** when commands, features or install steps change.
+5. **Keep `README.md` current** when commands, features or install steps change. **Keep `Topology.md` current** when files, events, internal messages, comm message types, saved data or the pipeline change. Its Mermaid diagrams must parse, because GitHub shows an error box otherwise.
 6. **Verify before committing.** Run `lua tests/run.lua .` (all tests must pass), `luac -p` on every changed `.lua` file, and check that `.xml` files are well-formed. Add tests in `tests/test_*.lua` for new logic, and extend the fake API in `tests/wow_stub.lua` as needed. Note in the changelog anything that still needs testing in game.
 6a. **Robustness:** run new event handlers, listeners and commands through the framework (`FC:RegisterEvent`, `FC:On`, `FC:Command`) so errors are isolated by `FC:SafeCall`. Wrap any other entry point (hooks, timers, frame scripts that do real work) with `FC:SafeCall` too. Never let a new feature be able to break the chronicle.
 7. **Commit messages:** a short imperative summary line, then a blank line and details if needed.

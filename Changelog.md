@@ -4,6 +4,9 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Added
+- `Topology.md`: a high-level map of the whole system. It has 11 Mermaid diagrams covering the system context, addon layers, the event and message hubs, a level-up walkthrough, the data model, the goal lifecycle, location goals, the messaging transport, together-goal sync, the companion app and the release pipeline. It also has tables mapping WoW events, internal messages, comm message types, files (component → functions → events in/out) and slash commands, plus the design constraints behind them and a suggested reading order. Linked from README and CLAUDE.md.
+
 ## [0.3.1] - 2026-11-03
 
 First release published automatically, with **standalone installers for Windows and Linux** (no Python needed).

@@ -2,6 +2,8 @@
 
 Automatically chronicles your adventure and tracks personal goals.
 
+How it all fits together (diagrams, data flow, component map): [Topology.md](Topology.md).
+
 ## Install
 **Easiest:** from the [latest release](https://github.com/SaffronG/ForeverChronicaller/releases/latest), close WoW and then:
 - **Windows:** download `ForeverChronicaller-Installer-<version>-windows.exe` and double-click it. If SmartScreen warns about an unknown publisher, click *More info* → *Run anyway*.
