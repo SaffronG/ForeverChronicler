@@ -157,6 +157,28 @@ FC:Command("errors", "/chron errors [clear] - show or clear errors logged by the
     FC:Print("Full details incl. stack traces are saved in WTF/.../SavedVariables/ForeverChronicaller.lua (errorLog).")
 end, 95)
 
+-- Privacy summary (full text: PRIVACY.md, shipped with the addon) -------------------
+local PRIVACY = {
+    "|cffd4af37Privacy:|r your chronicle, goals and notes stay on this computer (in WoW's saved data).",
+    "This addon can't use the internet. It only sends hidden addon messages when you",
+    "share a goal or do a together goal (the goal and your character name, to the players",
+    "you choose) and your addon version to your group. Nothing else leaves the game.",
+    "Optional extras (Discord/phone posts, anonymous telemetry) live in the separate",
+    "companion app and are off unless you turn them on. Details: PRIVACY.md in the addon folder.",
+}
+
+FC:Command("privacy", "/chron privacy - what this addon stores and shares", function()
+    for _, line in ipairs(PRIVACY) do FC:Print(line) end
+end, 94)
+
+-- Shown once per character, the first time the addon loads.
+FC:On("READY", function()
+    if not FC.db.privacyNoticeShown then
+        FC.db.privacyNoticeShown = true
+        FC:Print("Your chronicle stays on this computer; nothing is shared unless you share goals. /chron privacy for details.")
+    end
+end)
+
 SLASH_FOREVERCHRONICALLER1 = "/chron"
 SLASH_FOREVERCHRONICALLER2 = "/fc"
 SlashCmdList["FOREVERCHRONICALLER"] = function(msg)

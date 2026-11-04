@@ -5,6 +5,12 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- `PRIVACY.md`: privacy, permissions and risks (terms version 1). It covers what the addon and companion can access, what data exists and where it goes (a table per data type), opt-in telemetry (what would and would never be collected), a risk table (botched or interrupted update, updating while the game runs, bad releases, untested-in-game code, in-game data loss, the unsigned `.exe`, third-party services, trust in together goals, server rules) with protections and what you can do, how to see or delete everything, and a no-warranty notice. Shipped in the addon zip, the installer bundle and the standalone installers.
+- Install-time disclaimer: `install`, `update` and `setup` show a summary (permissions, data, risks) and require typing **yes** once per terms version. The answer is stored with a timestamp. Declining changes nothing. Non-interactive use needs an explicit `--accept-terms`, so `--yes` alone refuses. `ForeverChronicaller-Installer privacy` shows the summary any time.
+- In game: `/chron privacy`, plus a one-time note on first login that the chronicle stays on your computer.
+- The release smoke test checks the consent flow: refuses without agreement, then installs normally and in double-click mode after "yes".
+
+### Added
 - `Topology.md`: a high-level map of the whole system. It has 11 Mermaid diagrams covering the system context, addon layers, the event and message hubs, a level-up walkthrough, the data model, the goal lifecycle, location goals, the messaging transport, together-goal sync, the companion app and the release pipeline. It also has tables mapping WoW events, internal messages, comm message types, files (component → functions → events in/out) and slash commands, plus the design constraints behind them and a suggested reading order. Linked from README and CLAUDE.md.
 
 ## [0.3.1] - 2026-11-03

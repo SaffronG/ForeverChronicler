@@ -360,6 +360,9 @@ flowchart TB
     Main --> Watch["watch<br/>poll SavedVariables"]
     Main --> Upd["update [--check|--zip]"]
     Main --> Inst["install<br/>find WoW → install addon"]
+    Main --> Priv["privacy<br/>show disclaimer"]
+    Inst & Upd & Setup --> Terms{"terms agreed?<br/>(TERMS_VERSION)"}
+    Terms -- "no: show disclaimer,<br/>need 'yes' / --accept-terms" --> Cfg
 
     Setup --> Cfg[("config.json<br/>%APPDATA% or ~/.config<br/>chmod 600")]
     Watch --> Parse["parse_saved_variables<br/>tokenizer + parser,<br/>never executes Lua"]
@@ -376,6 +379,7 @@ flowchart TB
 
 | Safety rule | Where |
 |---|---|
+| Nothing is installed or changed before the user agrees to the disclaimer (`PRIVACY.md`, once per terms version); `--yes` alone never agrees | `ensure_terms` |
 | SavedVariables are parsed, never executed (`X = os.execute(...)` is a parse error) | `parse_saved_variables` |
 | Webhook URL never appears in logs or errors | `Watcher.notify` |
 | Zip contents must all sit under `ForeverChronicaller/`, with no `..`, absolute paths or drive letters, a size limit, and a `.toc` | `check_zip` |
@@ -458,7 +462,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `way` | MapGoals | | `export`, `import`, `sync` | Export |
 | `tracker` | Tracker | | `version` | VersionCheck |
 | `journey` | Journey | | `config` / `options` | Settings |
-| `help`, `errors` | Core | | | |
+| `help`, `errors`, `privacy` | Core | | | |
 
 ---
 

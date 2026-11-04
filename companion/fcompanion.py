@@ -36,6 +36,40 @@ VERSION = "0.3.1"
 USER_AGENT = f"ForeverChronicallerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicaller"
 
+TERMS_VERSION = 1  # bump when PRIVACY.md changes in a way users must agree to again
+PRIVACY_URL = "https://github.com/SaffronG/ForeverChronicaller/blob/main/PRIVACY.md"
+
+DISCLAIMER = f"""\
+==============================================================================
+ Forever Chronicaller - before you install (terms version {TERMS_VERSION})
+==============================================================================
+ PERMISSIONS - this program will:
+   * write the addon into <WoW folder>/Interface/AddOns/ForeverChronicaller
+   * keep its settings, state and backups in its own folder
+   * list running program NAMES to check WoW is closed before changing files
+   * read the addon's saved files (only if you use Discord/phone posting)
+   * connect to GitHub for updates; to Discord / ntfy / telemetry only if
+     you set those up. The addon itself can't use the internet at all.
+
+ DATA:
+   * Your chronicle and goals stay on your computer.
+   * Nothing is sent anywhere unless you turn it on. Sharing goals sends
+     the goal (and your character name) to the players you choose.
+   * Telemetry (anonymous diagnostics) is OFF by default and opt-in only.
+     It never contains names, chronicle text or chat.
+
+ RISKS:
+   * A failed or interrupted update can leave the addon broken. The old
+     version is backed up first and restored automatically if the swap
+     fails; your chronicle (in WTF/) is never touched by updates.
+   * New, hobby software, mostly tested outside the real game: expect bugs.
+   * The program is unsigned: Windows may warn about an unknown publisher.
+   * Provided as is, without warranty. Use at your own risk.
+
+ Full details: {{privacy}}
+==============================================================================
+"""
+
 # True when running as a standalone program built with PyInstaller (no Python needed).
 FROZEN = bool(getattr(sys, "frozen", False))
 
@@ -74,6 +108,8 @@ def default_config() -> Dict[str, Any]:
         "characters": [],          # empty = all characters
         "poll_seconds": 5,
         "github_repo": DEFAULT_REPO,  # "owner/repo" for updates
+        "accepted_terms": 0,       # TERMS_VERSION the user agreed to (0 = not yet)
+        "accepted_terms_at": 0,
     }
 
 
@@ -594,17 +630,50 @@ def find_wow_dirs(roots: Optional[List[Path]] = None) -> List[Path]:
     return found
 
 
-def bundled_zip() -> Optional[Path]:
-    """The addon zip shipped with the installer: inside the standalone program,
-    or next to the script / program."""
+def bundle_places() -> List[Path]:
+    """Where files shipped with the program live: inside the standalone program,
+    next to it, or next to this script."""
     places = []
     if FROZEN and getattr(sys, "_MEIPASS", None):
         places.append(Path(sys._MEIPASS))           # embedded in the .exe / binary
     if FROZEN:
         places.append(Path(sys.executable).resolve().parent)
     places.append(Path(__file__).resolve().parent)
+    places.append(Path(__file__).resolve().parent.parent)  # repo checkout
+    return places
+
+
+def privacy_location() -> str:
+    for place in bundle_places():
+        if (place / "PRIVACY.md").is_file():
+            return f"{place / 'PRIVACY.md'}\n               or {PRIVACY_URL}"
+    return PRIVACY_URL
+
+
+def ensure_terms(cfg: Dict[str, Any], accept_flag: bool = False, interactive: bool = True) -> bool:
+    """Show the disclaimer and get explicit agreement once per terms version."""
+    if int(cfg.get("accepted_terms") or 0) >= TERMS_VERSION:
+        return True
+    print(DISCLAIMER.format(privacy=privacy_location()))
+    if accept_flag:
+        print("Agreed via --accept-terms.")
+    elif not interactive:
+        print("Not agreed. Run again without --yes to answer, or add --accept-terms.")
+        return False
+    else:
+        answer = input("Type 'yes' to agree and continue (anything else cancels): ").strip().lower()
+        if answer not in ("yes", "y"):
+            print("Cancelled. Nothing was installed or changed.")
+            return False
+    cfg["accepted_terms"] = TERMS_VERSION
+    cfg["accepted_terms_at"] = int(time.time())
+    return True
+
+
+def bundled_zip() -> Optional[Path]:
+    """The addon zip shipped with the installer."""
     zips = []
-    for place in places:
+    for place in bundle_places():
         zips += place.glob(f"{ADDON}-[0-9]*.zip")
     zips.sort(key=lambda p: version_tuple(p.name))
     return zips[-1] if zips else None
@@ -672,6 +741,8 @@ def ask(prompt: str, current: str = "") -> str:
 
 
 def cmd_setup(cfg: Dict[str, Any], args) -> int:
+    if not ensure_terms(cfg, getattr(args, "accept_terms", False)):
+        return 1
     print("Forever Chronicaller companion setup. Press Enter to keep the value in [brackets].\n")
     cfg["wow_path"] = ask("WoW: Forever folder (the one containing Interface and WTF)", cfg["wow_path"])
     if cfg["wow_path"] and not Path(cfg["wow_path"], "WTF").is_dir():
@@ -731,6 +802,10 @@ def cmd_update(cfg: Dict[str, Any], args) -> int:
     if not cfg.get("wow_path"):
         print(f"Run `{prog()} setup` first.")
         return 1
+    if not args.check:
+        if not ensure_terms(cfg, args.accept_terms):
+            return 1
+        save_config(cfg)
     try:
         if args.zip:
             if game_running() and not args.force:
@@ -768,6 +843,8 @@ def choose_wow_path(cfg: Dict[str, Any], given: Optional[str], assume_yes: bool)
 
 
 def cmd_install(cfg: Dict[str, Any], args) -> int:
+    if not ensure_terms(cfg, args.accept_terms, interactive=not args.yes):
+        return 1
     wow = choose_wow_path(cfg, args.wow, args.yes)
     if not wow:
         print("No folder chosen; nothing installed.")
@@ -805,7 +882,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fcompanion", description="Forever Chronicaller companion app")
     p.add_argument("--version", action="version", version=VERSION)
     sub = p.add_subparsers(dest="command", required=True)
-    sub.add_parser("setup", help="configure the WoW folder, Discord and ntfy")
+    st = sub.add_parser("setup", help="configure the WoW folder, Discord and ntfy")
+    st.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
+    sub.add_parser("privacy", help="show permissions, data and risks (the install disclaimer)")
     sub.add_parser("test", help="send a test notification")
     w = sub.add_parser("watch", help="post new chronicle entries while you play")
     w.add_argument("--once", action="store_true", help="check once and exit")
@@ -814,14 +893,23 @@ def build_parser() -> argparse.ArgumentParser:
     i.add_argument("--zip", help="install this addon zip")
     i.add_argument("--yes", action="store_true", help="don't ask questions")
     i.add_argument("--force", action="store_true", help="install even if the game is running")
+    i.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
     u = sub.add_parser("update", help="install the latest addon release (or a zip you have)")
     u.add_argument("--check", action="store_true", help="only check, don't install")
     u.add_argument("--force", action="store_true", help="install even if the game is running")
     u.add_argument("--zip", help="install this zip instead of downloading")
+    u.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
     return p
 
 
-COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": cmd_update, "install": cmd_install}
+def cmd_privacy(cfg: Dict[str, Any], args) -> int:
+    print(DISCLAIMER.format(privacy=privacy_location()))
+    agreed = int(cfg.get("accepted_terms") or 0)
+    print(f"You agreed to terms version {agreed}." if agreed else "You haven't agreed to the terms yet.")
+    return 0
+
+
+COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": cmd_update, "install": cmd_install, "privacy": cmd_privacy}
 
 
 def main(argv: Optional[List[str]] = None) -> int:

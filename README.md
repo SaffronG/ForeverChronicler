@@ -2,6 +2,8 @@
 
 Automatically chronicles your adventure and tracks personal goals.
 
+**Privacy, permissions and risks:** [PRIVACY.md](PRIVACY.md). In short, everything stays on your computer unless you turn on sharing, Discord/phone posting or (opt-in, anonymous) telemetry.
+
 How it all fits together (diagrams, data flow, component map): [Topology.md](Topology.md).
 
 ## Install
@@ -47,6 +49,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron sync` | save now (reloads the UI) so the companion app posts your latest entries |
 | `/chron config` | open the options page |
 | `/chron version` | show your version (you're told automatically if a group member has a newer one) |
+| `/chron privacy` | what the addon stores and shares |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
 | `/chron help` | list all commands |
 

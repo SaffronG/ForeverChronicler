@@ -99,17 +99,25 @@ jobs:
           # absolute path: PyInstaller resolves relative data paths against the spec folder
           pyinstaller --onefile --clean --noconfirm --name ForeverChronicaller-Installer \
             --add-data "$GITHUB_WORKSPACE/dist/ForeverChronicaller-$V.zip${SEP}." \
+            --add-data "$GITHUB_WORKSPACE/PRIVACY.md${SEP}." \
             companion/fcompanion.py
       - name: Smoke test the real binary
         run: |
           test "$("$BIN" --version | tr -d '\r')" = "$V"
           mkdir -p "fake/WoW Forever" && touch "fake/WoW Forever/Wow.exe"
-          "$BIN" install --wow "$GITHUB_WORKSPACE/fake/WoW Forever" --yes
+          # non-interactive install needs an explicit --accept-terms; --yes alone must refuse
+          if "$BIN" install --wow "$GITHUB_WORKSPACE/fake/WoW Forever" --yes; then
+            echo "installed without accepting the terms" >&2; exit 1
+          fi
+          test ! -e "fake/WoW Forever/Interface"
+          "$BIN" privacy | grep -q "RISKS"
+          "$BIN" install --wow "$GITHUB_WORKSPACE/fake/WoW Forever" --yes --accept-terms
           test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
           grep -q "## Version: $V" "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
-          # double-click mode: no arguments, answers the folder prompt, then "Press Enter to close"
+          # double-click mode with a fresh config: agree to the terms, answer the folder
+          # prompt, then "Press Enter to close"
           rm -rf "fake/WoW Forever/Interface"
-          printf '%s\n\n' "$GITHUB_WORKSPACE/fake/WoW Forever" | "$BIN"
+          printf 'yes\n%s\n\n' "$GITHUB_WORKSPACE/fake/WoW Forever" | APPDATA="$GITHUB_WORKSPACE/cfg2" XDG_CONFIG_HOME="$GITHUB_WORKSPACE/cfg2" "$BIN"
           test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
       - name: Name the download
         run: |

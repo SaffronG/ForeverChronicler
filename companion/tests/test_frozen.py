@@ -42,7 +42,7 @@ class FrozenTests(unittest.TestCase):
         self.assertEqual(fc.bundled_zip().name, "ForeverChronicaller-0.3.1.zip")
 
     def test_double_click_installs_and_waits_for_enter(self):
-        answers = iter([str(self.wow), ""])  # folder prompt, then "Press Enter to close"
+        answers = iter(["yes", str(self.wow), ""])  # terms, folder prompt, then "Press Enter to close"
         prompts = []
 
         def fake_input(prompt=""):
@@ -53,6 +53,7 @@ class FrozenTests(unittest.TestCase):
             code = fc.main([])
         self.assertEqual(code, 0, out.getvalue())
         self.assertEqual(fc.installed_version(str(self.wow)), "0.3.1")
+        self.assertIn("Type 'yes' to agree", prompts[0])
         self.assertIn("Press Enter to close", prompts[-1])
         self.assertIn("ForeverChronicaller-Installer.exe setup", out.getvalue().replace("./", ""))
 

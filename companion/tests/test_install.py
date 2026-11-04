@@ -74,7 +74,7 @@ class InstallCommandTests(unittest.TestCase):
         return code, out.getvalue()
 
     def test_install_with_flags_saves_config(self):
-        code, out = self.run_install("--wow", str(self.wow), "--zip", str(self.zip), "--yes")
+        code, out = self.run_install("--wow", str(self.wow), "--zip", str(self.zip), "--yes", "--accept-terms")
         self.assertEqual(code, 0, out)
         self.assertEqual(fc.installed_version(str(self.wow)), "0.2.0")
         self.assertEqual(fc.load_config(self.root / "cfg" / "config.json")["wow_path"], str(self.wow))
@@ -83,20 +83,65 @@ class InstallCommandTests(unittest.TestCase):
     def test_install_uses_bundled_zip_and_detected_folder(self):
         with mock.patch.object(fc, "bundled_zip", return_value=self.zip), \
              mock.patch.object(fc, "find_wow_dirs", return_value=[self.wow]):
-            code, out = self.run_install("--yes")
+            code, out = self.run_install("--yes", "--accept-terms")
         self.assertEqual(code, 0, out)
         self.assertEqual(fc.installed_version(str(self.wow)), "0.2.0")
 
     def test_refuses_non_wow_folder_without_confirmation(self):
-        code, out = self.run_install("--wow", str(self.root / "cfg-not-wow"), "--zip", str(self.zip), "--yes")
+        code, out = self.run_install("--wow", str(self.root / "cfg-not-wow"), "--zip", str(self.zip), "--yes", "--accept-terms")
         self.assertEqual(code, 1)
         self.assertIn("doesn't look like a WoW folder", out)
 
     def test_refuses_while_running(self):
         with mock.patch.object(fc, "game_running", return_value=True):
-            code, out = self.run_install("--wow", str(self.wow), "--zip", str(self.zip), "--yes")
+            code, out = self.run_install("--wow", str(self.wow), "--zip", str(self.zip), "--yes", "--accept-terms")
         self.assertEqual(code, 1)
         self.assertIsNone(fc.installed_version(str(self.wow)))
+
+
+class TermsTests(InstallCommandTests):
+    """The disclaimer must be agreed to explicitly before anything is installed."""
+
+    def run_install_answering(self, answers, *argv):
+        answers = iter(answers)
+        args = fc.build_parser().parse_args(["install", *argv])
+        out = io.StringIO()
+        cfg = fc.load_config(self.root / "cfg" / "config.json")
+        with mock.patch("builtins.input", lambda p="": next(answers)), mock.patch("sys.stdout", out):
+            code = fc.cmd_install(cfg, args)
+        return code, out.getvalue()
+
+    def test_disclaimer_shown_and_decline_installs_nothing(self):
+        code, out = self.run_install_answering(["no"], "--wow", str(self.wow), "--zip", str(self.zip))
+        self.assertEqual(code, 1)
+        for words in ("PERMISSIONS", "DATA", "RISKS", "OFF by default", "backed up", "PRIVACY.md"):
+            self.assertIn(words, out)
+        self.assertIn("Nothing was installed", out)
+        self.assertIsNone(fc.installed_version(str(self.wow)))
+
+    def test_yes_alone_does_not_accept(self):
+        code, out = self.run_install("--wow", str(self.wow), "--zip", str(self.zip), "--yes")
+        self.assertEqual(code, 1)
+        self.assertIn("--accept-terms", out)
+        self.assertIsNone(fc.installed_version(str(self.wow)))
+
+    def test_agreement_is_remembered(self):
+        code, _ = self.run_install_answering(["yes"], "--wow", str(self.wow), "--zip", str(self.zip))
+        self.assertEqual(code, 0)
+        saved = fc.load_config(self.root / "cfg" / "config.json")
+        self.assertEqual(saved["accepted_terms"], fc.TERMS_VERSION)
+        self.assertGreater(saved["accepted_terms_at"], 0)
+        # second run: no disclaimer, no question
+        code, out = self.run_install_answering([], "--wow", str(self.wow), "--zip", str(self.zip))
+        self.assertEqual(code, 0)
+        self.assertNotIn("RISKS", out)
+
+    def test_privacy_command(self):
+        out = io.StringIO()
+        with mock.patch("sys.stdout", out):
+            fc.main(["privacy"])
+        self.assertIn("RISKS", out.getvalue())
+        self.assertIn("PRIVACY.md", out.getvalue())
 
 
 class BundleTest(unittest.TestCase):
