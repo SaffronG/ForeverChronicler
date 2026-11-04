@@ -20,9 +20,10 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 8. **Don't** delete user files, rewrite history or push to a remote unless the user asks.
 
 ## Layout
-- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → UI.
+- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → Settings → UI.
 - `Core.lua`: saved data (`ForeverChronicallerDB`), event dispatch, internal message system (`FC:On` / `FC:Fire`).
 - `Chronicle.lua`: automatic logging (`FC:AddEntry`).
 - `Goals.lua`: goal parsing and auto-completion.
+- `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `UI.lua`: window and slash commands (`/chron`, `/fc`).
 - `main.lua`, `persistance.lua`: original prototype. Not loaded, can be deleted.

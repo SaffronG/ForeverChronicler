@@ -211,6 +211,8 @@ SlashCmdList["FOREVERCHRONICALLER"] = function(msg)
     elseif cmd == "del" and tonumber(rest) then
         FC:RemoveGoal(tonumber(rest))
         printGoals()
+    elseif cmd == "config" or cmd == "options" then
+        FC:OpenSettings()
     elseif cmd == "recent" then
         local n = tonumber(rest) or 10
         local e = FC.db.entries
@@ -222,5 +224,6 @@ SlashCmdList["FOREVERCHRONICALLER"] = function(msg)
         FC:Print("/chron goal <text> - add a goal (level 20 / zone <name> / quest <name> auto-complete)")
         FC:Print("/chron goals - list goals    /chron done <n>    /chron del <n>")
         FC:Print("/chron recent [n] - print last n chronicle entries")
+        FC:Print("/chron config - open the options page")
     end
 end

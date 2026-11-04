@@ -1,0 +1,58 @@
+-- Forever Chronicaller: options page (Options -> AddOns -> Forever Chronicaller)
+-- Built with the retail Settings API (vertical layout). Settings are stored in
+-- FC.db.settings, so they're saved for each character with the rest of the data.
+
+local ADDON, FC = ...
+
+local TOGGLES = {
+    { key = "level",       name = "Level ups",            tip = "Write an entry each time you gain a level." },
+    { key = "zone",        name = "New zones",            tip = "Write an entry the first time you enter a zone." },
+    { key = "quest",       name = "Quest turn-ins",       tip = "Write an entry for every quest you complete." },
+    { key = "death",       name = "Deaths",               tip = "Write an entry when you die. The death counter is kept either way." },
+    { key = "achievement", name = "Achievements",         tip = "Write an entry when you earn an achievement." },
+    { key = "goal",        name = "Goals achieved",       tip = "Write an entry when you complete a goal." },
+}
+
+local category
+
+local function register()
+    if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then
+        return -- Settings API missing; /chron config will say so
+    end
+
+    category = Settings.RegisterVerticalLayoutCategory("Forever Chronicaller")
+    local createCheckbox = Settings.CreateCheckbox or Settings.CreateCheckBox -- renamed in 11.0
+
+    local chronicle = FC.db.settings.chronicle
+    for _, t in ipairs(TOGGLES) do
+        local setting = Settings.RegisterAddOnSetting(category, ADDON .. "_Log_" .. t.key, t.key,
+            chronicle, Settings.VarType.Boolean, t.name, true)
+        createCheckbox(category, setting, t.tip)
+    end
+
+    local cap = Settings.RegisterAddOnSetting(category, ADDON .. "_MaxEntries", "maxEntries",
+        FC.db.settings, Settings.VarType.Number, "Chronicle size limit", 0)
+    local options = Settings.CreateSliderOptions(0, 5000, 100)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return value == 0 and "Unlimited" or tostring(value)
+    end)
+    Settings.CreateSlider(category, cap, options,
+        "Maximum number of chronicle entries to keep. When a new entry pushes the chronicle over the limit, " ..
+        "the oldest entries are permanently deleted. 0 = unlimited.")
+
+    Settings.RegisterAddOnCategory(category)
+end
+
+FC:On("READY", register)
+
+function FC:OpenSettings()
+    if not category then
+        self:Print("The options page isn't available on this client.")
+        return
+    end
+    if InCombatLockdown() then
+        self:Print("Can't open options during combat.")
+        return
+    end
+    Settings.OpenToCategory(category:GetID())
+end

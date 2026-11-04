@@ -11,7 +11,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [ ] Confirm the Interface number `120105` in game, and do a first in-game test (`/chron goal level 2`, `/chron note hello`, `/reload`, check persistence)
 
 ## Next (planned for the build day)
-- [ ] **#1 Configure auto-chronicaller** – Settings API options page; on/off per event type (level, zone, quest, death, achievement), optional entry cap
+- [x] **#1 Configure auto-chronicaller** – Settings API options page; on/off per event type (level, zone, quest, death, achievement), optional entry cap
 - [ ] **#7 Map goals** – modifier + right-click on world map → context menu "Set as goal"; use built-in user waypoint + super-tracking for the arrow; custom map pins for goals; auto-complete on proximity (open world only)
 - [ ] **#2 Goal tracker / quest-style menu** – own on-screen tracker frame (don't hook Blizzard's objective tracker); goal log with details (description, category, created date, progress)
 - [ ] **#3 Share goals with party** – register addon message prefix; send/accept popup; chunk messages >255 bytes; validate incoming data; outgoing queue that waits while messaging is restricted (instances during encounters / M+ / PvP)

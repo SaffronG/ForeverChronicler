@@ -9,6 +9,11 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 - Quest tracking now uses the `QUEST_TURNED_IN` event instead of hooking `GetQuestReward`. The title comes from `C_QuestLog.GetTitleForQuestID`, falling back to the open quest frame, then `Quest #<id>`.
 
 ### Added
+- Options page (Options → AddOns → Forever Chronicaller, or `/chron config`) built with the retail Settings API (new `Settings.lua`):
+  - On/off switch for each automatic entry type: level ups, new zones, quest turn-ins, deaths, achievements, goals achieved. Counters (deaths, quests, visited zones) are still tracked when an entry type is off.
+  - Chronicle size limit slider (0 = unlimited, up to 5000). The limit is applied only when a new entry is added, so moving the slider never deletes anything by itself.
+  - Settings are saved for each character in `ForeverChronicallerDB.settings`. Older saves get the defaults automatically.
+  - Not yet tested in game; the Settings API calls are based on retail 11.x/12.x.
 - Quest goals can target a quest ID (`/chron goal quest 12345`) for exact matching. Matching by name still works.
 - `TODO.md` with the planned feature roadmap.
 - `CLAUDE.md` with working rules for future contributors (human or AI).

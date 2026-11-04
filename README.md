@@ -12,6 +12,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 
 ## What gets chronicled automatically
 - Level ups, first visit to each zone, quest turn-ins, deaths, achievements, goals achieved
+- Each type can be switched off, and the chronicle size can be limited, in Options → AddOns → Forever Chronicaller (`/chron config`)
 
 ## Commands (`/chron` or `/fc`)
 | Command | Effect |
@@ -22,6 +23,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron goals` | list goals |
 | `/chron done <n>` / `/chron del <n>` | complete / delete goal n |
 | `/chron recent [n]` | print last n entries to chat |
+| `/chron config` | open the options page |
 
 Goals that complete automatically:
 `level 30`, `zone Stranglethorn Vale`, `quest The Defias Brotherhood` (or `quest <questID>` for an exact match).
@@ -31,6 +33,7 @@ Anything else is a free-form goal you tick off yourself.
 - `Core.lua` – SavedVariables (persistence), event dispatch
 - `Chronicle.lua` – automatic event logging
 - `Goals.lua` – goal parsing / auto-completion
+- `Settings.lua` – options page (Settings API)
 - `UI.lua` – window and slash commands
 
 Data is saved per character in `WTF/Account/<acct>/<realm>/<char>/SavedVariables/ForeverChronicaller.lua`.

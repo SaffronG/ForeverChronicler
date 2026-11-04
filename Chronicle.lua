@@ -2,9 +2,20 @@
 
 local _, FC = ...
 
+-- Returns nil if this entry type is switched off in the settings.
+-- Counters (deaths, quests, visited zones) are still tracked either way.
 function FC:AddEntry(kind, text)
+    local settings = self.db.settings
+    if settings.chronicle[kind] == false then return nil end
     local e = { t = time(), kind = kind, text = text, zone = self:Zone(), level = UnitLevel("player") }
-    table.insert(self.db.entries, e)
+    local entries = self.db.entries
+    table.insert(entries, e)
+    -- Enforce the cap only when a new entry arrives, so dragging the slider
+    -- around in the options never deletes anything by itself.
+    local max = settings.maxEntries or 0
+    if max > 0 then
+        while #entries > max do table.remove(entries, 1) end
+    end
     self:Fire("ENTRY_ADDED", e)
     return e
 end

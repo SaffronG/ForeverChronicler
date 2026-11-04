@@ -12,6 +12,11 @@ local function defaults()
         goals = {},     -- { text, kind = "free"|"level"|"zone"|"quest", target, done, created, completed }
         zones = {},     -- set of zone names already visited
         stats = { deaths = 0, quests = 0 },
+        settings = {
+            -- which automatic entry types get written (notes and the opening entry are always kept)
+            chronicle = { level = true, zone = true, quest = true, death = true, achievement = true, goal = true },
+            maxEntries = 0, -- 0 = unlimited; otherwise oldest entries are dropped as new ones arrive
+        },
     }
 end
 
