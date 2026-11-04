@@ -7,7 +7,7 @@ Until WOW Forever is out for long enough and the add-on has been stress tested e
 | Version | Supported          |
 | ------- | ------------------ |
 | 0.4.x   | :white_check_mark: |
-| 0.4.x   | :x:                |
+| < 0.3.x   | :x:                |
 
 ## Reporting a Vulnerability
 
