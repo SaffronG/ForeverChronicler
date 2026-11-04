@@ -96,6 +96,8 @@ function W.setup(dir, opts)
         return unpack(out)
     end
     GetTime = function() return env.now or 0 end
+    env.ms = 0
+    debugprofilestop = function() env.ms = env.ms + (env.tick or 0.3); return env.ms end
     geterrorhandler = function() return function(msg) env.lastError = msg end end
     debugstack = function() return "stack" end
     hooksecurefunc = function(name, fn)

@@ -92,14 +92,33 @@ jobs:
         with:
           name: addon
           path: dist
+      - name: Telemetry destination (optional)
+        # Opt-in telemetry goes to the OTLP endpoint in these repository secrets.
+        # Without them, opted-in data stays in a local file on the player's PC.
+        # Use an ingest-only (write-only) token: anything in the binary can be extracted.
+        env:
+          OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
+          OTEL_HEADERS: ${{ secrets.OTEL_HEADERS }}
+        run: |
+          if [ -n "$OTEL_ENDPOINT" ]; then
+            python -c 'import json, os; json.dump({"endpoint": os.environ["OTEL_ENDPOINT"], "headers": os.environ.get("OTEL_HEADERS", "")}, open("companion/telemetry_build.json", "w"))'
+            echo "Telemetry endpoint configured."
+          else
+            echo "::notice::No OTEL_ENDPOINT secret: opted-in telemetry will stay local on players' PCs."
+          fi
       - name: Build standalone installer (Python is bundled in)
         run: |
           python -m pip install "pyinstaller==6.*"
           SEP=":"; [ "$RUNNER_OS" = "Windows" ] && SEP=";"
-          # absolute path: PyInstaller resolves relative data paths against the spec folder
+          EXTRA=()
+          if [ -f companion/telemetry_build.json ]; then
+            EXTRA+=(--add-data "$GITHUB_WORKSPACE/companion/telemetry_build.json${SEP}.")
+          fi
+          # absolute paths: PyInstaller resolves relative data paths against the spec folder
           pyinstaller --onefile --clean --noconfirm --name ForeverChronicaller-Installer \
             --add-data "$GITHUB_WORKSPACE/dist/ForeverChronicaller-$V.zip${SEP}." \
             --add-data "$GITHUB_WORKSPACE/PRIVACY.md${SEP}." \
+            "${EXTRA[@]}" \
             companion/fcompanion.py
       - name: Smoke test the real binary
         run: |
@@ -111,13 +130,14 @@ jobs:
           fi
           test ! -e "fake/WoW Forever/Interface"
           "$BIN" privacy | grep -q "RISKS"
+          "$BIN" telemetry status | grep -q "off (default)"   # telemetry must be off out of the box
           "$BIN" install --wow "$GITHUB_WORKSPACE/fake/WoW Forever" --yes --accept-terms
           test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
           grep -q "## Version: $V" "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
           # double-click mode with a fresh config: agree to the terms, answer the folder
-          # prompt, then "Press Enter to close"
+          # prompt, press Enter at the telemetry question (= no), then "Press Enter to close"
           rm -rf "fake/WoW Forever/Interface"
-          printf 'yes\n%s\n\n' "$GITHUB_WORKSPACE/fake/WoW Forever" | APPDATA="$GITHUB_WORKSPACE/cfg2" XDG_CONFIG_HOME="$GITHUB_WORKSPACE/cfg2" "$BIN"
+          printf 'yes\n%s\n\n\n' "$GITHUB_WORKSPACE/fake/WoW Forever" | APPDATA="$GITHUB_WORKSPACE/cfg2" XDG_CONFIG_HOME="$GITHUB_WORKSPACE/cfg2" "$BIN"
           test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
       - name: Name the download
         run: |

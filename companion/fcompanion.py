@@ -31,6 +31,11 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import fc_telemetry  # noqa: E402  (opt-in telemetry, see PRIVACY.md)
+
+TEL: fc_telemetry.Telemetry = fc_telemetry.DISABLED  # replaced in main() if the user opted in
+
 ADDON = "ForeverChronicaller"
 VERSION = "0.3.1"
 USER_AGENT = f"ForeverChronicallerCompanion/{VERSION}"
@@ -108,6 +113,13 @@ def default_config() -> Dict[str, Any]:
         "characters": [],          # empty = all characters
         "poll_seconds": 5,
         "github_repo": DEFAULT_REPO,  # "owner/repo" for updates
+        "telemetry": {             # opt-in, OFF by default (PRIVACY.md section 3)
+            "enabled": False,
+            "install_id": "",      # random, created on opt-in, deleted on opt-out
+            "endpoint": "",        # optional override of the OTLP endpoint
+            "headers": "",
+            "asked": False,        # the opt-in question was answered (never ask again)
+        },
         "accepted_terms": 0,       # TERMS_VERSION the user agreed to (0 = not yet)
         "accepted_terms_at": 0,
     }
@@ -335,15 +347,27 @@ def batch_lines(lines: List[str], limit: int) -> List[str]:
 
 # -------------------------------------------------------------------- notifiers
 
-Sender = Callable[[urllib.request.Request], None]
+Sender = Callable[[urllib.request.Request], Optional[int]]
 
 
-def _http_send(req: urllib.request.Request) -> None:
+def _traced_send(send: Sender, req: urllib.request.Request, target: str) -> None:
+    """Send with a telemetry span: target name, status code and latency - never the URL."""
+    with TEL.span("http.post", **{"http.request.method": "POST", "fc.target": target}) as sp:
+        try:
+            status = send(req)
+        except urllib.error.HTTPError as e:
+            sp.set(**{"http.response.status_code": e.code})
+            raise
+        if isinstance(status, int):
+            sp.set(**{"http.response.status_code": status})
+
+
+def _http_send(req: urllib.request.Request) -> Optional[int]:
     for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=15) as resp:
                 resp.read()
-            return
+                return getattr(resp, "status", None)
         except urllib.error.HTTPError as e:
             if e.code == 429 and attempt < 2:  # rate limited
                 retry = float(e.headers.get("Retry-After", "2") or 2)
@@ -352,7 +376,8 @@ def _http_send(req: urllib.request.Request) -> None:
             raise
 
 
-def post_discord(webhook: str, character: str, lines: List[str], send: Sender = _http_send) -> int:
+def post_discord(webhook: str, character: str, lines: List[str], send: Optional[Sender] = None) -> int:
+    send = send or _http_send
     count = 0
     for chunk in batch_lines(lines, 1900):
         body = json.dumps({
@@ -362,12 +387,13 @@ def post_discord(webhook: str, character: str, lines: List[str], send: Sender = 
         }).encode()
         req = urllib.request.Request(webhook, data=body, method="POST",
                                      headers={"Content-Type": "application/json", "User-Agent": USER_AGENT})
-        send(req)
+        _traced_send(send, req, "discord")
         count += 1
     return count
 
 
-def post_ntfy(server: str, topic: str, character: str, lines: List[str], send: Sender = _http_send) -> int:
+def post_ntfy(server: str, topic: str, character: str, lines: List[str], send: Optional[Sender] = None) -> int:
+    send = send or _http_send
     count = 0
     url = f"{server.rstrip('/')}/{urllib.request.quote(topic)}"
     for chunk in batch_lines(lines, 3500):
@@ -376,7 +402,7 @@ def post_ntfy(server: str, topic: str, character: str, lines: List[str], send: S
             "Tags": "scroll",
             "User-Agent": USER_AGENT,
         })
-        send(req)
+        _traced_send(send, req, "ntfy")
         count += 1
     return count
 
@@ -390,11 +416,11 @@ def entry_key(e: Dict[str, Any]) -> str:
 class Watcher:
     """Finds chronicle entries that haven't been posted yet."""
 
-    def __init__(self, cfg: Dict[str, Any], state_path: Optional[Path] = None, send: Sender = _http_send,
+    def __init__(self, cfg: Dict[str, Any], state_path: Optional[Path] = None, send: Optional[Sender] = None,
                  log: Callable[[str], None] = print):
         self.cfg = cfg
         self.state_path = state_path or config_dir() / "state.json"
-        self.send = send
+        self.send = send or _http_send
         self.log = log
         self.state = self._load_state()
         self.mtimes: Dict[str, float] = {}
@@ -443,10 +469,15 @@ class Watcher:
 
     def process_file(self, path: Path) -> int:
         """Post new entries from one SavedVariables file. Returns the number posted."""
-        text = path.read_text(encoding="utf-8", errors="replace")
-        data = parse_saved_variables(text).get("ForeverChronicallerDB")
+        with TEL.span("watch.read"):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            data = parse_saved_variables(text).get("ForeverChronicallerDB")
         if not isinstance(data, dict):
             return 0
+        if TEL.enabled:
+            seen = set(self.state.setdefault("sent_errors", []))
+            TEL.add_addon_data(data, installed_version(self.cfg.get("wow_path", "")), seen)
+            self.state["sent_errors"] = sorted(seen)[-500:]
         entries = data.get("entries") or []
         if isinstance(entries, dict):  # sparse table
             entries = [entries[k] for k in sorted(entries) if isinstance(k, int)]
@@ -472,7 +503,7 @@ class Watcher:
                 self.log(f"ntfy post failed: {type(e).__name__}: {getattr(e, 'code', '')}")
 
     def poll_once(self) -> int:
-        posted = 0
+        posted, changed = 0, False
         for path in saved_variable_files(self.cfg["wow_path"]):
             try:
                 mtime = path.stat().st_mtime
@@ -482,12 +513,16 @@ class Watcher:
             if self.mtimes.get(key) == mtime:
                 continue
             self.mtimes[key] = mtime
+            changed = True
             try:
-                posted += self.process_file(path)
+                with TEL.span("watch.process"):
+                    posted += self.process_file(path)
             except (LuaParseError, OSError, UnicodeError) as e:
                 # The game may be in the middle of writing the file; try again next change.
                 self.log(f"Couldn't read {path.name} for {character_of(path)} yet ({e}).")
                 self.mtimes.pop(key, None)
+        if changed:
+            TEL.flush()  # long-running watch: send as we go
         return posted
 
 
@@ -561,14 +596,16 @@ def game_running() -> bool:
 def install_zip(zip_path: Path, wow_path: str, log: Callable[[str], None] = print) -> str:
     """Install/replace the addon from a zip. The old version is kept in the backups folder.
     Returns the installed version."""
-    version = check_zip(zip_path)
+    with TEL.span("install.verify_zip"):
+        version = check_zip(zip_path)
     addons = Path(wow_path) / "Interface" / "AddOns"
     if not Path(wow_path).is_dir():
         raise UpdateError(f"WoW folder not found: {wow_path}")
     addons.mkdir(parents=True, exist_ok=True)
     target = addons / ADDON
     backup = None
-    with tempfile.TemporaryDirectory(dir=str(addons.parent)) as tmp:
+    with tempfile.TemporaryDirectory(dir=str(addons.parent)) as tmp, TEL.span("install.swap") as swap:
+        swap.set(**{"fc.replaced_existing": target.exists()})
         with zipfile.ZipFile(zip_path) as zf:
             zf.extractall(tmp)  # paths were validated by check_zip
         if target.exists():
@@ -661,7 +698,7 @@ def ensure_terms(cfg: Dict[str, Any], accept_flag: bool = False, interactive: bo
         print("Not agreed. Run again without --yes to answer, or add --accept-terms.")
         return False
     else:
-        answer = input("Type 'yes' to agree and continue (anything else cancels): ").strip().lower()
+        answer = safe_input("Type 'yes' to agree and continue (anything else cancels): ").strip().lower()
         if answer not in ("yes", "y"):
             print("Cancelled. Nothing was installed or changed.")
             return False
@@ -688,8 +725,9 @@ def _http_get(url: str) -> bytes:
         return resp.read()
 
 
-def latest_release(repo: str, fetch: Fetch = _http_get) -> Dict[str, str]:
+def latest_release(repo: str, fetch: Optional[Fetch] = None) -> Dict[str, str]:
     """{'version': '0.3.0', 'url': <addon zip download url>} for the newest GitHub release."""
+    fetch = fetch or _http_get
     if not re.match(r"^[\w.-]+/[\w.-]+$", repo or ""):
         raise UpdateError("set github_repo (owner/repo) in the config first")
     try:
@@ -708,11 +746,14 @@ def latest_release(repo: str, fetch: Fetch = _http_get) -> Dict[str, str]:
     raise UpdateError("the latest release has no addon zip")
 
 
-def update(cfg: Dict[str, Any], fetch: Fetch = _http_get, check_only: bool = False, force: bool = False,
+def update(cfg: Dict[str, Any], fetch: Optional[Fetch] = None, check_only: bool = False, force: bool = False,
            log: Callable[[str], None] = print, running: Callable[[], bool] = game_running) -> bool:
     """Install the latest release if it's newer. Returns True if something was installed."""
+    fetch = fetch or _http_get
     current = installed_version(cfg["wow_path"])
-    latest = latest_release(cfg.get("github_repo", ""), fetch)
+    with TEL.span("update.check") as sp:
+        latest = latest_release(cfg.get("github_repo", ""), fetch)
+        sp.set(**{"fc.update_available": not current or version_tuple(latest["version"]) > version_tuple(current)})
     if current and version_tuple(latest["version"]) <= version_tuple(current):
         log(f"Forever Chronicaller {current} is up to date.")
         return False
@@ -726,7 +767,10 @@ def update(cfg: Dict[str, Any], fetch: Fetch = _http_get, check_only: bool = Fal
         return False
     with tempfile.TemporaryDirectory() as tmp:
         zip_path = Path(tmp) / "addon.zip"
-        zip_path.write_bytes(fetch(latest["url"]))
+        with TEL.span("update.download") as sp:
+            data = fetch(latest["url"])
+            sp.set(**{"fc.bytes": len(data)})
+        zip_path.write_bytes(data)
         version = install_zip(zip_path, cfg["wow_path"], log)
     log(f"Installed Forever Chronicaller {version}.")
     return True
@@ -734,9 +778,18 @@ def update(cfg: Dict[str, Any], fetch: Fetch = _http_get, check_only: bool = Fal
 
 # ---------------------------------------------------------------------- commands
 
+def safe_input(prompt: str) -> str:
+    """input() that treats a closed input stream as an empty answer (= the safe default)."""
+    try:
+        return input(prompt)
+    except EOFError:
+        print()
+        return ""
+
+
 def ask(prompt: str, current: str = "") -> str:
     shown = f" [{current}]" if current else ""
-    answer = input(f"{prompt}{shown}: ").strip()
+    answer = safe_input(f"{prompt}{shown}: ").strip()
     return answer or current
 
 
@@ -756,6 +809,8 @@ def cmd_setup(cfg: Dict[str, Any], args) -> int:
     cfg["ntfy_topic"] = ask("ntfy topic for phone notifications (install the ntfy app and subscribe; empty to skip)",
                             cfg["ntfy_topic"])
     cfg["github_repo"] = ask("GitHub repository for updates, owner/repo (empty to skip)", cfg["github_repo"])
+    if not telemetry_cfg(cfg).get("enabled") and not telemetry_cfg(cfg).get("asked"):
+        ask_telemetry(cfg)
     path = save_config(cfg)
     print(f"\nSaved to {path}")
     print(f"Next: run `{prog()} test`, then `{prog()} watch` while you play.")
@@ -827,18 +882,18 @@ def choose_wow_path(cfg: Dict[str, Any], given: Optional[str], assume_yes: bool)
     if cfg.get("wow_path") and looks_like_wow(Path(cfg["wow_path"])):
         return cfg["wow_path"]
     found = find_wow_dirs()
-    if len(found) == 1 and (assume_yes or input(f"Install into {found[0]}? [Y/n]: ").strip().lower() in ("", "y", "yes")):
+    if len(found) == 1 and (assume_yes or safe_input(f"Install into {found[0]}? [Y/n]: ").strip().lower() in ("", "y", "yes")):
         return str(found[0])
     if len(found) > 1:
         print("Found several WoW folders:")
         for i, p in enumerate(found, 1):
             print(f"  {i}. {p}")
-        pick = input("Which one? (number, or paste a path): ").strip()
+        pick = safe_input("Which one? (number, or paste a path): ").strip()
         if pick.isdigit() and 1 <= int(pick) <= len(found):
             return str(found[int(pick) - 1])
         return pick or None
     print("Couldn't find WoW: Forever automatically.")
-    path = input("Paste the WoW: Forever folder (the one with Wow.exe in it): ").strip().strip('"')
+    path = safe_input("Paste the WoW: Forever folder (the one with Wow.exe in it): ").strip().strip('"')
     return path or None
 
 
@@ -851,7 +906,7 @@ def cmd_install(cfg: Dict[str, Any], args) -> int:
         return 1
     if not looks_like_wow(Path(wow)):
         print(f"{wow} doesn't look like a WoW folder (no Wow*.exe, Interface or WTF).")
-        if args.yes or input("Install there anyway? [y/N]: ").strip().lower() not in ("y", "yes"):
+        if args.yes or safe_input("Install there anyway? [y/N]: ").strip().lower() not in ("y", "yes"):
             return 1
     if game_running() and not args.force:
         print("WoW seems to be running. Close it, then run the installer again.")
@@ -871,8 +926,11 @@ def cmd_install(cfg: Dict[str, Any], args) -> int:
     except UpdateError as e:
         print(f"Install failed: {e}")
         return 1
-    save_config(cfg)
     print(f"\nForever Chronicaller {version} is installed in {addon_dir(wow)}")
+    t = telemetry_cfg(cfg)
+    if not t.get("enabled") and (args.telemetry or not t.get("asked")):
+        ask_telemetry(cfg, flag=args.telemetry, interactive=not args.yes)
+    save_config(cfg)
     print("Start the game, make sure it's enabled in the AddOns list, and type /chron in game.")
     print(f"Optional: `{prog()} setup` for Discord / phone notifications.")
     return 0
@@ -885,6 +943,10 @@ def build_parser() -> argparse.ArgumentParser:
     st = sub.add_parser("setup", help="configure the WoW folder, Discord and ntfy")
     st.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
     sub.add_parser("privacy", help="show permissions, data and risks (the install disclaimer)")
+    tp = sub.add_parser("telemetry", help="opt-in anonymous diagnostics: status, on, off, show, send")
+    tp.add_argument("action", nargs="?", default="status", choices=["status", "on", "off", "show", "send"])
+    tp.add_argument("--yes", action="store_true", help="with 'on': don't ask")
+    tp.add_argument("--lines", type=int, default=5, help="with 'show': how many entries")
     sub.add_parser("test", help="send a test notification")
     w = sub.add_parser("watch", help="post new chronicle entries while you play")
     w.add_argument("--once", action="store_true", help="check once and exit")
@@ -894,12 +956,153 @@ def build_parser() -> argparse.ArgumentParser:
     i.add_argument("--yes", action="store_true", help="don't ask questions")
     i.add_argument("--force", action="store_true", help="install even if the game is running")
     i.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
+    i.add_argument("--telemetry", action="store_true", help="opt in to anonymous diagnostics (off unless given or answered yes)")
     u = sub.add_parser("update", help="install the latest addon release (or a zip you have)")
     u.add_argument("--check", action="store_true", help="only check, don't install")
     u.add_argument("--force", action="store_true", help="install even if the game is running")
     u.add_argument("--zip", help="install this zip instead of downloading")
     u.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
     return p
+
+
+# ------------------------------------------------------------------- telemetry (opt-in)
+
+TELEMETRY_SUMMARY = """\
+Anonymous diagnostics help fix bugs. If you turn this on, the companion sends:
+  * versions (addon, companion, Python) and your OS type (Windows/Linux/macOS)
+  * errors: type and code location (e.g. "Goals.lua:42"), with quoted text,
+    paths, URLs and long numbers removed
+  * how long operations take (install, update, download, Discord/ntfy posts)
+    and whether they worked, with HTTP status codes but never URLs
+  * in-game handler timings, only if you also turn on "Performance
+    diagnostics" in the addon options
+It NEVER sends: character, account, realm or friend names, chronicle/goal/
+note text, chat, zones, coordinates, folder paths, your webhook or topic.
+Identified only by a random ID that is deleted when you turn it off.
+Destination: {dest}
+You can change this any time: {prog} telemetry on|off|status"""
+
+
+def telemetry_build_defaults() -> Dict[str, Any]:
+    """Endpoint baked into release builds (telemetry_build.json), if any."""
+    for place in bundle_places():
+        f = place / "telemetry_build.json"
+        if f.is_file():
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                return data if isinstance(data, dict) else {}
+            except (OSError, ValueError):
+                return {}
+    return {}
+
+
+def telemetry_cfg(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    t = cfg.get("telemetry")
+    if not isinstance(t, dict):
+        t = {}
+    merged = dict(default_config()["telemetry"])
+    merged.update(t)
+    cfg["telemetry"] = merged
+    return merged
+
+
+def spool_path() -> Path:
+    return config_dir() / "telemetry-spool.jsonl"
+
+
+def build_telemetry(cfg: Dict[str, Any]) -> fc_telemetry.Telemetry:
+    t = telemetry_cfg(cfg)
+    if not (t.get("enabled") and t.get("install_id")):
+        return fc_telemetry.DISABLED
+    endpoint, headers = fc_telemetry.destination(t, telemetry_build_defaults())
+    addon_version = installed_version(cfg["wow_path"]) if cfg.get("wow_path") else None
+    return fc_telemetry.Telemetry(
+        enabled=True, install_id=t["install_id"], endpoint=endpoint, headers=headers,
+        resource=fc_telemetry.runtime_resource(VERSION, addon_version, FROZEN), spool_path=spool_path())
+
+
+def set_telemetry(cfg: Dict[str, Any], enabled: bool) -> None:
+    t = telemetry_cfg(cfg)
+    if enabled:
+        t["enabled"] = True
+        t["install_id"] = t.get("install_id") or fc_telemetry.new_install_id()
+    else:
+        t["enabled"] = False
+        t["install_id"] = ""
+        for f in (spool_path(), spool_path().with_suffix(".old.jsonl")):
+            try:
+                f.unlink()
+            except OSError:
+                pass
+
+
+def telemetry_destination_label(cfg: Dict[str, Any]) -> str:
+    endpoint, _ = fc_telemetry.destination(telemetry_cfg(cfg), telemetry_build_defaults())
+    return fc_telemetry.endpoint_label(endpoint)
+
+
+def ask_telemetry(cfg: Dict[str, Any], flag: bool = False, interactive: bool = True) -> bool:
+    """Opt-in question. Default is NO; only an explicit yes (or --telemetry) turns it on."""
+    if flag:
+        set_telemetry(cfg, True)
+        return True
+    if not interactive:
+        return False
+    print()
+    print(TELEMETRY_SUMMARY.format(dest=telemetry_destination_label(cfg), prog=prog()))
+    answer = safe_input("Share anonymous diagnostics? [y/N]: ").strip().lower()
+    set_telemetry(cfg, answer in ("y", "yes"))
+    telemetry_cfg(cfg)["asked"] = True
+    print("Thanks! Diagnostics are on." if answer in ("y", "yes") else "OK, diagnostics stay off.")
+    return answer in ("y", "yes")
+
+
+def cmd_telemetry(cfg: Dict[str, Any], args) -> int:
+    global TEL
+    t = telemetry_cfg(cfg)
+    action = args.action
+    if action == "on":
+        if not args.yes:
+            print(TELEMETRY_SUMMARY.format(dest=telemetry_destination_label(cfg), prog=prog()))
+            if safe_input("Turn on anonymous diagnostics? [y/N]: ").strip().lower() not in ("y", "yes"):
+                print("Diagnostics stay off.")
+                return 0
+        set_telemetry(cfg, True)
+        save_config(cfg)
+        print("Diagnostics are on.")
+    elif action == "off":
+        set_telemetry(cfg, False)
+        save_config(cfg)
+        TEL = fc_telemetry.DISABLED
+        print("Diagnostics are off. The random ID and any locally stored diagnostics were deleted.")
+    elif action == "show":
+        if not spool_path().exists():
+            print("No locally stored diagnostics." + ("" if t.get("enabled") else " (Diagnostics are off.)"))
+            return 0
+        print(f"Locally stored diagnostics ({spool_path()}):")
+        for line in spool_path().read_text(encoding="utf-8").splitlines()[-args.lines:]:
+            item = json.loads(line)
+            print(json.dumps(item, indent=2))
+    elif action == "send":
+        if not TEL.enabled:
+            print("Diagnostics are off; nothing to send.")
+            return 0
+        for path in saved_variable_files(cfg.get("wow_path", "")):
+            try:
+                data = parse_saved_variables(path.read_text(encoding="utf-8", errors="replace")).get("ForeverChronicallerDB")
+            except (LuaParseError, OSError):
+                continue
+            if isinstance(data, dict):
+                TEL.add_addon_data(data, installed_version(cfg["wow_path"]))
+        print("Addon errors and diagnostics collected; they're sent when this command finishes.")
+    else:  # status
+        print(f"Diagnostics: {'ON' if t.get('enabled') else 'off (default)'}")
+        if t.get("enabled"):
+            print(f"Random ID: {t['install_id'][:8]}...")
+        print(f"Destination: {telemetry_destination_label(cfg)}")
+        print(f"Local file: {spool_path()}")
+        print(f"Change with: {prog()} telemetry on|off  ·  see what's stored: {prog()} telemetry show")
+    return 0
 
 
 def cmd_privacy(cfg: Dict[str, Any], args) -> int:
@@ -909,7 +1112,8 @@ def cmd_privacy(cfg: Dict[str, Any], args) -> int:
     return 0
 
 
-COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": cmd_update, "install": cmd_install, "privacy": cmd_privacy}
+COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": cmd_update, "install": cmd_install, "privacy": cmd_privacy,
+            "telemetry": cmd_telemetry}
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -920,10 +1124,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     if double_clicked:
         argv = ["install"]
         print(f"Forever Chronicaller installer {VERSION}\n")
+    global TEL
     try:
         args = build_parser().parse_args(argv)
         cfg = load_config()
-        return COMMANDS[args.command](cfg, args)
+        TEL = build_telemetry(cfg)  # disabled (does nothing) unless the user opted in
+        try:
+            with TEL.span(f"command.{args.command}"):
+                return COMMANDS[args.command](cfg, args)
+        finally:
+            TEL.flush()
     except KeyboardInterrupt:
         return 1
     except Exception as e:  # show the problem instead of a window that just vanishes

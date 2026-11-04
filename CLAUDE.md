@@ -24,7 +24,7 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 
 ## Layout
 - `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → UI → Journey.
-- `Core.lua`: saved data (`ForeverChronicallerDB`), error isolation (`FC:SafeCall`, `/chron errors`), event dispatch, internal message system (`FC:On` / `FC:Fire`), slash command registry (`FC:Command(names, usage, fn, order)`).
+- `Core.lua`: saved data (`ForeverChronicallerDB`), error isolation (`FC:SafeCall`, `FC:Dispatch`, `/chron errors`), opt-in diagnostics, event dispatch, internal message system (`FC:On` / `FC:Fire`), slash command registry (`FC:Command(names, usage, fn, order)`).
 - `Chronicle.lua`: automatic logging (`FC:AddEntry`).
 - `Goals.lua`: goal parsing and auto-completion (`FC:CreateGoal`, `FC:AddGoal`). Fires `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED` and `GOALS_CHANGED`.
 - `MapGoals.lua`: location goals (`kind = "location"`), world map Ctrl + right-click menu, waypoint/super-track, arrival polling.
@@ -35,6 +35,7 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 - `SharedGoals.lua`: together goals (`kind = "shared"`, members keyed by short name). Sync messages SGINV/SGJOIN/SGSYNC/SGLEAVE. Merges must only move state forward, and a reply is only sent if we know more (`knowsMore`), which keeps the sync from looping.
 - `Export.lua`: export/import (`FC:ExportString`, `FC:ImportString(str, "merge"|"replace")`, `FC:UndoImport`). When adding new saved data, include it in the export and validate it in the importer.
 - `VersionCheck.lua`: `FC.version` (from the .toc), `FC.CompareVersions`, version announcements to the group.
+- Telemetry: the addon only records locally (`FC:Dispatch` timings when `settings.diagnostics` is on; `errorLog` entries carry `v` and `label`). `companion/fc_telemetry.py` turns those plus companion spans into OTLP. Use `TEL.span(...)` for new companion operations, and only pass fixed code names, numbers or values that went through `scrub()`. Extend the personal-data test in `companion/tests/test_telemetry.py` when adding fields.
 - `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `Journey.lua`: progress samples (`FC.db.samples`, `FC:TakeSample`), stats (`FC:JourneyStats`) and the Journey tab charts. Loads after UI.lua and adds its tab on READY.
 - `UI.lua`: main window (Chronicle tab, quest-log-style Goals tab, `FC:AddWindowTab` for extra tabs) and basic slash commands.

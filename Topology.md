@@ -10,6 +10,7 @@ For *using* it, see [README.md](README.md). For working rules, see [CLAUDE.md](C
 - [5. Goals](#5-goals)
 - [6. Player-to-player messaging](#6-player-to-player-messaging)
 - [7. Companion app](#7-companion-app)
+- [7a. Telemetry (opt-in)](#7a-telemetry-opt-in)
 - [8. Build, test and release pipeline](#8-build-test-and-release-pipeline)
 - [9. Component : function map](#9-component--function-map)
 - [10. Design rules and constraints](#10-design-rules-and-constraints)
@@ -42,6 +43,7 @@ flowchart LR
     Discord["Discord channel<br/>(webhook)"]
     Phone["Phone<br/>(ntfy app)"]
     GH["GitHub<br/>SaffronG/ForeverChronicaller"]
+    OTel["OpenTelemetry endpoint<br/>(opt-in, off by default)"]
 
     Addon -- "writes on logout or /reload" --> SV
     SV -- "polls and parses (never executes)" --> Comp
@@ -51,6 +53,7 @@ flowchart LR
     Comp -- "installs / updates" --> AddOns
     AddOns -- "loaded at login" --> Addon
     Addon <-- "addon messages (prefix FChron)" --> Friend
+    Comp -. "anonymous traces + metrics,<br/>only if opted in" .-> OTel
 ```
 
 **Why it's shaped like this:** WoW addons are sandboxed. They have **no network and no file access**, and their saved data reaches disk **only on logout or `/reload`**. So:
@@ -191,6 +194,7 @@ classDiagram
         samples : Sample[]
         settings : Settings
         errorLog : Error[]
+        diagnostics : opt-in handler timings
     }
     class Entry {
         t : unix time
@@ -389,6 +393,46 @@ flowchart TB
 
 ---
 
+## 7a. Telemetry (opt-in)
+
+Telemetry is **off by default**. Nothing below runs unless the player answers *yes* (or passes `--telemetry`). Full disclosure: [PRIVACY.md §3](PRIVACY.md#3-telemetry-opt-in-off-by-default).
+
+```mermaid
+flowchart LR
+    subgraph Game["In game (records locally only)"]
+        Disp["FC:Dispatch<br/>(every event, message, command)"]
+        ErrLog[("errorLog<br/>msg, count, v = version,<br/>label = handler, stack")]
+        Diag[("diagnostics (opt-in)<br/>per-handler latency buckets,<br/>reset per version")]
+        Disp -- "error" --> ErrLog
+        Disp -- "timing, if enabled" --> Diag
+    end
+    SV2[("SavedVariables")]
+    ErrLog & Diag --> SV2
+
+    subgraph Companion["Companion (fc_telemetry.py)"]
+        Spans["TEL.span(...)<br/>command.*, install.*, update.*,<br/>watch.*, http.post"]
+        Addon2["add_addon_data<br/>fc.addon.errors · addon.error spans<br/>fc.addon.handler.duration"]
+        Scrub{"scrub()<br/>quotes, paths, URLs,<br/>e-mails, numbers removed"}
+        Out{"endpoint<br/>configured?"}
+    end
+    SV2 -- "watch / telemetry send" --> Addon2
+    Spans & Addon2 --> Scrub --> Out
+    Out -- yes --> OTLP["OTLP/HTTP JSON<br/>/v1/traces · /v1/metrics"]
+    Out -- no --> Spool[("telemetry-spool.jsonl<br/>local, capped 1 MB")]
+    Gate{"opted in?<br/>(random install id)"} -. "no: Telemetry is a no-op" .-> Spans
+```
+
+| Signal | Name | Key attributes |
+|---|---|---|
+| Trace | `command.<name>` and children (`install.verify_zip`, `install.swap`, `update.check`, `update.download`, `watch.process`, `watch.read`, `http.post`) | status, scrubbed exception, `fc.target`, `http.response.status_code` |
+| Trace | `addon.error` | `addon.version`, `error.where` (`Goals.lua:42`), `handler`, `error.stack` (locations only) |
+| Metric (sum) | `fc.operations` · `fc.errors` · `fc.addon.errors` · `fc.addon.handler.errors` | operation/outcome · error type/location · version |
+| Metric (histogram) | `fc.operation.duration` · `fc.addon.handler.duration` | latency in ms, by operation / handler and version |
+
+The endpoint comes from (highest first) the `OTEL_EXPORTER_OTLP_ENDPOINT` / `_HEADERS` environment variables, the companion config, or `telemetry_build.json`, which the release workflow writes from the `OTEL_ENDPOINT` / `OTEL_HEADERS` repository secrets.
+
+---
+
 ## 8. Build, test and release pipeline
 
 ```mermaid
@@ -436,6 +480,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `Sharing.lua` | Send a goal copy to group/friend, accept popup | `FC:ShareGoal`, `FC.GoalToFields`, `FC.FieldsToGoal` (validation); `/chron share` | comm `GOAL`, `GOALACK` | comm `GOAL`, `GOALACK` |
 | `SharedGoals.lua` | Together goals: invites, per-member progress, offline-safe sync | `FC:CreateSharedGoal`, `FC:InviteToShared`, `FC:MarkSharedPartDone`, `FC:SharedProgressText`, `FC.CleanSharedTarget`, `FC:IsMemberOnline`; `/chron together`, `/chron invite` | `READY`, `LEVEL`, `ZONE`, `QUEST`, `GOAL_REMOVED`, `GROUP_ROSTER_UPDATE`, `FRIENDLIST_UPDATE`; comm `SG*` | `SHARED_PART_DONE`, `GOALS_CHANGED`; comm `SG*` |
 | `Export.lua` | Export/import strings (backup, other PC), `/chron sync` | `FC:ExportString`, `FC:ImportString(str, "merge"/"replace")`, `FC:UndoImport`; `/chron export`, `/chron import`, `/chron sync` | – | `GOALS_CHANGED`, `ENTRY_ADDED` |
+| `Core.lua` (diagnostics) | Opt-in handler timing (off by default), version-linked error log | `FC:Dispatch(label, fn, ...)`, `FC.DIAG_BOUNDS`; `/chron diagnostics` | – | – |
 | `VersionCheck.lua` | Tell players about newer versions in their group | `FC.version`, `FC.CompareVersions`; `/chron version` | `READY`, `GROUP_ROSTER_UPDATE`; comm `VER` | comm `VER` |
 | `Settings.lua` | Options page (Settings API) | `FC:OpenSettings`; `/chron config` | `READY` | `SETTINGS_CHANGED` |
 | `UI.lua` | Main window: Chronicle tab, quest-log-style Goals tab, extra tabs | `FC:Toggle`, `FC.Refresh`, `FC:AddWindowTab`, `FC:DescribeGoalType`; `/chron`, `note`, `goal`, `goals`, `done`, `del`, `recent` | `ENTRY_ADDED`, `GOALS_CHANGED`, `GOAL_ADDED`, `LOCATIONS_UPDATED` | – |
@@ -445,6 +490,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | Path | Responsibility |
 |---|---|
 | `companion/fcompanion.py` | Companion: `setup`, `test`, `watch`, `update`, `install`. SavedVariables parser, Discord/ntfy, zip validation, WoW-folder detection, standalone (double-click) mode |
+| `companion/fc_telemetry.py` | Opt-in OpenTelemetry: spans, metrics, scrubbing, addon error/diagnostic import, OTLP export or local spool |
 | `companion/Install.bat`, `install.sh` | Launchers for the Python-based installer bundle |
 | `companion/tests/` | Companion tests (parser, watcher, update, install, standalone mode, version match) |
 | `tests/wow_stub.lua`, `tests/run.lua`, `tests/test_*.lua` | Fake WoW API (multi-player), test runner, addon tests |
@@ -462,7 +508,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `way` | MapGoals | | `export`, `import`, `sync` | Export |
 | `tracker` | Tracker | | `version` | VersionCheck |
 | `journey` | Journey | | `config` / `options` | Settings |
-| `help`, `errors`, `privacy` | Core | | | |
+| `help`, `errors`, `privacy`, `diagnostics` | Core | | | |
 
 ---
 
@@ -477,6 +523,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | Other players' data is untrusted | Every incoming message and import is validated (types, lengths, ranges, membership). Nothing is ever executed |
 | Friends may be offline | Together-goal state is saved, merged forward-only and synced on contact |
 | Players shouldn't need Python | PyInstaller standalone builds per platform in the release pipeline |
+| Telemetry must be opt-in and anonymous | Off by default, explicit yes only, random ID deleted on opt-out, every free-text value scrubbed, labels limited to code names, a personal-data leak test |
 
 ---
 

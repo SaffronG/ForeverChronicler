@@ -1,1 +1,3 @@
 dist/
+companion/telemetry_build.json
+__pycache__/

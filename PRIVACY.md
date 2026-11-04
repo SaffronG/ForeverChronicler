@@ -31,7 +31,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 ### The companion app (on your computer)
 | Permission | What exactly | When |
 |---|---|---|
-| **Read** files | The addon's SavedVariables files under your WoW folder's `WTF` folder | `watch` (and telemetry, if you opt in) |
+| **Read** files | The addon's SavedVariables files under your WoW folder's `WTF` folder | `watch` and `telemetry send` (telemetry only reads the error log and diagnostics, if you opt in) |
 | **Write** files | `Interface/AddOns/ForeverChronicaller/` (installing and updating the addon). Its own folder: `%APPDATA%\forever-chronicaller\` on Windows, `~/.config/forever-chronicaller/` on Linux (config, state, backups, telemetry spool) | `install`, `update`, `setup`, `watch` |
 | **List running programs** | Process **names** only (`tasklist` / `ps`), to check whether WoW is running before replacing files | `install`, `update` |
 | **Network** | `api.github.com` and `github.com` (update checks and downloads); your Discord webhook; your ntfy server; the telemetry endpoint, **only if you opt in** | Only for the features you use |
@@ -47,7 +47,7 @@ Administrator rights are not required. If WoW is installed in a protected folder
 | Data | Stored | Leaves your computer? |
 |---|---|---|
 | Chronicle entries, goals, notes, stats, progress samples | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
-| Settings, error log | SavedVariables (local) | No (telemetry, if you opt in, sends errors with personal data removed; see section 3) |
+| Settings, error log, performance diagnostics (opt-in) | SavedVariables (local) | No. Telemetry, if you opt in, sends errors and timings with personal data removed (section 3) |
 | Companion config: WoW folder, Discord webhook URL, ntfy topic | `config.json` (local; readable only by you on Linux/macOS) | No. The webhook URL is never printed or logged |
 | **Shared goals** (`/chron share`) | Sent as an addon message | **Yes, to the players you share with**: goal text, notes and type, and your character name, which the game attaches to every message |
 | **Together goals** (`/chron together`) | Sent as addon whispers | **Yes, to the members of that goal**: goal text and members' names and progress times |
@@ -62,22 +62,29 @@ The maintainer runs **no server** that receives your chronicle, goals, names or 
 
 ## 3. Telemetry (opt-in, off by default)
 
-> Telemetry is being added in the next version. Until then nothing is collected. This section describes what it will and will not contain.
+Telemetry helps fix bugs: which version failed where, and how long things take. It is:
 
-Telemetry helps fix bugs: which version crashed where, and how long things take. It is:
+- **Off by default.** The installer asks once, and the default answer is **No**. `--yes` never turns it on; only answering *yes* or passing `--telemetry` does. If you said no, you're not asked again.
+- **Under your control:** `ForeverChronicaller-Installer telemetry status | on | off | show | send`. `off` deletes the random ID and any locally stored diagnostics.
+- **Anonymous.** Identified only by a random ID created when you opt in. It isn't linked to your WoW account, characters or computer.
 
-- **Off by default.** You're asked once (the default answer is *No*), and you can change it any time with `ForeverChronicaller-Installer telemetry on|off`.
-- **Anonymous.** It's identified only by a random ID created when you opt in and deleted when you opt out. It isn't linked to your WoW account, characters or computer name.
+**Exactly what's sent (OpenTelemetry format), only when opted in:**
 
-**Would be collected (only when opted in):**
-- Addon and companion **version**, operating system type (Windows/Linux/macOS), Python version.
-- **Errors**: the error type, plus the file and line where it happened (for example `Goals.lua:42: attempt to index a nil value`). Quoted text, numbers that could identify you, file paths before `Interface/AddOns`, and user names are removed.
-- **Traces and latency** of companion operations (install, update, download, posting to Discord/ntfy): how long each step took and whether it succeeded, with HTTP status codes but never URLs.
-- In-game performance, only if you also turn on *Performance diagnostics* in the addon options: how many times each internal handler ran and how long it took (names like `PLAYER_LEVEL_UP`, never your data).
+| Kind | Content |
+|---|---|
+| About the program | `service.version` (companion), `fc.addon.version`, `os.type` (windows/linux/darwin), `process.runtime.version` (Python), `fc.build` (standalone/python), `fc.install.id` (the random ID) |
+| Traces (companion) | One span per operation: `command.<name>`, `install.verify_zip`, `install.swap`, `update.check`, `update.download`, `watch.process`, `watch.read`, `http.post`. Each has start and end time, ok/error status, and a few fixed fields (`fc.target` = discord/ntfy, HTTP status code, download size, whether an update was available). Errors add the exception **type** and a scrubbed message |
+| Metrics (companion) | `fc.operations` (count by operation and outcome), `fc.operation.duration` (latency histogram in ms), `fc.errors` (count by error type, code location such as `fcompanion.py:812`, and operation) |
+| Addon errors | From the addon's own error log: `fc.addon.errors` (count by addon version, code location such as `Goals.lua:42`, handler such as `msg:GOALS_CHANGED`, and a scrubbed message), plus an `addon.error` span with the code locations of the stack (for example `Goals.lua:42 < Core.lua:70`) |
+| In-game performance | Only if you **also** turn on *Performance diagnostics* in the addon options (off by default; `/chron diagnostics`): `fc.addon.handler.duration` (latency histogram) and `fc.addon.handler.errors`, by handler name (such as `event:PLAYER_LEVEL_UP`) and addon version |
 
-**Never collected:** character, account, realm or friend names; chronicle, goal or note text; chat; zone names; map coordinates; your WoW folder path; the Discord webhook or ntfy topic; your computer or user name.
+**Scrubbing:** every message passes through a filter that removes quoted text, file paths, URLs, e-mail addresses, long numbers and WoW colour codes. From stack traces, only code file names and line numbers are kept. Handler names are only accepted if they look like `event:`, `msg:` or `cmd:` code names.
 
-**Where it goes:** to an OpenTelemetry endpoint run by the maintainer. The endpoint is shown when you opt in. If no endpoint is configured, opted-in data is only written to a local file (`telemetry-spool.jsonl` in the companion folder) that you can read and delete. Like any web request, the endpoint can see your IP address.
+**Never sent:** character, account, realm or friend names; chronicle, goal or note text; chat; zone names; map coordinates; your WoW folder or any file path; the Discord webhook or ntfy topic; your computer or user name.
+
+**When:** while `watch` runs (after it reads new saved data), at the end of each companion command, or when you run `telemetry send`. The addon never sends anything itself; in-game data only leaves through the companion.
+
+**Where it goes:** to the OpenTelemetry endpoint the maintainer configured for official releases. It's shown (as `https://host` only) when you're asked and in `telemetry status`. If no endpoint is configured, opted-in data is only written to `telemetry-spool.jsonl` in the companion folder (you can read it with `telemetry show`; it's capped at about 1 MB). Like any web request, the endpoint sees your IP address. Advanced users can redirect telemetry with the standard `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_EXPORTER_OTLP_HEADERS` environment variables.
 
 ---
 

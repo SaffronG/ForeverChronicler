@@ -94,3 +94,44 @@ test("privacy notice shown once, /chron privacy explains", function()
     env2.slash("privacy")
     ok(env2.chatContains("can't use the internet"), "summary")
 end)
+
+test("diagnostics are off by default and record nothing", function()
+    local env = setup()
+    eq(env.FC.db.settings.diagnostics, false, "off by default")
+    env.slash("note hi")
+    eq(env.FC.db.diagnostics, nil, "nothing recorded")
+end)
+
+test("diagnostics on: per-label latency buckets, errors, version reset", function()
+    local env = setup({ version = "0.3.1" })
+    local FC = env.FC
+    env.slash("diagnostics on")
+    env.tick = 3 -- each handler "takes" 3 ms
+    env.player.level = 11; env.fire("PLAYER_LEVEL_UP", 11)
+    env.slash("note hello")
+    local d = FC.db.diagnostics
+    eq(d.version, "0.3.1", "linked to version")
+    local lvl = d.handlers["event:PLAYER_LEVEL_UP"]
+    ok(lvl and lvl.n == 1, "event timed")
+    ok(lvl.sum > 3, "nested handlers count towards their parent")
+    FC:RegisterEvent("TEST_LEAF", function() end)
+    env.fire("TEST_LEAF")
+    local h = d.handlers["event:TEST_LEAF"]
+    eq(h.sum, 3, "leaf handler took 3 ms")
+    eq(h.b[5], 1, "3 ms lands in the (2, 5] bucket")
+    local total = 0
+    for _, c in ipairs(h.b) do total = total + c end
+    eq(total, h.n, "bucket counts add up to runs")
+    ok(d.handlers["cmd:note"] and d.handlers["msg:ENTRY_ADDED"], "commands and messages timed")
+    for label in pairs(d.handlers) do ok(not label:find("hello"), "labels never contain user text") end
+    FC:On("BOOM", function() error("x") end)
+    FC:Fire("BOOM")
+    eq(d.handlers["msg:BOOM"].err, 1, "failure counted")
+    eq(FC.db.errorLog[1].v, "0.3.1", "error linked to version")
+    eq(FC.db.errorLog[1].label, "msg:BOOM", "error linked to handler")
+    FC.version = "0.4.0"; env.slash("note again")
+    eq(FC.db.diagnostics.version, "0.4.0", "reset on new version")
+    eq(FC.db.diagnostics.handlers["msg:BOOM"], nil, "old data dropped")
+    env.slash("diagnostics off")
+    eq(FC.db.diagnostics, nil, "turning off deletes the data")
+end)

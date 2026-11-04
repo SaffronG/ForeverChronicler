@@ -5,6 +5,24 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- **Opt-in anonymous telemetry** (OpenTelemetry, OTLP/HTTP JSON; new `companion/fc_telemetry.py`, standard library only). **Off by default.**
+  - The installer and `setup` ask once, with the default answer **No**, and remember the answer. `--yes` never opts in; only answering yes or `--telemetry` does.
+  - `telemetry status | on | off | show | send`. `off` deletes the random install ID and all locally stored diagnostics.
+  - **Traces:** spans for every command and step (`install.verify_zip`, `install.swap`, `update.check`, `update.download`, `watch.*`, `http.post`) with parent/child links, status and scrubbed exception events.
+  - **Metrics:** `fc.operations`, `fc.operation.duration` (latency histogram), `fc.errors` (by type, code location and operation).
+  - **Addon errors linked to a version:** `fc.addon.errors` (by addon version, `File.lua:line`, handler) plus `addon.error` spans with stack locations.
+  - **In-game latency:** `fc.addon.handler.duration` and `.errors` histograms per handler.
+  - Every free-text value is scrubbed (quoted text, paths, URLs, e-mail addresses, long numbers, colour codes), and only code names are accepted as labels. A test fills the saved data with personal data and checks that none of it appears in what would be sent. Payloads were checked against the official OTLP protobuf schema.
+  - Destination: the `OTEL_ENDPOINT` / `OTEL_HEADERS` repository secrets baked into release builds, or the standard `OTEL_EXPORTER_OTLP_*` environment variables. Without an endpoint, opted-in data stays in a local spool file. Sending never blocks or breaks the program.
+- Addon: errors now record the **addon version** and the **handler** that failed. New opt-in **Performance diagnostics** (options page or `/chron diagnostics on|off`, off by default): every event, message and command handler is timed into local latency buckets, which reset when the version changes and are deleted when turned off. The addon itself still sends nothing.
+- The release workflow bakes in the telemetry endpoint from secrets (if set), and the smoke test checks that telemetry is off out of the box.
+
+### Fixed
+- Companion network functions (GitHub, Discord, ntfy) are looked up when called, not when defined, so tests can no longer accidentally reach the internet.
+- `/chron diagnostics off` no longer re-records its own timing after deleting the data.
+- All installer questions treat a closed input stream as the safe default (no / cancel).
+
+### Added
 - `PRIVACY.md`: privacy, permissions and risks (terms version 1). It covers what the addon and companion can access, what data exists and where it goes (a table per data type), opt-in telemetry (what would and would never be collected), a risk table (botched or interrupted update, updating while the game runs, bad releases, untested-in-game code, in-game data loss, the unsigned `.exe`, third-party services, trust in together goals, server rules) with protections and what you can do, how to see or delete everything, and a no-warranty notice. Shipped in the addon zip, the installer bundle and the standalone installers.
 - Install-time disclaimer: `install`, `update` and `setup` show a summary (permissions, data, risks) and require typing **yes** once per terms version. The answer is stored with a timestamp. Declining changes nothing. Non-interactive use needs an explicit `--accept-terms`, so `--yes` alone refuses. `ForeverChronicaller-Installer privacy` shows the summary any time.
 - In game: `/chron privacy`, plus a one-time note on first login that the chronicle stays on your computer.

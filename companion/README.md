@@ -35,5 +35,20 @@ The settings are stored in `%APPDATA%\forever-chronicaller\config.json` (Windows
 - `python fcompanion.py update` installs it. **Close WoW first.** Your previous version is kept in the `backups` folder next to the config.
 - `python fcompanion.py update --zip ForeverChronicaller-0.2.0.zip` installs a zip someone gave you.
 
+## Anonymous diagnostics (telemetry), opt-in
+**Off by default.** The installer asks once (default **No**). Manage it with `telemetry status | on | off | show | send`. What's sent and what's never sent is listed in [PRIVACY.md](../PRIVACY.md#3-telemetry-opt-in-off-by-default).
+
+### For maintainers: where telemetry goes
+Release builds read two **repository secrets** (Settings → Secrets and variables → Actions):
+- `OTEL_ENDPOINT`: OTLP/HTTP base URL. The companion posts to `<endpoint>/v1/traces` and `<endpoint>/v1/metrics` as OTLP JSON.
+- `OTEL_HEADERS`: auth headers in the standard `key=value,key2=value2` format (URL-encode values, e.g. `Authorization=Basic%20<base64>`).
+
+Use a token that can **only write** telemetry, because anything inside a public binary can be extracted. For example, with Grafana Cloud: create an access policy token with only the metrics:write and traces:write scopes, and use your stack's OTLP endpoint (`https://otlp-gateway-<region>.grafana.net/otlp`) with `Authorization=Basic <base64 of instanceID:token>`. Check your provider's OTLP docs for the exact values. Without the secrets, opted-in data stays in the local spool file.
+
+Useful queries:
+- errors by version: `fc.addon.errors` / `fc.errors` grouped by `addon.version` / `service.version` and `error.where`
+- latency: `fc.operation.duration` and `fc.addon.handler.duration` (p50/p95)
+- traces: `command.*` spans with their children
+
 ## Development
 `python3 -m unittest discover -s companion/tests`

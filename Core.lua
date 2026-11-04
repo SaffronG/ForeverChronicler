@@ -20,6 +20,7 @@ local function defaults()
             arrivalYards = 20, -- how close you must get to complete a location goal
             showTracker = true, -- on-screen goal tracker
             acceptShares = true, -- show popups when group members share goals
+            diagnostics = false, -- opt-in: time handlers locally (see FC:Dispatch, PRIVACY.md)
             trackerCollapsed = false,
             trackerPos = nil, -- { point, relativePoint, x, y } once the tracker has been moved
         },
@@ -65,7 +66,10 @@ local function report(err)
             last.t = time()
         else
             local stack = debugstack and debugstack(2, 8, 0) or nil
-            table.insert(log, { t = time(), msg = msg, stack = stack, count = 1 })
+            -- v and label link the error to a version and to the handler that failed
+            -- (used by the companion's opt-in telemetry; see PRIVACY.md)
+            table.insert(log, { t = time(), first = time(), msg = msg, stack = stack, count = 1,
+                v = FC.version, label = FC.currentLabel })
             while #log > MAX_ERRORS do table.remove(log, 1) end
         end
     end
@@ -83,6 +87,52 @@ function FC:SafeCall(fn, ...)
     return xpcall(function() return fn(unpack(args, 1, n)) end, report)
 end
 
+-- Performance diagnostics (opt-in, off by default) --------------------------------
+-- When settings.diagnostics is on, every dispatched handler is timed into
+-- latency buckets per label ("event:PLAYER_LEVEL_UP", "msg:GOALS_CHANGED",
+-- "cmd:goal"). Stored locally in db.diagnostics and reset when the version
+-- changes. Labels are code names only, never player data. The companion app
+-- sends these only if its telemetry is also turned on.
+local BOUNDS = { 0.1, 0.5, 1, 2, 5, 10, 25, 50, 100, 250, 1000 } -- milliseconds
+FC.DIAG_BOUNDS = BOUNDS
+local MAX_LABELS = 200
+
+local function recordTiming(label, ms, failed)
+    local d = FC.db.diagnostics
+    if type(d) ~= "table" or d.version ~= FC.version then
+        d = { version = FC.version, since = time(), handlers = {}, labels = 0 }
+        FC.db.diagnostics = d
+    end
+    local h = d.handlers[label]
+    if not h then
+        if d.labels >= MAX_LABELS then return end
+        h = { n = 0, sum = 0, max = 0, err = 0, b = {} }
+        for i = 1, #BOUNDS + 1 do h.b[i] = 0 end
+        d.handlers[label] = h
+        d.labels = d.labels + 1
+    end
+    h.n = h.n + 1
+    h.sum = h.sum + ms
+    if ms > h.max then h.max = ms end
+    if failed then h.err = h.err + 1 end
+    local i = 1
+    while i <= #BOUNDS and ms > BOUNDS[i] do i = i + 1 end
+    h.b[i] = h.b[i] + 1
+end
+
+-- Run a handler isolated (SafeCall) and, if diagnostics are on, timed.
+function FC:Dispatch(label, fn, ...)
+    local previous = self.currentLabel
+    self.currentLabel = label
+    local timing = self.db and self.db.settings and self.db.settings.diagnostics and debugprofilestop
+    local start = timing and debugprofilestop()
+    local ok, result = self:SafeCall(fn, ...)
+    -- re-check: the handler itself may have just turned diagnostics off
+    if timing and self.db.settings.diagnostics then recordTiming(label, debugprofilestop() - start, not ok) end
+    self.currentLabel = previous
+    return ok, result
+end
+
 -- Simple internal message bus so modules don't depend on each other directly.
 FC.listeners = {}
 function FC:On(msg, fn)
@@ -90,7 +140,7 @@ function FC:On(msg, fn)
     table.insert(self.listeners[msg], fn)
 end
 function FC:Fire(msg, ...)
-    for _, fn in ipairs(self.listeners[msg] or {}) do self:SafeCall(fn, ...) end
+    for _, fn in ipairs(self.listeners[msg] or {}) do self:Dispatch("msg:" .. msg, fn, ...) end
 end
 
 -- WoW event dispatch
@@ -107,7 +157,7 @@ function FC:RegisterEvent(event, fn)
 end
 
 frame:SetScript("OnEvent", function(_, event, ...)
-    for _, fn in ipairs(handlers[event] or {}) do FC:SafeCall(fn, ...) end
+    for _, fn in ipairs(handlers[event] or {}) do FC:Dispatch("event:" .. event, fn, ...) end
 end)
 
 FC:RegisterEvent("ADDON_LOADED", function(name)
@@ -167,6 +217,24 @@ local PRIVACY = {
     "companion app and are off unless you turn them on. Details: PRIVACY.md in the addon folder.",
 }
 
+FC:Command("diagnostics", "/chron diagnostics [on|off] - opt-in local performance timing (sent only via companion telemetry)", function(rest)
+    local s = FC.db.settings
+    if rest == "on" then s.diagnostics = true
+    elseif rest == "off" then s.diagnostics = false; FC.db.diagnostics = nil
+    elseif rest ~= "" then return false end
+    FC:Print("Performance diagnostics are " .. (s.diagnostics and "|cff00ff00on|r (timings are kept locally; the companion sends them only if its telemetry is on)." or "off."))
+    local d = FC.db.diagnostics
+    if s.diagnostics and d and d.handlers then
+        local rows = {}
+        for label, h in pairs(d.handlers) do rows[#rows + 1] = { label = label, h = h } end
+        table.sort(rows, function(a, b) return a.h.sum > b.h.sum end)
+        for i = 1, math.min(5, #rows) do
+            local h = rows[i].h
+            FC:Print(string.format("  %s: %d runs, avg %.2f ms, max %.2f ms", rows[i].label, h.n, h.sum / h.n, h.max))
+        end
+    end
+end, 93)
+
 FC:Command("privacy", "/chron privacy - what this addon stores and shares", function()
     for _, line in ipairs(PRIVACY) do FC:Print(line) end
 end, 94)
@@ -186,6 +254,6 @@ SlashCmdList["FOREVERCHRONICALLER"] = function(msg)
     local name, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
     local cmd = FC.commands[(name or ""):lower()]
     if not cmd then help() return end
-    local ok, result = FC:SafeCall(cmd.fn, rest or "")
+    local ok, result = FC:Dispatch("cmd:" .. (name or ""):lower(), cmd.fn, rest or "")
     if ok and result == false and cmd.usage then FC:Print("Usage: " .. cmd.usage) end
 end

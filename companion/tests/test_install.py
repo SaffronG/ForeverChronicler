@@ -126,7 +126,7 @@ class TermsTests(InstallCommandTests):
         self.assertIsNone(fc.installed_version(str(self.wow)))
 
     def test_agreement_is_remembered(self):
-        code, _ = self.run_install_answering(["yes"], "--wow", str(self.wow), "--zip", str(self.zip))
+        code, _ = self.run_install_answering(["yes", ""], "--wow", str(self.wow), "--zip", str(self.zip))
         self.assertEqual(code, 0)
         saved = fc.load_config(self.root / "cfg" / "config.json")
         self.assertEqual(saved["accepted_terms"], fc.TERMS_VERSION)

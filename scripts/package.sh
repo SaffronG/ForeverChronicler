@@ -32,7 +32,7 @@ echo "$OUT"
 # Unzip anywhere, double-click Install.bat (Windows) or run ./install.sh.
 BUNDLE="$NAME-Installer"
 mkdir -p "$STAGE/$BUNDLE"
-cp companion/fcompanion.py companion/README.md companion/Install.bat companion/install.sh PRIVACY.md "$STAGE/$BUNDLE/"
+cp companion/fcompanion.py companion/fc_telemetry.py companion/README.md companion/Install.bat companion/install.sh PRIVACY.md "$STAGE/$BUNDLE/"
 cp "$OUT" "$STAGE/$BUNDLE/"
 INSTALLER="dist/$BUNDLE-$VERSION.zip"
 rm -f "$INSTALLER"
