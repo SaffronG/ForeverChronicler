@@ -3,6 +3,7 @@
 --   "level 30"            -> completes when you reach level 30
 --   "zone Stranglethorn Vale" -> completes when you enter that zone
 --   "quest The Defias Brotherhood" -> completes when you turn in that quest
+--   "quest 12345"         -> same, matched by quest ID (exact, language-proof)
 --   anything else         -> free-form goal, mark done manually
 
 local _, FC = ...
@@ -64,13 +65,14 @@ end
 
 -- Check every open auto-goal against current state.
 -- newLevel is passed on level-up because UnitLevel() can lag behind the event.
-function FC:CheckGoals(questTitle, newLevel)
+function FC:CheckGoals(questTitle, newLevel, questID)
     if not self.db then return end
     local level, zone = newLevel or UnitLevel("player"), self:Zone()
     for i, g in ipairs(self.db.goals) do
         if not g.done then
             if (g.kind == "level" and level >= g.target)
                 or (g.kind == "zone" and zone:lower() == g.target:lower())
+                or (g.kind == "quest" and questID and tonumber(g.target) == questID)
                 or (g.kind == "quest" and questTitle and questTitle:lower() == g.target:lower()) then
                 self:CompleteGoal(i)
             end
@@ -81,4 +83,4 @@ end
 FC:On("READY", function() FC:CheckGoals() end)
 FC:On("LEVEL", function(lvl) FC:CheckGoals(nil, lvl) end)
 FC:On("ZONE", function() FC:CheckGoals() end)
-FC:On("QUEST", function(title) FC:CheckGoals(title) end)
+FC:On("QUEST", function(title, questID) FC:CheckGoals(title, nil, questID) end)

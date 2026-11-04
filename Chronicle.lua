@@ -57,13 +57,13 @@ if GetAchievementInfo then
     end)
 end
 
--- Quest turn-ins: hook the function the "Complete Quest" button calls.
--- Works on old clients that lack the QUEST_TURNED_IN event.
-hooksecurefunc("GetQuestReward", function()
-    local title = GetTitleText()
-    if title and title ~= "" then
-        FC.db.stats.quests = FC.db.stats.quests + 1
-        FC:AddEntry("quest", string.format("|cffffff00Completed quest: %s|r", title))
-        FC:Fire("QUEST", title)
-    end
+-- Quest turn-ins. QUEST_TURNED_IN gives the quest ID; the title may not be
+-- cached yet, so fall back to the open quest frame, then to the ID.
+FC:RegisterEvent("QUEST_TURNED_IN", function(questID)
+    local title = C_QuestLog and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
+    if not title or title == "" then title = GetTitleText and GetTitleText() end
+    if not title or title == "" then title = "Quest #" .. tostring(questID) end
+    FC.db.stats.quests = FC.db.stats.quests + 1
+    FC:AddEntry("quest", string.format("|cffffff00Completed quest: %s|r", title))
+    FC:Fire("QUEST", title, questID)
 end)

@@ -4,9 +4,11 @@ Work top to bottom. Tick items off (`[x]`) as they're finished, in the same comm
 Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addon restrictions).
 
 ## Now
-- [ ] **Apply two fixes to existing code**
-  - [ ] Set `## Interface:` in `ForeverChronicaller.toc` to the real client number (check in game: `/run print((select(4, GetBuildInfo())))`; expected ~`120105`)
-  - [ ] Replace the `GetQuestReward` hook in `Chronicle.lua` with the `QUEST_TURNED_IN` event (quest ID → title via `C_QuestLog`); make quest goals match on ID where possible
+- [x] **Apply two fixes to existing code**
+  - [x] Set `## Interface:` in `ForeverChronicaller.toc` to the real client number (check in game: `/run print((select(4, GetBuildInfo())))`; expected ~`120105`)
+  - [x] Replace the `GetQuestReward` hook in `Chronicle.lua` with the `QUEST_TURNED_IN` event (quest ID → title via `C_QuestLog`); make quest goals match on ID where possible
+
+- [ ] Confirm the Interface number `120105` in game, and do a first in-game test (`/chron goal level 2`, `/chron note hello`, `/reload`, check persistence)
 
 ## Next (planned for the build day)
 - [ ] **#1 Configure auto-chronicaller** – Settings API options page; on/off per event type (level, zone, quest, death, achievement), optional entry cap

@@ -4,7 +4,12 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Changed
+- `.toc` Interface number set to `120105` for the WoW: Forever client (12.1.5-style API). **Not yet confirmed in game.** Check with `/run print((select(4, GetBuildInfo())))`.
+- Quest tracking now uses the `QUEST_TURNED_IN` event instead of hooking `GetQuestReward`. The title comes from `C_QuestLog.GetTitleForQuestID`, falling back to the open quest frame, then `Quest #<id>`.
+
 ### Added
+- Quest goals can target a quest ID (`/chron goal quest 12345`) for exact matching. Matching by name still works.
 - `TODO.md` with the planned feature roadmap.
 - `CLAUDE.md` with working rules for future contributors (human or AI).
 - Git repository and this changelog.
@@ -21,6 +26,5 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 - `README.md` with install steps, commands and the proposed features list.
 
 ### Known issues
-- The `.toc` Interface number is `30300` (3.3.5) but the target client uses the 12.1.5-style API. Tracked in `TODO.md`.
-- Quest tracking hooks `GetQuestReward` instead of the modern `QUEST_TURNED_IN` event. Tracked in `TODO.md`.
+- The `.toc` Interface number was `30300` (3.3.5) and quest tracking hooked `GetQuestReward`. Both fixed in Unreleased.
 - `main.lua` and `persistance.lua` are the original prototype files. They aren't loaded by the `.toc` and can be deleted.

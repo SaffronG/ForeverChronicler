@@ -24,7 +24,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron recent [n]` | print last n entries to chat |
 
 Goals that complete automatically:
-`level 30`, `zone Stranglethorn Vale`, `quest The Defias Brotherhood`.
+`level 30`, `zone Stranglethorn Vale`, `quest The Defias Brotherhood` (or `quest <questID>` for an exact match).
 Anything else is a free-form goal you tick off yourself.
 
 ## Files
