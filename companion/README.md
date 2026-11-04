@@ -5,6 +5,7 @@ A small program that runs **outside** the game, next to the addon. It needs Pyth
 WoW addons can't use the internet, so the companion does the parts the addon can't:
 
 - **Discord and phone notifications** for new chronicle entries (level ups, goals achieved, new zones, deaths, …)
+- **Updating the addon** from GitHub releases
 
 ## How it works
 The game saves addon data only when you **log out** or **reload** the UI. The companion watches those saved files and posts any entries it hasn't posted before.
@@ -26,6 +27,11 @@ The first time it sees a character, it only remembers where that character is up
 4. `python fcompanion.py watch` runs while you play. Leave it open, and stop it with Ctrl+C.
 
 The settings are stored in `%APPDATA%\forever-chronicaller\config.json` (Windows) or `~/.config/forever-chronicaller/config.json`. There you can also choose which entry types are posted (`post_kinds`; quests are off by default) and limit it to certain characters (`characters`).
+
+## Updating the addon
+- `python fcompanion.py update --check` shows whether a newer release exists (`watch` also checks when it starts). This needs `github_repo` (owner/repo) to be set in `setup`.
+- `python fcompanion.py update` installs it. **Close WoW first.** Your previous version is kept in the `backups` folder next to the config.
+- `python fcompanion.py update --zip ForeverChronicaller-0.2.0.zip` installs a zip someone gave you.
 
 ## Development
 `python3 -m unittest discover -s companion/tests`

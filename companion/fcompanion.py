@@ -20,8 +20,12 @@ import glob
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
+import zipfile
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -439,6 +443,151 @@ class Watcher:
         return posted
 
 
+# ------------------------------------------------------------- install / update
+
+class UpdateError(Exception):
+    pass
+
+
+MAX_UNZIPPED = 20 * 1024 * 1024  # an addon zip is ~100 KB; refuse anything absurd
+
+
+def version_tuple(v: str):
+    return tuple(int(n) for n in re.findall(r"\d+", str(v))) or (0,)
+
+
+def addon_dir(wow_path: str) -> Path:
+    return Path(wow_path) / "Interface" / "AddOns" / ADDON
+
+
+def installed_version(wow_path: str) -> Optional[str]:
+    toc = addon_dir(wow_path) / f"{ADDON}.toc"
+    if not toc.exists():
+        return None
+    m = re.search(r"^## Version:\s*(\S+)", toc.read_text(encoding="utf-8", errors="replace"), re.M)
+    return m.group(1) if m else "0"
+
+
+def check_zip(zip_path: Path) -> str:
+    """Validate an addon zip and return the version inside. Raises UpdateError."""
+    try:
+        zf = zipfile.ZipFile(zip_path)
+    except zipfile.BadZipFile:
+        raise UpdateError("not a valid zip file")
+    with zf:
+        total = 0
+        for info in zf.infolist():
+            name = info.filename
+            parts = Path(name).parts
+            if name.startswith(("/", "\\")) or ".." in parts or ":" in name or not parts or parts[0] != ADDON:
+                raise UpdateError(f"unexpected path in zip: {name!r}")
+            total += info.file_size
+            if total > MAX_UNZIPPED:
+                raise UpdateError("zip is too large")
+        try:
+            toc = zf.read(f"{ADDON}/{ADDON}.toc").decode("utf-8", "replace")
+        except KeyError:
+            raise UpdateError(f"zip doesn't contain {ADDON}/{ADDON}.toc")
+    m = re.search(r"^## Version:\s*(\S+)", toc, re.M)
+    if not m:
+        raise UpdateError("no version in the zip's .toc")
+    return m.group(1)
+
+
+def game_running() -> bool:
+    """Best effort: is a WoW client process running?"""
+    try:
+        if os.name == "nt":
+            out = subprocess.run(["tasklist"], capture_output=True, text=True, timeout=10).stdout
+        else:
+            out = subprocess.run(["ps", "-eo", "comm,args"], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return bool(re.search(r"\bwow[\w-]*\.exe\b", out, re.I))
+
+
+def install_zip(zip_path: Path, wow_path: str, log: Callable[[str], None] = print) -> str:
+    """Install/replace the addon from a zip. The old version is kept in the backups folder.
+    Returns the installed version."""
+    version = check_zip(zip_path)
+    addons = Path(wow_path) / "Interface" / "AddOns"
+    if not Path(wow_path).is_dir():
+        raise UpdateError(f"WoW folder not found: {wow_path}")
+    addons.mkdir(parents=True, exist_ok=True)
+    target = addons / ADDON
+    backup = None
+    with tempfile.TemporaryDirectory(dir=str(addons.parent)) as tmp:
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(tmp)  # paths were validated by check_zip
+        if target.exists():
+            backups = config_dir() / "backups"
+            backups.mkdir(parents=True, exist_ok=True)
+            backup = backups / f"{ADDON}-{installed_version(wow_path) or 'old'}-{int(time.time())}"
+            shutil.move(str(target), str(backup))
+        try:
+            shutil.move(str(Path(tmp) / ADDON), str(target))
+        except Exception:
+            if backup is not None and not target.exists():
+                shutil.move(str(backup), str(target))  # put the old version back
+            raise
+    if backup:
+        log(f"Previous version backed up to {backup}")
+    return version
+
+
+Fetch = Callable[[str], bytes]
+
+
+def _http_get(url: str) -> bytes:
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/vnd.github+json"})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read()
+
+
+def latest_release(repo: str, fetch: Fetch = _http_get) -> Dict[str, str]:
+    """{'version': '0.3.0', 'url': <addon zip download url>} for the newest GitHub release."""
+    if not re.match(r"^[\w.-]+/[\w.-]+$", repo or ""):
+        raise UpdateError("set github_repo (owner/repo) in the config first")
+    try:
+        data = json.loads(fetch(f"https://api.github.com/repos/{repo}/releases/latest"))
+    except urllib.error.HTTPError as e:
+        raise UpdateError(f"GitHub answered {e.code} (no releases yet?)")
+    except (urllib.error.URLError, OSError) as e:
+        raise UpdateError(f"couldn't reach GitHub ({e})")
+    for asset in data.get("assets", []):
+        name = asset.get("name", "")
+        if re.match(rf"^{ADDON}-[\d.]+\.zip$", name):
+            url = asset.get("browser_download_url", "")
+            if not url.startswith("https://github.com/"):
+                raise UpdateError("unexpected download location")
+            return {"version": str(data.get("tag_name", "")).lstrip("v"), "url": url}
+    raise UpdateError("the latest release has no addon zip")
+
+
+def update(cfg: Dict[str, Any], fetch: Fetch = _http_get, check_only: bool = False, force: bool = False,
+           log: Callable[[str], None] = print, running: Callable[[], bool] = game_running) -> bool:
+    """Install the latest release if it's newer. Returns True if something was installed."""
+    current = installed_version(cfg["wow_path"])
+    latest = latest_release(cfg.get("github_repo", ""), fetch)
+    if current and version_tuple(latest["version"]) <= version_tuple(current):
+        log(f"Forever Chronicaller {current} is up to date.")
+        return False
+    log(f"New version available: {latest['version']} (installed: {current or 'none'}).")
+    if check_only:
+        log("Run `python fcompanion.py update` to install it.")
+        return False
+    if running() and not force:
+        log("WoW seems to be running. Close it first (or use --force, then restart the game: "
+            "/reload is not enough when files were added).")
+        return False
+    with tempfile.TemporaryDirectory() as tmp:
+        zip_path = Path(tmp) / "addon.zip"
+        zip_path.write_bytes(fetch(latest["url"]))
+        version = install_zip(zip_path, cfg["wow_path"], log)
+    log(f"Installed Forever Chronicaller {version}.")
+    return True
+
+
 # ---------------------------------------------------------------------- commands
 
 def ask(prompt: str, current: str = "") -> str:
@@ -460,6 +609,7 @@ def cmd_setup(cfg: Dict[str, Any], args) -> int:
         cfg["discord_webhook"] = hook
     cfg["ntfy_topic"] = ask("ntfy topic for phone notifications (install the ntfy app and subscribe; empty to skip)",
                             cfg["ntfy_topic"])
+    cfg["github_repo"] = ask("GitHub repository for updates, owner/repo (empty to skip)", cfg["github_repo"])
     path = save_config(cfg)
     print(f"\nSaved to {path}")
     print("Next: run `python fcompanion.py test`, then `python fcompanion.py watch` while you play.")
@@ -482,6 +632,11 @@ def cmd_watch(cfg: Dict[str, Any], args) -> int:
         return 1
     if not cfg.get("discord_webhook") and not cfg.get("ntfy_topic"):
         print("No Discord webhook or ntfy topic configured; entries will only be listed here.")
+    if cfg.get("github_repo"):
+        try:
+            update(cfg, check_only=True)
+        except UpdateError as e:
+            print(f"(Update check skipped: {e})")
     w = Watcher(cfg)
     files = saved_variable_files(cfg["wow_path"])
     print(f"Watching {len(files)} character file(s) under {cfg['wow_path']}. "
@@ -497,6 +652,25 @@ def cmd_watch(cfg: Dict[str, Any], args) -> int:
     return 0
 
 
+def cmd_update(cfg: Dict[str, Any], args) -> int:
+    if not cfg.get("wow_path"):
+        print("Run `python fcompanion.py setup` first.")
+        return 1
+    try:
+        if args.zip:
+            if game_running() and not args.force:
+                print("WoW seems to be running. Close it first, or use --force.")
+                return 1
+            version = install_zip(Path(args.zip), cfg["wow_path"])
+            print(f"Installed Forever Chronicaller {version}.")
+        else:
+            update(cfg, check_only=args.check, force=args.force)
+    except UpdateError as e:
+        print(f"Update failed: {e}")
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fcompanion", description="Forever Chronicaller companion app")
     p.add_argument("--version", action="version", version=VERSION)
@@ -505,10 +679,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("test", help="send a test notification")
     w = sub.add_parser("watch", help="post new chronicle entries while you play")
     w.add_argument("--once", action="store_true", help="check once and exit")
+    u = sub.add_parser("update", help="install the latest addon release (or a zip you have)")
+    u.add_argument("--check", action="store_true", help="only check, don't install")
+    u.add_argument("--force", action="store_true", help="install even if the game is running")
+    u.add_argument("--zip", help="install this zip instead of downloading")
     return p
 
 
-COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch}
+COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": cmd_update}
 
 
 def main(argv: Optional[List[str]] = None) -> int:

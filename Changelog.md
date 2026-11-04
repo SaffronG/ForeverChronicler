@@ -10,8 +10,12 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
   - Removes WoW colour codes and links, splits long messages under Discord's limit, blocks @mentions, and retries on rate limits. Errors never print the webhook URL.
   - `setup` (guided configuration, stored with private file permissions on Linux and macOS) and `test`.
   - Which entry types are posted can be configured (quests are off by default), as can which characters.
+- Companion auto-update: `python fcompanion.py update` installs the newest GitHub release if it's newer than the installed addon (`--check` only reports, and `watch` checks at start). `update --zip <file>` installs a zip you already have.
+  - Zips are validated before anything is touched: only `ForeverChronicaller/` paths, no `..` or absolute paths, a size limit, and the `.toc` must be present. Downloads must come from github.com.
+  - The previous version is moved to a backups folder, and put back automatically if installing fails.
+  - Refuses while WoW is running (`--force` overrides). After an update, restart the game; `/reload` isn't enough when new files were added.
 - `/chron sync` in game: asks, then reloads the UI so the saved data is written and the companion posts straight away.
-- CI runs the companion's 14 tests on Python 3.8.
+- CI runs the companion's tests on Python 3.8, including a check that the real addon zip passes the installer's validation.
 ## [0.2.0] - 2026-11-03
 
 First version meant for playing. Everything below is tested against a fake game API (56 tests on Lua 5.1 and 5.4) but **not yet in the real game**. If something misbehaves, `/chron errors` lists what went wrong, and the rest of the addon keeps working.

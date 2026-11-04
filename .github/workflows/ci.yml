@@ -36,6 +36,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.8"   # oldest supported
+      - name: Build the addon zip (the installer tests check it)
+        run: scripts/package.sh
       - name: Companion tests
         run: python -m unittest discover -s companion/tests -v
 

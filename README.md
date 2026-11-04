@@ -71,7 +71,7 @@ Every open location goal appears as a gold star on the world map. Click a star t
 - **By file:** your data lives in `WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicaller.lua`. Copy that file (with the game closed) to the same place on the other computer.
 
 ## Companion app (optional)
-`companion/fcompanion.py` posts your new chronicle entries to **Discord** or your **phone** (ntfy). It runs outside the game and only reads the addon's saved files. See [companion/README.md](companion/README.md).
+`companion/fcompanion.py` posts your new chronicle entries to **Discord** or your **phone** (ntfy), and can install addon updates from GitHub releases. It runs outside the game and only reads the addon's saved files. See [companion/README.md](companion/README.md).
 
 ## Development / releasing
 - Build an installable zip: `scripts/package.sh` → `dist/ForeverChronicaller-<version>.zip`. Unzip it into `Interface/AddOns/`.
