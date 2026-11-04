@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-03
+
+Adds an install-time disclaimer (privacy, permissions, risks) and **opt-in, off-by-default** anonymous telemetry.
+
 ### Added
 - **Opt-in anonymous telemetry** (OpenTelemetry, OTLP/HTTP JSON; new `companion/fc_telemetry.py`, standard library only). **Off by default.**
   - The installer and `setup` ask once, with the default answer **No**, and remember the answer. `--yes` never opts in; only answering yes or `--telemetry` does.

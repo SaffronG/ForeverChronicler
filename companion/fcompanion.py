@@ -37,7 +37,7 @@ import fc_telemetry  # noqa: E402  (opt-in telemetry, see PRIVACY.md)
 TEL: fc_telemetry.Telemetry = fc_telemetry.DISABLED  # replaced in main() if the user opted in
 
 ADDON = "ForeverChronicaller"
-VERSION = "0.3.1"
+VERSION = "0.4.0"
 USER_AGENT = f"ForeverChronicallerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicaller"
 
