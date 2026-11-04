@@ -114,7 +114,7 @@ class TermsTests(InstallCommandTests):
     def test_disclaimer_shown_and_decline_installs_nothing(self):
         code, out = self.run_install_answering(["no"], "--wow", str(self.wow), "--zip", str(self.zip))
         self.assertEqual(code, 1)
-        for words in ("PERMISSIONS", "DATA", "RISKS", "OFF by default", "backed up", "PRIVACY.md"):
+        for words in ("PERMISSIONS", "DATA", "RISKS", "No telemetry", "backed up", "PRIVACY.md"):
             self.assertIn(words, out)
         self.assertIn("Nothing was installed", out)
         self.assertIsNone(fc.installed_version(str(self.wow)))

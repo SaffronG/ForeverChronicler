@@ -35,10 +35,15 @@ The settings are stored in `%APPDATA%\forever-chronicaller\config.json` (Windows
 - `python fcompanion.py update` installs it. **Close WoW first.** Your previous version is kept in the `backups` folder next to the config.
 - `python fcompanion.py update --zip ForeverChronicaller-0.2.0.zip` installs a zip someone gave you.
 
-## Anonymous diagnostics (telemetry), opt-in
-**Off by default.** The installer asks once (default **No**). Manage it with `telemetry status | on | off | show | send`. What's sent and what's never sent is listed in [PRIVACY.md](../PRIVACY.md#3-telemetry-opt-in-off-by-default).
+## Anonymous diagnostics (telemetry): switched off
+Telemetry is built and tested (`fc_telemetry.py`) but **disabled by a feature flag** (`FEATURE_TELEMETRY = False` in `fcompanion.py`). This version doesn't offer it, has no `telemetry` command, and collects nothing. It's planned to be switched on (opt-in, off by default) together with the Grafana dashboard. The planned contents are listed in [PRIVACY.md](../PRIVACY.md#3-telemetry-not-active-in-this-version).
 
-### For maintainers: where telemetry goes
+To turn it on later:
+1. Set `FEATURE_TELEMETRY = True` (and `FC.FEATURES.diagnostics = true` in `Core.lua` for in-game timings).
+2. Update `PRIVACY.md` §3 and the `DISCLAIMER`, and bump `TERMS_VERSION` so everyone is asked again.
+3. Set the secrets below.
+
+### For maintainers: where telemetry will go
 Release builds read two **repository secrets** (Settings → Secrets and variables → Actions):
 - `OTEL_ENDPOINT`: OTLP/HTTP base URL. The companion posts to `<endpoint>/v1/traces` and `<endpoint>/v1/metrics` as OTLP JSON.
 - `OTEL_HEADERS`: auth headers in the standard `key=value,key2=value2` format (URL-encode values, e.g. `Authorization=Basic%20<base64>`).

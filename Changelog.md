@@ -6,10 +6,13 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [0.4.0] - 2026-11-03
 
-Adds an install-time disclaimer (privacy, permissions, risks) and **opt-in, off-by-default** anonymous telemetry.
+Adds an install-time disclaimer (privacy, permissions, risks). Telemetry is built and tested but **switched off by a feature flag**: this version collects nothing. It's planned to be switched on with the Grafana dashboard in 0.4.1.
+
+### Changed
+- **Telemetry is behind feature flags that are off** (`FEATURE_TELEMETRY = False` in the companion, `FC.FEATURES.diagnostics = false` in the addon). There's no opt-in question at install or setup, no `telemetry` command or `--telemetry` flag, no in-game diagnostics option or `/chron diagnostics`, and nothing is timed, collected or sent, even if a config file says "enabled". The disclaimer and `PRIVACY.md` say "no telemetry in this version" and describe the planned opt-in design separately. The code stays tested with the flags switched on in tests, and new tests check the shipped flag-off behaviour. The release smoke test checks that telemetry is unavailable.
 
 ### Added
-- **Opt-in anonymous telemetry** (OpenTelemetry, OTLP/HTTP JSON; new `companion/fc_telemetry.py`, standard library only). **Off by default.**
+- (Built but switched off, see *Changed*.) **Opt-in anonymous telemetry** (OpenTelemetry, OTLP/HTTP JSON; new `companion/fc_telemetry.py`, standard library only). **Off by default.**
   - The installer and `setup` ask once, with the default answer **No**, and remember the answer. `--yes` never opts in; only answering yes or `--telemetry` does.
   - `telemetry status | on | off | show | send`. `off` deletes the random install ID and all locally stored diagnostics.
   - **Traces:** spans for every command and step (`install.verify_zip`, `install.swap`, `update.check`, `update.download`, `watch.*`, `http.post`) with parent/child links, status and scrubbed exception events.
@@ -18,7 +21,7 @@ Adds an install-time disclaimer (privacy, permissions, risks) and **opt-in, off-
   - **In-game latency:** `fc.addon.handler.duration` and `.errors` histograms per handler.
   - Every free-text value is scrubbed (quoted text, paths, URLs, e-mail addresses, long numbers, colour codes), and only code names are accepted as labels. A test fills the saved data with personal data and checks that none of it appears in what would be sent. Payloads were checked against the official OTLP protobuf schema.
   - Destination: the `OTEL_ENDPOINT` / `OTEL_HEADERS` repository secrets baked into release builds, or the standard `OTEL_EXPORTER_OTLP_*` environment variables. Without an endpoint, opted-in data stays in a local spool file. Sending never blocks or breaks the program.
-- Addon: errors now record the **addon version** and the **handler** that failed. New opt-in **Performance diagnostics** (options page or `/chron diagnostics on|off`, off by default): every event, message and command handler is timed into local latency buckets, which reset when the version changes and are deleted when turned off. The addon itself still sends nothing.
+- Addon: errors now record the **addon version** and the **handler** that failed (local `/chron errors` log). (Switched off:) opt-in **Performance diagnostics** (options page or `/chron diagnostics on|off`, off by default): every event, message and command handler is timed into local latency buckets, which reset when the version changes and are deleted when turned off. The addon itself still sends nothing.
 - The release workflow bakes in the telemetry endpoint from secrets (if set), and the smoke test checks that telemetry is off out of the box.
 
 ### Fixed

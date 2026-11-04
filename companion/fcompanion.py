@@ -34,6 +34,12 @@ from typing import Any, Callable, Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fc_telemetry  # noqa: E402  (opt-in telemetry, see PRIVACY.md)
 
+# Feature flag. Telemetry is built and tested but NOT offered in this version:
+# while False there's no opt-in question, no `telemetry` command, and nothing is
+# collected or sent, whatever a config file says. Turn on together with the
+# Grafana dashboard (and update PRIVACY.md section 3 and DISCLAIMER).
+FEATURE_TELEMETRY = False
+
 TEL: fc_telemetry.Telemetry = fc_telemetry.DISABLED  # replaced in main() if the user opted in
 
 ADDON = "ForeverChronicaller"
@@ -53,15 +59,14 @@ DISCLAIMER = f"""\
    * keep its settings, state and backups in its own folder
    * list running program NAMES to check WoW is closed before changing files
    * read the addon's saved files (only if you use Discord/phone posting)
-   * connect to GitHub for updates; to Discord / ntfy / telemetry only if
-     you set those up. The addon itself can't use the internet at all.
+   * connect to GitHub for updates, and to Discord / ntfy only if you set
+     those up. The addon itself can't use the internet at all.
 
  DATA:
    * Your chronicle and goals stay on your computer.
    * Nothing is sent anywhere unless you turn it on. Sharing goals sends
      the goal (and your character name) to the players you choose.
-   * Telemetry (anonymous diagnostics) is OFF by default and opt-in only.
-     It never contains names, chronicle text or chat.
+   * No telemetry: this version collects no usage or diagnostic data.
 
  RISKS:
    * A failed or interrupted update can leave the addon broken. The old
@@ -809,7 +814,7 @@ def cmd_setup(cfg: Dict[str, Any], args) -> int:
     cfg["ntfy_topic"] = ask("ntfy topic for phone notifications (install the ntfy app and subscribe; empty to skip)",
                             cfg["ntfy_topic"])
     cfg["github_repo"] = ask("GitHub repository for updates, owner/repo (empty to skip)", cfg["github_repo"])
-    if not telemetry_cfg(cfg).get("enabled") and not telemetry_cfg(cfg).get("asked"):
+    if FEATURE_TELEMETRY and not telemetry_cfg(cfg).get("enabled") and not telemetry_cfg(cfg).get("asked"):
         ask_telemetry(cfg)
     path = save_config(cfg)
     print(f"\nSaved to {path}")
@@ -928,7 +933,7 @@ def cmd_install(cfg: Dict[str, Any], args) -> int:
         return 1
     print(f"\nForever Chronicaller {version} is installed in {addon_dir(wow)}")
     t = telemetry_cfg(cfg)
-    if not t.get("enabled") and (args.telemetry or not t.get("asked")):
+    if FEATURE_TELEMETRY and not t.get("enabled") and (args.telemetry or not t.get("asked")):
         ask_telemetry(cfg, flag=args.telemetry, interactive=not args.yes)
     save_config(cfg)
     print("Start the game, make sure it's enabled in the AddOns list, and type /chron in game.")
@@ -943,10 +948,11 @@ def build_parser() -> argparse.ArgumentParser:
     st = sub.add_parser("setup", help="configure the WoW folder, Discord and ntfy")
     st.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
     sub.add_parser("privacy", help="show permissions, data and risks (the install disclaimer)")
-    tp = sub.add_parser("telemetry", help="opt-in anonymous diagnostics: status, on, off, show, send")
-    tp.add_argument("action", nargs="?", default="status", choices=["status", "on", "off", "show", "send"])
-    tp.add_argument("--yes", action="store_true", help="with 'on': don't ask")
-    tp.add_argument("--lines", type=int, default=5, help="with 'show': how many entries")
+    if FEATURE_TELEMETRY:
+        tp = sub.add_parser("telemetry", help="opt-in anonymous diagnostics: status, on, off, show, send")
+        tp.add_argument("action", nargs="?", default="status", choices=["status", "on", "off", "show", "send"])
+        tp.add_argument("--yes", action="store_true", help="with 'on': don't ask")
+        tp.add_argument("--lines", type=int, default=5, help="with 'show': how many entries")
     sub.add_parser("test", help="send a test notification")
     w = sub.add_parser("watch", help="post new chronicle entries while you play")
     w.add_argument("--once", action="store_true", help="check once and exit")
@@ -956,7 +962,10 @@ def build_parser() -> argparse.ArgumentParser:
     i.add_argument("--yes", action="store_true", help="don't ask questions")
     i.add_argument("--force", action="store_true", help="install even if the game is running")
     i.add_argument("--accept-terms", action="store_true", help="agree to the terms in PRIVACY.md without being asked")
-    i.add_argument("--telemetry", action="store_true", help="opt in to anonymous diagnostics (off unless given or answered yes)")
+    if FEATURE_TELEMETRY:
+        i.add_argument("--telemetry", action="store_true", help="opt in to anonymous diagnostics (off unless given or answered yes)")
+    else:
+        i.set_defaults(telemetry=False)
     u = sub.add_parser("update", help="install the latest addon release (or a zip you have)")
     u.add_argument("--check", action="store_true", help="only check, don't install")
     u.add_argument("--force", action="store_true", help="install even if the game is running")
@@ -1012,7 +1021,7 @@ def spool_path() -> Path:
 
 def build_telemetry(cfg: Dict[str, Any]) -> fc_telemetry.Telemetry:
     t = telemetry_cfg(cfg)
-    if not (t.get("enabled") and t.get("install_id")):
+    if not FEATURE_TELEMETRY or not (t.get("enabled") and t.get("install_id")):
         return fc_telemetry.DISABLED
     endpoint, headers = fc_telemetry.destination(t, telemetry_build_defaults())
     addon_version = installed_version(cfg["wow_path"]) if cfg.get("wow_path") else None

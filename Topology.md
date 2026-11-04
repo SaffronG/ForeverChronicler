@@ -395,7 +395,9 @@ flowchart TB
 
 ## 7a. Telemetry (opt-in)
 
-Telemetry is **off by default**. Nothing below runs unless the player answers *yes* (or passes `--telemetry`). Full disclosure: [PRIVACY.md §3](PRIVACY.md#3-telemetry-opt-in-off-by-default).
+> **Switched off in this version** by feature flags (`FEATURE_TELEMETRY = False`, `FC.FEATURES.diagnostics = false`): no question, no command, nothing collected. This section documents the built-and-tested design that's planned to be switched on with the Grafana dashboard.
+
+When enabled, telemetry is **off by default**. Nothing below runs unless the player answers *yes* (or passes `--telemetry`). Full disclosure: [PRIVACY.md §3](PRIVACY.md#3-telemetry-not-active-in-this-version).
 
 ```mermaid
 flowchart LR

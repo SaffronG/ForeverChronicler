@@ -2,7 +2,7 @@
 
 Automatically chronicles your adventure and tracks personal goals.
 
-**Privacy, permissions and risks:** [PRIVACY.md](PRIVACY.md). In short, everything stays on your computer unless you turn on sharing, Discord/phone posting or (opt-in, anonymous) telemetry.
+**Privacy, permissions and risks:** [PRIVACY.md](PRIVACY.md). In short, everything stays on your computer unless you turn on sharing or Discord/phone posting. No telemetry is collected.
 
 How it all fits together (diagrams, data flow, component map): [Topology.md](Topology.md).
 

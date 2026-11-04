@@ -69,10 +69,12 @@ local function register()
         FC.db.settings, Settings.VarType.Boolean, "Allow shared goals", true)
     createCheckbox(category, shares, "Show a popup when someone shares a goal with you. Turn off to ignore all shared goals.")
 
-    local diag = Settings.RegisterAddOnSetting(category, ADDON .. "_Diagnostics", "diagnostics",
-        FC.db.settings, Settings.VarType.Boolean, "Performance diagnostics (opt-in)", false)
-    createCheckbox(category, diag, "Time the addon's internal handlers and keep the results on this computer. " ..
-        "They're only sent anywhere if you also turn on telemetry in the companion app. Never includes your data. See PRIVACY.md.")
+    if FC.FEATURES.diagnostics then
+        local diag = Settings.RegisterAddOnSetting(category, ADDON .. "_Diagnostics", "diagnostics",
+            FC.db.settings, Settings.VarType.Boolean, "Performance diagnostics (opt-in)", false)
+        createCheckbox(category, diag, "Time the addon's internal handlers and keep the results on this computer. " ..
+            "They're only sent anywhere if you also turn on telemetry in the companion app. Never includes your data. See PRIVACY.md.")
+    end
 
     Settings.RegisterAddOnCategory(category)
 end

@@ -1,5 +1,9 @@
 -- Forever Chronicaller: core / persistence
 local ADDON, FC = ...
+
+-- Feature flags. Diagnostics (handler timing for telemetry) are built and tested
+-- but switched off in this version: no option, no command, no timing.
+FC.FEATURES = { diagnostics = false }
 FC.name = ADDON
 _G.ForeverChronicaller = FC -- handy for /dump and debugging
 
@@ -124,11 +128,12 @@ end
 function FC:Dispatch(label, fn, ...)
     local previous = self.currentLabel
     self.currentLabel = label
-    local timing = self.db and self.db.settings and self.db.settings.diagnostics and debugprofilestop
+    local timing = self.FEATURES.diagnostics and self.db and self.db.settings and self.db.settings.diagnostics
+        and debugprofilestop
     local start = timing and debugprofilestop()
     local ok, result = self:SafeCall(fn, ...)
     -- re-check: the handler itself may have just turned diagnostics off
-    if timing and self.db.settings.diagnostics then recordTiming(label, debugprofilestop() - start, not ok) end
+    if timing and self.FEATURES.diagnostics and self.db.settings.diagnostics then recordTiming(label, debugprofilestop() - start, not ok) end
     self.currentLabel = previous
     return ok, result
 end
@@ -213,11 +218,15 @@ local PRIVACY = {
     "This addon can't use the internet. It only sends hidden addon messages when you",
     "share a goal or do a together goal (the goal and your character name, to the players",
     "you choose) and your addon version to your group. Nothing else leaves the game.",
-    "Optional extras (Discord/phone posts, anonymous telemetry) live in the separate",
-    "companion app and are off unless you turn them on. Details: PRIVACY.md in the addon folder.",
+    "Optional extras (Discord/phone posts) live in the separate companion app and are off",
+    "unless you set them up. No telemetry is collected. Details: PRIVACY.md in the addon folder.",
 }
 
-FC:Command("diagnostics", "/chron diagnostics [on|off] - opt-in local performance timing (sent only via companion telemetry)", function(rest)
+FC:Command("diagnostics", FC.FEATURES.diagnostics and "/chron diagnostics [on|off] - opt-in local performance timing (sent only via companion telemetry)" or nil, function(rest)
+    if not FC.FEATURES.diagnostics then
+        FC:Print("Diagnostics aren't available in this version.")
+        return
+    end
     local s = FC.db.settings
     if rest == "on" then s.diagnostics = true
     elseif rest == "off" then s.diagnostics = false; FC.db.diagnostics = nil

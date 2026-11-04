@@ -64,6 +64,11 @@ class Base(unittest.TestCase):
             self.addCleanup(p.stop)
             os.environ.pop(var, None)
         self.addCleanup(setattr, fc, "TEL", ft.DISABLED)
+        # The feature flag is off in releases; these tests switch it on so the
+        # dormant telemetry code stays tested (see FlagOff for the shipped behaviour).
+        p = mock.patch.object(fc, "FEATURE_TELEMETRY", True)
+        p.start()
+        self.addCleanup(p.stop)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -286,6 +291,46 @@ class Payloads(Base):
         for _, body, _ in sent:
             for word in FORBIDDEN:
                 self.assertNotIn(word.encode(), body)
+
+
+class FlagOff(Base):
+    """What ships: FEATURE_TELEMETRY = False."""
+
+    def setUp(self):
+        super().setUp()
+        p = mock.patch.object(fc, "FEATURE_TELEMETRY", False)
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_flag_is_off_in_this_version(self):
+        source = Path(fc.__file__).read_text(encoding="utf-8")
+        self.assertRegex(source, r"(?m)^FEATURE_TELEMETRY = False$", "telemetry must ship switched off")
+
+    def test_no_question_no_command_no_flag(self):
+        zipf = self.root / "ForeverChronicaller-0.4.0.zip"
+        zipf.write_bytes(make_zip("0.4.0"))
+        wow = self.root / "w"
+        wow.mkdir()
+        (wow / "Wow.exe").write_bytes(b"")
+        code, out = self.run_main("install", "--wow", str(wow), "--zip", str(zipf), answers=["yes"])
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("diagnostics", out.lower())
+        self.assertIn("No telemetry", out)
+        self.assertFalse(fc.load_config(self.cfgdir / "config.json")["telemetry"]["asked"])
+        with mock.patch("sys.stderr", io.StringIO()), self.assertRaises(SystemExit):
+            fc.main(["telemetry", "status"])
+        with mock.patch("sys.stderr", io.StringIO()), self.assertRaises(SystemExit):
+            fc.main(["install", "--telemetry"])
+
+    def test_enabled_config_is_ignored(self):
+        wow = self.wow_with_sv()
+        cfg = self.config(wow_path=str(wow))
+        cfg["telemetry"].update(enabled=True, install_id="a" * 32)
+        fc.save_config(cfg)
+        self.assertIs(fc.build_telemetry(cfg), ft.DISABLED)
+        code, _ = self.run_main("watch", "--once")
+        self.assertEqual(code, 0)
+        self.assertFalse((self.cfgdir / "telemetry-spool.jsonl").exists())
 
 
 class Robustness(unittest.TestCase):

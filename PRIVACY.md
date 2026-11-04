@@ -11,7 +11,7 @@ You can use the addon without the companion.
 **In short:**
 - **Nothing is sent anywhere unless you turn it on.**
 - Your chronicle stays on your computer.
-- Telemetry (anonymous diagnostics) is **off by default** and never contains your character names, chat or chronicle text.
+- **This version collects no telemetry.**
 
 ---
 
@@ -34,7 +34,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 | **Read** files | The addon's SavedVariables files under your WoW folder's `WTF` folder | `watch` and `telemetry send` (telemetry only reads the error log and diagnostics, if you opt in) |
 | **Write** files | `Interface/AddOns/ForeverChronicaller/` (installing and updating the addon). Its own folder: `%APPDATA%\forever-chronicaller\` on Windows, `~/.config/forever-chronicaller/` on Linux (config, state, backups, telemetry spool) | `install`, `update`, `setup`, `watch` |
 | **List running programs** | Process **names** only (`tasklist` / `ps`), to check whether WoW is running before replacing files | `install`, `update` |
-| **Network** | `api.github.com` and `github.com` (update checks and downloads); your Discord webhook; your ntfy server; the telemetry endpoint, **only if you opt in** | Only for the features you use |
+| **Network** | `api.github.com` and `github.com` (update checks and downloads); your Discord webhook; your ntfy server | Only for the features you use |
 
 It **never** reads your WoW account password or login, game memory, chat logs, screenshots, or anything outside the folders above. It never runs anything from your saved data, which it reads as plain data.
 
@@ -47,28 +47,33 @@ Administrator rights are not required. If WoW is installed in a protected folder
 | Data | Stored | Leaves your computer? |
 |---|---|---|
 | Chronicle entries, goals, notes, stats, progress samples | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
-| Settings, error log, performance diagnostics (opt-in) | SavedVariables (local) | No. Telemetry, if you opt in, sends errors and timings with personal data removed (section 3) |
+| Settings, error log | SavedVariables (local) | No |
 | Companion config: WoW folder, Discord webhook URL, ntfy topic | `config.json` (local; readable only by you on Linux/macOS) | No. The webhook URL is never printed or logged |
 | **Shared goals** (`/chron share`) | Sent as an addon message | **Yes, to the players you share with**: goal text, notes and type, and your character name, which the game attaches to every message |
 | **Together goals** (`/chron together`) | Sent as addon whispers | **Yes, to the members of that goal**: goal text and members' names and progress times |
 | **Version check** | Sent to your group | **Yes, to your group**: the addon version number |
 | **Discord / ntfy posts** (optional) | Sent by the companion | **Yes, to that Discord channel or ntfy topic**: new chronicle entries (text, level, zone) and your character and realm name. Anyone who can read the channel or knows the ntfy topic can read them. Public ntfy topics are not private |
 | **Update checks** | Companion → GitHub | GitHub sees a normal web request: your IP address and the program version |
-| **Telemetry** | Off by default | Only if you opt in: see section 3 |
+| **Telemetry** | Not collected in this version | No (see section 3) |
 
 The maintainer runs **no server** that receives your chronicle, goals, names or game data.
 
 ---
 
-## 3. Telemetry (opt-in, off by default)
+## 3. Telemetry: not active in this version
 
-Telemetry helps fix bugs: which version failed where, and how long things take. It is:
+**This version collects and sends no telemetry.** The code for it exists but is switched off by a feature flag (`FEATURE_TELEMETRY = False` in the companion, `FC.FEATURES.diagnostics = false` in the addon). There's no question at install, no `telemetry` command and no diagnostics option, and nothing is collected, even if an old config file says otherwise.
+
+If a future version switches it on, these terms will change, and you'll be **asked to agree again** and asked separately whether to opt in. The rest of this section describes what that planned, opt-in telemetry would contain, so you can see it in advance.
+
+### Planned design (not active)
+Telemetry would help fix bugs: which version failed where, and how long things take. It would be:
 
 - **Off by default.** The installer asks once, and the default answer is **No**. `--yes` never turns it on; only answering *yes* or passing `--telemetry` does. If you said no, you're not asked again.
 - **Under your control:** `ForeverChronicaller-Installer telemetry status | on | off | show | send`. `off` deletes the random ID and any locally stored diagnostics.
 - **Anonymous.** Identified only by a random ID created when you opt in. It isn't linked to your WoW account, characters or computer.
 
-**Exactly what's sent (OpenTelemetry format), only when opted in:**
+**Exactly what would be sent (OpenTelemetry format), only when opted in:**
 
 | Kind | Content |
 |---|---|
@@ -80,7 +85,7 @@ Telemetry helps fix bugs: which version failed where, and how long things take. 
 
 **Scrubbing:** every message passes through a filter that removes quoted text, file paths, URLs, e-mail addresses, long numbers and WoW colour codes. From stack traces, only code file names and line numbers are kept. Handler names are only accepted if they look like `event:`, `msg:` or `cmd:` code names.
 
-**Never sent:** character, account, realm or friend names; chronicle, goal or note text; chat; zone names; map coordinates; your WoW folder or any file path; the Discord webhook or ntfy topic; your computer or user name.
+**Never sent (even then):** character, account, realm or friend names; chronicle, goal or note text; chat; zone names; map coordinates; your WoW folder or any file path; the Discord webhook or ntfy topic; your computer or user name.
 
 **When:** while `watch` runs (after it reads new saved data), at the end of each companion command, or when you run `telemetry send`. The addon never sends anything itself; in-game data only leaves through the companion.
 

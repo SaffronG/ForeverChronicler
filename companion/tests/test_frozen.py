@@ -54,8 +54,7 @@ class FrozenTests(unittest.TestCase):
         self.assertEqual(code, 0, out.getvalue())
         self.assertEqual(fc.installed_version(str(self.wow)), "0.3.1")
         self.assertIn("Type 'yes' to agree", prompts[0])
-        self.assertIn("Share anonymous diagnostics? [y/N]", prompts[2])
-        self.assertFalse(fc.load_config(self.root / "cfg" / "config.json")["telemetry"]["enabled"], "Enter = no")
+        self.assertFalse(any("diagnostics" in p for p in prompts), "telemetry isn't offered (feature flag off)")
         self.assertIn("Press Enter to close", prompts[-1])
         self.assertIn("ForeverChronicaller-Installer.exe setup", out.getvalue().replace("./", ""))
 

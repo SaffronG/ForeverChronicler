@@ -105,6 +105,7 @@ end)
 test("diagnostics on: per-label latency buckets, errors, version reset", function()
     local env = setup({ version = "0.3.1" })
     local FC = env.FC
+    FC.FEATURES.diagnostics = true -- feature flag is off in releases; the code stays tested
     env.slash("diagnostics on")
     env.tick = 3 -- each handler "takes" 3 ms
     env.player.level = 11; env.fire("PLAYER_LEVEL_UP", 11)
@@ -134,4 +135,19 @@ test("diagnostics on: per-label latency buckets, errors, version reset", functio
     eq(FC.db.diagnostics.handlers["msg:BOOM"], nil, "old data dropped")
     env.slash("diagnostics off")
     eq(FC.db.diagnostics, nil, "turning off deletes the data")
+end)
+
+test("diagnostics feature flag off: hidden, no timing, no option", function()
+    local env = setup()
+    local FC = env.FC
+    eq(FC.FEATURES.diagnostics, false, "flag is off in this version")
+    eq(env.settings["ForeverChronicaller_Diagnostics"], nil, "no options checkbox")
+    env.slash("help")
+    ok(not env.chatContains("/chron diagnostics"), "not listed in help")
+    env.slash("diagnostics on")
+    ok(env.chatContains("aren't available in this version"), "command explains")
+    eq(FC.db.settings.diagnostics, false, "setting unchanged")
+    FC.db.settings.diagnostics = true -- even if a saved setting says on...
+    env.slash("note hi")
+    eq(FC.db.diagnostics, nil, "...nothing is timed")
 end)
