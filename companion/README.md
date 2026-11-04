@@ -39,7 +39,7 @@ The settings are stored in `%APPDATA%\forever-chronicaller\config.json` (Windows
 Telemetry is built and tested (`fc_telemetry.py`) but **disabled by a feature flag** (`FEATURE_TELEMETRY = False` in `fcompanion.py`). This version doesn't offer it, has no `telemetry` command, and collects nothing. It's planned to be switched on (opt-in, off by default) together with the Grafana dashboard. The planned contents are listed in [PRIVACY.md](../PRIVACY.md#3-telemetry-not-active-in-this-version).
 
 To turn it on later:
-1. Set `FEATURE_TELEMETRY = True` (and `FC.FEATURES.diagnostics = true` in `Core.lua` for in-game timings).
+1. Set `FEATURE_TELEMETRY = True` (and `FC.FEATURES.diagnostics = true` in `src/core/Core.lua` for in-game timings).
 2. Update `PRIVACY.md` §3 and the `DISCLAIMER`, and bump `TERMS_VERSION` so everyone is asked again.
 3. Set the secrets below.
 

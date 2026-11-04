@@ -30,6 +30,8 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [x] Create the GitHub repository and push (`git remote add origin …`, `git push -u origin main --tags`). Needs the user, since there's no remote or `gh` CLI here. CI starts working once it's pushed
 
 ## Next: 0.4.1
+- [x] **Reorganize the repository**: addon code into `src/<feature>/`, developer docs into `docs/`
+- [ ] Check in game that the addon still loads from the `src/` subfolders
 - [ ] **Grafana dashboard** (free tier): importable dashboard JSON (`grafana/`), with panels for errors by version, error locations, success rate, latency p50/p95 and traces. Waiting on Grafana access
 - [ ] Before switching telemetry on: drop `error.message` from metric labels (keep it on traces) to limit series on the free tier, add `service.instance.id` (= the random install ID), set the `OTEL_ENDPOINT` / `OTEL_HEADERS` secrets, then set `FEATURE_TELEMETRY = True` (+ `FC.FEATURES.diagnostics`), update PRIVACY.md §3 and the DISCLAIMER, and bump `TERMS_VERSION`
 

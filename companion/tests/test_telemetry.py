@@ -175,6 +175,8 @@ class Scrubbing(unittest.TestCase):
     def test_scrub(self):
         cases = {
             "Interface/AddOns/ForeverChronicaller/Goals.lua:42: attempt to index field 'Buddy'": "Goals.lua:42: attempt to index field <str>",
+            "Interface/AddOns/ForeverChronicaller/src/goals/Goals.lua:42: attempt to call nil": "Goals.lua:42: attempt to call nil",
+            "C:\\WoW\\Interface\\AddOns\\ForeverChronicaller\\src\\core\\Core.lua:7: boom": "Core.lua:7: boom",
             'C:\\Users\\Chase\\file.txt failed': "<path> failed",
             "/home/chase/.config/x.json missing": "<path> missing",
             "see https://discord.com/api/webhooks/1/x now": "see <url> now",

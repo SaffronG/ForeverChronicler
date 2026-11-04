@@ -5,18 +5,18 @@
 ## Version: 0.4.0
 ## SavedVariablesPerCharacter: ForeverChronicallerDB
 
-Core.lua
-Chronicle.lua
-Goals.lua
-MapGoals.lua
-MapPins.lua
-MapPins.xml
-Tracker.lua
-Comms.lua
-Sharing.lua
-SharedGoals.lua
-Export.lua
-VersionCheck.lua
-Settings.lua
-UI.lua
-Journey.lua
+src/core/Core.lua
+src/chronicle/Chronicle.lua
+src/goals/Goals.lua
+src/goals/MapGoals.lua
+src/goals/MapPins.lua
+src/goals/MapPins.xml
+src/goals/Tracker.lua
+src/core/Comms.lua
+src/sharing/Sharing.lua
+src/sharing/SharedGoals.lua
+src/sharing/Export.lua
+src/core/VersionCheck.lua
+src/ui/Settings.lua
+src/ui/UI.lua
+src/chronicle/Journey.lua

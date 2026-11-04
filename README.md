@@ -4,7 +4,7 @@ Automatically chronicles your adventure and tracks personal goals.
 
 **Privacy, permissions and risks:** [PRIVACY.md](PRIVACY.md). In short, everything stays on your computer unless you turn on sharing or Discord/phone posting. No telemetry is collected.
 
-How it all fits together (diagrams, data flow, component map): [Topology.md](Topology.md).
+How it all fits together (diagrams, data flow, component map): [docs/Topology.md](docs/Topology.md).
 
 ## Install
 **Easiest:** from the [latest release](https://github.com/SaffronG/ForeverChronicaller/releases/latest), close WoW and then:
@@ -66,19 +66,21 @@ Open goals are listed in a small on-screen tracker (drag the title to move it, c
 Every open location goal appears as a gold star on the world map. Click a star to point the arrow at it.
 
 ## Files
-- `Core.lua` – SavedVariables (persistence), event dispatch
-- `Chronicle.lua` – automatic event logging
-- `Goals.lua` – goal parsing / auto-completion
-- `MapGoals.lua` – location goals, world map menu, waypoint arrow
-- `MapPins.lua` / `MapPins.xml` – world map pins for open location goals
-- `Tracker.lua` – on-screen goal tracker
-- `Comms.lua` – addon-to-addon messaging (chunking, queue, restrictions)
-- `Sharing.lua` – share goals with your group / friends
-- `SharedGoals.lua` – together goals: invites, per-member progress, offline-safe syncing
-- `Export.lua` – export/import strings and their window
-- `Settings.lua` – options page (Settings API)
-- `Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)
-- `UI.lua` – window and slash commands
+Addon code is in `src/`, grouped by feature. Developer docs are in `docs/`.
+
+- `src/core/Core.lua` – SavedVariables (persistence), event dispatch
+- `src/chronicle/Chronicle.lua` – automatic event logging
+- `src/goals/Goals.lua` – goal parsing / auto-completion
+- `src/goals/MapGoals.lua` – location goals, world map menu, waypoint arrow
+- `src/goals/MapPins.lua` / `MapPins.xml` – world map pins for open location goals
+- `src/goals/Tracker.lua` – on-screen goal tracker
+- `src/core/Comms.lua` – addon-to-addon messaging (chunking, queue, restrictions)
+- `src/sharing/Sharing.lua` – share goals with your group / friends
+- `src/sharing/SharedGoals.lua` – together goals: invites, per-member progress, offline-safe syncing
+- `src/sharing/Export.lua` – export/import strings and their window
+- `src/ui/Settings.lua` – options page (Settings API)
+- `src/chronicle/Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)
+- `src/ui/UI.lua` – window and slash commands
 
 ## Backup / moving to another computer
 - **In game:** `/chron export` and copy the text (Ctrl+C). On the other computer, `/chron import`, paste (Ctrl+V), then **Merge** or **Replace**. `/chron import undo` reverts the last import until you log out.

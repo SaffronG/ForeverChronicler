@@ -1,7 +1,7 @@
 # Forever Chronicaller: system topology
 
 A high-level map of how the system fits together: what runs where, how the pieces talk to each other, where data lives, and which file does what.
-For *using* it, see [README.md](README.md). For working rules, see [CLAUDE.md](CLAUDE.md).
+For *using* it, see [README.md](../README.md). For working rules, see [CLAUDE.md](../CLAUDE.md).
 
 - [1. The big picture](#1-the-big-picture)
 - [2. Addon architecture](#2-addon-architecture)
@@ -472,21 +472,21 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | File | Responsibility | Key functions / API | Listens to | Emits |
 |---|---|---|---|---|
 | `ForeverChronicaller.toc` | Manifest: metadata, saved variable, load order | `## Version`, `## Interface`, `SavedVariablesPerCharacter` | – | – |
-| `Core.lua` | Foundation: saved data, error isolation, event dispatch, message bus, slash commands | `FC:SafeCall`, `FC:RegisterEvent`, `FC:On`, `FC:Fire`, `FC:Command`, `FC:Print`, `FC:Zone`; `/chron help`, `/chron errors` | `ADDON_LOADED` | `READY` |
-| `Chronicle.lua` | Automatic adventure log | `FC:AddEntry(kind, text)` (respects settings + cap), `FC:FormatEntry` | `PLAYER_LEVEL_UP`, `ZONE_CHANGED_NEW_AREA`, `PLAYER_ENTERING_WORLD`, `QUEST_TURNED_IN`, `PLAYER_DEAD`, `ACHIEVEMENT_EARNED`, `READY` | `ENTRY_ADDED`, `LEVEL`, `ZONE`, `QUEST` |
-| `Goals.lua` | Goal model, text parsing, auto-completion | `FC:AddGoal`, `FC:CreateGoal`, `FC:CompleteGoal`, `FC:ToggleGoal`, `FC:RemoveGoal`, `FC:CheckGoals`, `FC:SetGoalDescription`, `FC.ParseGoalText` | `READY`, `LEVEL`, `ZONE`, `QUEST` | `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED`, `GOALS_CHANGED` |
-| `MapGoals.lua` | Location goals, waypoint arrow, arrival check, world-map Ctrl + right-click menu | `FC:ParseLocation`, `FC:GoalLocation`, `FC:SetGoalWaypoint`, `FC:WhenWorldMap`, `FC.goalDistance`; `/chron way` | `READY`, `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED`, `SHARED_PART_DONE`, `GOALS_CHANGED`, `ADDON_LOADED` | `LOCATIONS_UPDATED` |
-| `MapPins.lua` / `.xml` | Gold-star pins on the world map (projected onto parent maps) | `ForeverChronicallerGoalPinMixin`, map data provider | `GOALS_CHANGED` (+ map's own refresh) | – |
-| `Tracker.lua` | On-screen open-goal list with progress | `FC:GoalProgressText`, `FC.RefreshTracker`; `/chron tracker` | `READY`, `GOALS_CHANGED`, `LOCATIONS_UPDATED`, `LEVEL`, `SETTINGS_CHANGED` | – |
-| `Comms.lua` | Addon-message transport: encode, chunk, queue, reassemble | `FC:SendComm`, `FC:OnComm`, `FC:GroupChannel`, `FC.EncodeFields`, `FC.DecodeFields`, `FC.ShortName` | `CHAT_MSG_ADDON`, `READY` | comm handlers |
-| `Sharing.lua` | Send a goal copy to group/friend, accept popup | `FC:ShareGoal`, `FC.GoalToFields`, `FC.FieldsToGoal` (validation); `/chron share` | comm `GOAL`, `GOALACK` | comm `GOAL`, `GOALACK` |
-| `SharedGoals.lua` | Together goals: invites, per-member progress, offline-safe sync | `FC:CreateSharedGoal`, `FC:InviteToShared`, `FC:MarkSharedPartDone`, `FC:SharedProgressText`, `FC.CleanSharedTarget`, `FC:IsMemberOnline`; `/chron together`, `/chron invite` | `READY`, `LEVEL`, `ZONE`, `QUEST`, `GOAL_REMOVED`, `GROUP_ROSTER_UPDATE`, `FRIENDLIST_UPDATE`; comm `SG*` | `SHARED_PART_DONE`, `GOALS_CHANGED`; comm `SG*` |
-| `Export.lua` | Export/import strings (backup, other PC), `/chron sync` | `FC:ExportString`, `FC:ImportString(str, "merge"/"replace")`, `FC:UndoImport`; `/chron export`, `/chron import`, `/chron sync` | – | `GOALS_CHANGED`, `ENTRY_ADDED` |
-| `Core.lua` (diagnostics) | Opt-in handler timing (off by default), version-linked error log | `FC:Dispatch(label, fn, ...)`, `FC.DIAG_BOUNDS`; `/chron diagnostics` | – | – |
-| `VersionCheck.lua` | Tell players about newer versions in their group | `FC.version`, `FC.CompareVersions`; `/chron version` | `READY`, `GROUP_ROSTER_UPDATE`; comm `VER` | comm `VER` |
-| `Settings.lua` | Options page (Settings API) | `FC:OpenSettings`; `/chron config` | `READY` | `SETTINGS_CHANGED` |
-| `UI.lua` | Main window: Chronicle tab, quest-log-style Goals tab, extra tabs | `FC:Toggle`, `FC.Refresh`, `FC:AddWindowTab`, `FC:DescribeGoalType`; `/chron`, `note`, `goal`, `goals`, `done`, `del`, `recent` | `ENTRY_ADDED`, `GOALS_CHANGED`, `GOAL_ADDED`, `LOCATIONS_UPDATED` | – |
-| `Journey.lua` | Progress samples, statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
+| `src/core/Core.lua` | Foundation: saved data, error isolation, event dispatch, message bus, slash commands | `FC:SafeCall`, `FC:RegisterEvent`, `FC:On`, `FC:Fire`, `FC:Command`, `FC:Print`, `FC:Zone`; `/chron help`, `/chron errors` | `ADDON_LOADED` | `READY` |
+| `src/chronicle/Chronicle.lua` | Automatic adventure log | `FC:AddEntry(kind, text)` (respects settings + cap), `FC:FormatEntry` | `PLAYER_LEVEL_UP`, `ZONE_CHANGED_NEW_AREA`, `PLAYER_ENTERING_WORLD`, `QUEST_TURNED_IN`, `PLAYER_DEAD`, `ACHIEVEMENT_EARNED`, `READY` | `ENTRY_ADDED`, `LEVEL`, `ZONE`, `QUEST` |
+| `src/goals/Goals.lua` | Goal model, text parsing, auto-completion | `FC:AddGoal`, `FC:CreateGoal`, `FC:CompleteGoal`, `FC:ToggleGoal`, `FC:RemoveGoal`, `FC:CheckGoals`, `FC:SetGoalDescription`, `FC.ParseGoalText` | `READY`, `LEVEL`, `ZONE`, `QUEST` | `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED`, `GOALS_CHANGED` |
+| `src/goals/MapGoals.lua` | Location goals, waypoint arrow, arrival check, world-map Ctrl + right-click menu | `FC:ParseLocation`, `FC:GoalLocation`, `FC:SetGoalWaypoint`, `FC:WhenWorldMap`, `FC.goalDistance`; `/chron way` | `READY`, `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED`, `SHARED_PART_DONE`, `GOALS_CHANGED`, `ADDON_LOADED` | `LOCATIONS_UPDATED` |
+| `src/goals/MapPins.lua` / `.xml` | Gold-star pins on the world map (projected onto parent maps) | `ForeverChronicallerGoalPinMixin`, map data provider | `GOALS_CHANGED` (+ map's own refresh) | – |
+| `src/goals/Tracker.lua` | On-screen open-goal list with progress | `FC:GoalProgressText`, `FC.RefreshTracker`; `/chron tracker` | `READY`, `GOALS_CHANGED`, `LOCATIONS_UPDATED`, `LEVEL`, `SETTINGS_CHANGED` | – |
+| `src/core/Comms.lua` | Addon-message transport: encode, chunk, queue, reassemble | `FC:SendComm`, `FC:OnComm`, `FC:GroupChannel`, `FC.EncodeFields`, `FC.DecodeFields`, `FC.ShortName` | `CHAT_MSG_ADDON`, `READY` | comm handlers |
+| `src/sharing/Sharing.lua` | Send a goal copy to group/friend, accept popup | `FC:ShareGoal`, `FC.GoalToFields`, `FC.FieldsToGoal` (validation); `/chron share` | comm `GOAL`, `GOALACK` | comm `GOAL`, `GOALACK` |
+| `src/sharing/SharedGoals.lua` | Together goals: invites, per-member progress, offline-safe sync | `FC:CreateSharedGoal`, `FC:InviteToShared`, `FC:MarkSharedPartDone`, `FC:SharedProgressText`, `FC.CleanSharedTarget`, `FC:IsMemberOnline`; `/chron together`, `/chron invite` | `READY`, `LEVEL`, `ZONE`, `QUEST`, `GOAL_REMOVED`, `GROUP_ROSTER_UPDATE`, `FRIENDLIST_UPDATE`; comm `SG*` | `SHARED_PART_DONE`, `GOALS_CHANGED`; comm `SG*` |
+| `src/sharing/Export.lua` | Export/import strings (backup, other PC), `/chron sync` | `FC:ExportString`, `FC:ImportString(str, "merge"/"replace")`, `FC:UndoImport`; `/chron export`, `/chron import`, `/chron sync` | – | `GOALS_CHANGED`, `ENTRY_ADDED` |
+| `src/core/Core.lua` (diagnostics) | Opt-in handler timing (off by default), version-linked error log | `FC:Dispatch(label, fn, ...)`, `FC.DIAG_BOUNDS`; `/chron diagnostics` | – | – |
+| `src/core/VersionCheck.lua` | Tell players about newer versions in their group | `FC.version`, `FC.CompareVersions`; `/chron version` | `READY`, `GROUP_ROSTER_UPDATE`; comm `VER` | comm `VER` |
+| `src/ui/Settings.lua` | Options page (Settings API) | `FC:OpenSettings`; `/chron config` | `READY` | `SETTINGS_CHANGED` |
+| `src/ui/UI.lua` | Main window: Chronicle tab, quest-log-style Goals tab, extra tabs | `FC:Toggle`, `FC.Refresh`, `FC:AddWindowTab`, `FC:DescribeGoalType`; `/chron`, `note`, `goal`, `goals`, `done`, `del`, `recent` | `ENTRY_ADDED`, `GOALS_CHANGED`, `GOAL_ADDED`, `LOCATIONS_UPDATED` | – |
+| `src/chronicle/Journey.lua` | Progress samples, statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
 
 ### Outside the game
 | Path | Responsibility |
@@ -500,7 +500,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `scripts/release_notes.sh` | Prints a version's Changelog section |
 | `.github/workflows/ci.yml` | Tests on push to main / PRs (also reused by release) |
 | `.github/workflows/release.yml` | Automatic versioned release with standalone installers |
-| `README.md` · `Changelog.md` · `TODO.md` · `CLAUDE.md` · `Topology.md` | Usage · history · roadmap · contributor rules · this map |
+| `README.md` · `Changelog.md` · `docs/TODO.md` · `CLAUDE.md` · `docs/Topology.md` | Usage · history · roadmap · contributor rules · this map |
 
 ### Slash command → owner
 | Command | File | | Command | File |
@@ -532,7 +532,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 ## 11. Where to start reading
 
 1. `ForeverChronicaller.toc`: what loads, in what order.
-2. `Core.lua`: the four building blocks (`SafeCall`, events, message bus, commands). Everything else uses them.
-3. `Chronicle.lua` → `Goals.lua`: the core features, and how WoW events become internal messages.
+2. `src/core/Core.lua`: the four building blocks (`SafeCall`, events, message bus, commands). Everything else uses them.
+3. `src/chronicle/Chronicle.lua` → `src/goals/Goals.lua`: the core features, and how WoW events become internal messages.
 4. `tests/test_core.lua` and `tests/test_goals_settings.lua`: how to drive the addon without the game.
 5. Then whichever area you're changing, using the [component map](#9-component--function-map) above.

@@ -45,7 +45,7 @@ SEND_TIMEOUT = 5
 
 _COLOR = re.compile(r"\|c[0-9a-fA-F]{8}|\|r")
 _URL = re.compile(r"\b[a-z][a-z0-9+.-]*://\S+", re.I)
-_ADDON_PATH = re.compile(r"[^\s'\"]*?[\\/]AddOns[\\/](?:ForeverChronicaller[\\/])?", re.I)
+_ADDON_PATH = re.compile(r"[^\s'\"]*?[\\/]AddOns[\\/](?:ForeverChronicaller[\\/](?:src[\\/][\w-]+[\\/])?)?", re.I)
 _WIN_PATH = re.compile(r"\b[A-Za-z]:[\\/][^\s'\"]*")
 _POSIX_PATH = re.compile(r"(?<![\w.])/(?:[\w.~-]+/)+[\w.~-]*")
 _QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"|\[\[.*?\]\]", re.S)
@@ -57,7 +57,7 @@ def scrub(text: Any, limit: int = 200) -> str:
     """Remove anything that could identify the user from an error message or stack."""
     s = _COLOR.sub("", str(text))
     s = _URL.sub("<url>", s)
-    s = _ADDON_PATH.sub("", s)          # ".../AddOns/ForeverChronicaller/Goals.lua:42" -> "Goals.lua:42"
+    s = _ADDON_PATH.sub("", s)          # ".../AddOns/ForeverChronicaller/src/goals/Goals.lua:42" -> "Goals.lua:42"
     s = _WIN_PATH.sub("<path>", s)
     s = _POSIX_PATH.sub("<path>", s)
     s = _QUOTED.sub("<str>", s)

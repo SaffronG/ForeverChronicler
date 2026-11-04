@@ -4,6 +4,9 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Changed
+- **Reorganized the repository.** Addon code moved from the root into `src/`, grouped by feature: `src/core/` (Core, Comms, VersionCheck), `src/chronicle/` (Chronicle, Journey), `src/goals/` (Goals, MapGoals, MapPins, Tracker), `src/sharing/` (Sharing, SharedGoals, Export) and `src/ui/` (Settings, UI). `Topology.md` and `TODO.md` moved to `docs/`. The `.toc` lists the new paths (load order unchanged), CI checks the XML files the `.toc` lists, and the telemetry scrubber also strips the new `src/<folder>/` prefix so error locations stay `File.lua:line`. Nothing changes for players: the release zip still has the `.toc` at the top of the `ForeverChronicaller/` folder. Still to test in game: that the client loads files from subfolders listed with `/` in the `.toc`.
+
 ## [0.4.0] - 2026-11-03
 
 Adds an install-time disclaimer (privacy, permissions, risks). Telemetry is built and tested but **switched off by a feature flag**: this version collects nothing. It's planned to be switched on with the Grafana dashboard in 0.4.1.
