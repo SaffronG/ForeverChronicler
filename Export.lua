@@ -188,9 +188,9 @@ local function cleanGoals(list)
                     target = { mapID = tonumber(target.mapID), x = tonumber(target.x), y = tonumber(target.y), armed = false }
                 end
             elseif g.kind == "level" then target = tonumber(target)
-            elseif g.kind == "shared" then target = type(target) == "table" and target or nil
+            elseif g.kind == "shared" then target = FC.CleanSharedTarget and FC.CleanSharedTarget(target) or nil
             elseif type(target) == "table" then target = nil end
-            if g.kind == "free" or g.kind == "shared" or target ~= nil then
+            if g.kind == "free" or target ~= nil then
                 out[#out + 1] = { kind = g.kind, target = target, text = g.text:sub(1, 200),
                     done = g.done == true, created = g.created, completed = tonumber(g.completed),
                     description = type(g.description) == "string" and g.description:sub(1, 500) or nil,

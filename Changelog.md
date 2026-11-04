@@ -5,6 +5,15 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- Together goals (new `SharedGoals.lua`): goals you complete with friends.
+  - `/chron together <name> <goal>` (for example `/chron together Buddy level 30`) creates the goal and invites your friend, who gets a Join popup. `/chron invite <n> <name>` adds more friends (up to 10 members).
+  - Each player's addon checks its own part (level, zone or quest, or "Done" for personal goals) and tells the others. The goal completes for everyone once every member who joined has done their part. The tracker and goal log show progress, for example `(1/2: Buddy ..., Chase done)`.
+  - **Offline friends:** progress is only sent to members who are online (in your group, online on your friend list, or seen in the last 5 minutes). Anything else is remembered (saved) and sent when they come online, join your group, or every minute. Updates can arrive in any order, because state only moves forward.
+  - Safety: only members can update a goal, nobody can mark *your* part done for you, the number of members is capped, and every message is validated. A sync can't loop forever. Progress is still trust-based: each client reports its own part.
+  - Deleting a together goal tells the others you left.
+  - Location goals can't be together goals yet.
+  - Not yet tested in game. **Add each other as friends** so syncing works automatically.
+- Tests can now run two fake players talking to each other (`transfer(a, b)`).
 - Journey tab with graphs and statistics (new `Journey.lua`, also `/chron journey`):
   - Line charts over time for **Level** (including XP progress, for example 12.4), **Gold**, **Quests**, **Zones** and **Deaths**, drawn with the client's line API, with min/max and date labels.
   - Summary: time adventuring, totals, average/fastest/slowest time per level, and **your path**: zones in the order you discovered them.

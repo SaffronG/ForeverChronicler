@@ -9,6 +9,8 @@ local tests, failures = {}, 0
 local function test(name, fn) table.insert(tests, { name = name, fn = fn }) end
 _G.test = test
 _G.setup = function(opts) return W.setup(dir, opts) end
+_G.transfer = W.transfer
+_G.activate = W.activate
 _G.eq = function(actual, expected, what)
     if actual ~= expected then
         error(string.format("%s: expected %s, got %s", what or "value", tostring(expected), tostring(actual)), 2)

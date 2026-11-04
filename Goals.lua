@@ -28,6 +28,8 @@ local function parseGoal(text)
 end
 
 -- Create a goal from already-parsed parts (used by AddGoal and the map menu).
+FC.ParseGoalText = function(text) return parseGoal(text) end
+
 function FC:CreateGoal(kind, target, text)
     local g = { text = text, kind = kind, target = target, done = false, created = time() }
     table.insert(self.db.goals, g)
@@ -48,9 +50,15 @@ function FC:AddGoal(rawText)
     return self:CreateGoal(kind, target, text)
 end
 
-function FC:CompleteGoal(index)
+-- force = true finishes a shared goal (all members done); otherwise "done" on a
+-- shared goal only marks *your* part (see SharedGoals.lua).
+function FC:CompleteGoal(index, force)
     local g = self.db.goals[index]
     if not g or g.done then return end
+    if g.kind == "shared" and not force and self.MarkSharedPartDone then
+        self:MarkSharedPartDone(g)
+        return
+    end
     g.done = true
     g.completed = time()
     self:Fire("GOAL_COMPLETED", g)
@@ -82,6 +90,7 @@ function FC:ToggleGoal(index)
     local g = self.db.goals[index]
     if not g then return end
     if g.done then
+        if g.kind == "shared" then return end -- finished together; can't be undone alone
         g.done, g.completed = false, nil
         self:Fire("GOALS_CHANGED")
     else

@@ -22,7 +22,7 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 8. **Don't** delete user files, rewrite history or push to a remote unless the user asks.
 
 ## Layout
-- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → Export → Settings → UI → Journey.
+- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → SharedGoals → Export → Settings → UI → Journey.
 - `Core.lua`: saved data (`ForeverChronicallerDB`), error isolation (`FC:SafeCall`, `/chron errors`), event dispatch, internal message system (`FC:On` / `FC:Fire`), slash command registry (`FC:Command(names, usage, fn, order)`).
 - `Chronicle.lua`: automatic logging (`FC:AddEntry`).
 - `Goals.lua`: goal parsing and auto-completion (`FC:CreateGoal`, `FC:AddGoal`). Fires `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED` and `GOALS_CHANGED`.
@@ -31,9 +31,10 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 - `Tracker.lua`: on-screen goal tracker (`FC:GoalProgressText`, `FC.RefreshTracker`). Distances come from `FC.goalDistance` (set by `MapGoals.lua`, which fires `LOCATIONS_UPDATED`).
 - `Comms.lua`: addon messages (`FC:SendComm(type, fields, channel, target)`, `FC:OnComm(type, fn)`), prefix `FChron`. Incoming data is untrusted, so always validate it.
 - `Sharing.lua`: goal sharing (`FC.GoalToFields` / `FC.FieldsToGoal` validate and convert goals for messages).
+- `SharedGoals.lua`: together goals (`kind = "shared"`, members keyed by short name). Sync messages SGINV/SGJOIN/SGSYNC/SGLEAVE. Merges must only move state forward, and a reply is only sent if we know more (`knowsMore`), which keeps the sync from looping.
 - `Export.lua`: export/import (`FC:ExportString`, `FC:ImportString(str, "merge"|"replace")`, `FC:UndoImport`). When adding new saved data, include it in the export and validate it in the importer.
 - `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `Journey.lua`: progress samples (`FC.db.samples`, `FC:TakeSample`), stats (`FC:JourneyStats`) and the Journey tab charts. Loads after UI.lua and adds its tab on READY.
 - `UI.lua`: main window (Chronicle tab, quest-log-style Goals tab, `FC:AddWindowTab` for extra tabs) and basic slash commands.
-- `tests/`: `run.lua` (runner), `wow_stub.lua` (fake WoW API), `test_*.lua` (tests). Not loaded by the game.
+- `tests/`: `run.lua` (runner), `wow_stub.lua` (fake WoW API), `test_*.lua` (tests). Not loaded by the game. Several fake players can exist at once: `setup({ name = "Buddy" })`, then `transfer(a, b)` delivers a's addon messages to b.
 - `main.lua`, `persistance.lua`: original prototype. Not loaded, can be deleted.

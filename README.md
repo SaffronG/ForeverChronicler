@@ -28,6 +28,8 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron share <n> [name]` | share goal n with your group, or whisper it to a friend (they need the addon) |
 | `/chron export` / `/chron import [undo]` | back up / restore your chronicle as a text string |
 | `/chron journey` | open the Journey graphs and statistics |
+| `/chron together <name> <goal>` | a goal you complete together with a friend |
+| `/chron invite <n> <name>` | invite another friend to together goal n |
 | `/chron config` | open the options page |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
 | `/chron help` | list all commands |
@@ -40,6 +42,7 @@ Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal
 The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
 The **Goals** tab works like the quest log: pick a goal on the left to see its details and progress, write notes for it, or point the arrow, complete or delete it.
 The **Journey** tab (`/chron journey`) graphs your level, gold, quests, zones and deaths over time, and sums up your path through the world and how long each level took.
+**Together goals:** `/chron together Buddy level 30` creates a goal you and a friend complete together. Each of you does your part, and it's achieved when everyone has. Add each other as friends so progress syncs automatically, even if one of you was offline.
 Open goals are listed in a small on-screen tracker (drag the title to move it, click to collapse, `/chron tracker` to hide it).
 Every open location goal appears as a gold star on the world map. Click a star to point the arrow at it.
 
@@ -52,6 +55,7 @@ Every open location goal appears as a gold star on the world map. Click a star t
 - `Tracker.lua` – on-screen goal tracker
 - `Comms.lua` – addon-to-addon messaging (chunking, queue, restrictions)
 - `Sharing.lua` – share goals with your group / friends
+- `SharedGoals.lua` – together goals: invites, per-member progress, offline-safe syncing
 - `Export.lua` – export/import strings and their window
 - `Settings.lua` – options page (Settings API)
 - `Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)

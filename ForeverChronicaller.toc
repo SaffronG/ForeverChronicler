@@ -14,6 +14,7 @@ MapPins.xml
 Tracker.lua
 Comms.lua
 Sharing.lua
+SharedGoals.lua
 Export.lua
 Settings.lua
 UI.lua

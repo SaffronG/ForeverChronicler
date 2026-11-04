@@ -209,7 +209,7 @@ function FC:DescribeGoalType(g)
     elseif g.kind == "quest" then
         return tonumber(g.target) and ("Quest goal - quest ID " .. g.target) or ("Quest goal - turn in \"" .. tostring(g.target) .. "\"")
     elseif g.kind == "location" then return "Location goal - arrive within " .. (self.db.settings.arrivalYards or 20) .. " yd"
-    elseif g.kind == "shared" then return "Shared goal"
+    elseif g.kind == "shared" then return "Together goal - done when everyone has done their part"
     end
     return "Personal goal - tick it off yourself"
 end

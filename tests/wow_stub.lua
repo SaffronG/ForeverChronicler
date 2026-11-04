@@ -45,8 +45,30 @@ local function newObject(name)
 end
 W.newObject = newObject
 
+-- Several fake players can exist at once: each setup() remembers the globals it
+-- created, and W.activate(env) switches the "current" player back to it.
+function W.activate(env)
+    for k, v in pairs(env.globals) do _G[k] = v end
+    W.env = env
+end
+
+-- Deliver messages `from` has sent to `to` (whispers only if addressed to `to`).
+function W.transfer(from, to)
+    local msgs = from.addonMessages
+    from.addonMessages = {}
+    W.activate(to)
+    for _, m in ipairs(msgs) do
+        local target = m.target and m.target:gsub("%-.*$", "")
+        if m.channel ~= "WHISPER" or target == to.player.name then
+            to.fire("CHAT_MSG_ADDON", m.prefix, m.msg, m.channel, from.player.name .. "-Forever")
+        end
+    end
+end
+
 function W.setup(dir, opts)
     opts = opts or {}
+    local before = {}
+    for k, v in pairs(_G) do before[k] = v end
     local env = { chat = {}, eventFrames = {}, tickers = {}, timers = {}, addonMessages = {}, menus = {},
         settings = {}, pins = {}, popups = {}, played = 0 }
     W.env = env
@@ -56,6 +78,7 @@ function W.setup(dir, opts)
         env.eventFrames[frame][event] = true
     end
     function env.fire(event, ...)
+        if env.globals and W.env ~= env then W.activate(env) end
         for frame, events in pairs(env.eventFrames) do
             if events[event] and frame.scripts.OnEvent then frame.scripts.OnEvent(frame, event, ...) end
         end
@@ -118,7 +141,7 @@ function W.setup(dir, opts)
     SlashCmdList = {}
 
     -- Player / world
-    env.player = { name = "Chase", level = opts.level or 10, zone = "Elwynn Forest", map = 1, x = 0.5, y = 0.5,
+    env.player = { name = opts.name or "Chase", level = opts.level or 10, zone = "Elwynn Forest", map = 1, x = 0.5, y = 0.5,
         money = 0, realm = "Forever" }
     local P = env.player
     UnitName = function(unit) if unit == "player" then return P.name end return unit end
@@ -138,6 +161,10 @@ function W.setup(dir, opts)
     Ambiguate = function(name) return (name:gsub("%-.*$", "")) end
     IsInRaid = function() return false end
     IsInInstance = function() return env.inInstance or false, env.inInstance and "party" or "none" end
+    env.groupMembers, env.friendsOnline = {}, {}
+    UnitInParty = function(name) return env.groupMembers[name] or false end
+    UnitInRaid = function() return nil end
+    C_FriendList = { GetFriendInfo = function(name) if env.friendsOnline[name] ~= nil then return { connected = env.friendsOnline[name] } end end }
     GetNumGroupMembers = function() return env.inGroup and 2 or 0 end
 
     -- Quests
@@ -179,6 +206,7 @@ function W.setup(dir, opts)
         After = function(_, fn) table.insert(env.timers, fn) end,
     }
     function env.runTickers()
+        if env.globals and W.env ~= env then W.activate(env) end
         for _, t in ipairs(env.tickers) do if not t.cancelled then t.fn(t) end end
     end
     function env.activeTickers()
@@ -293,6 +321,7 @@ function W.setup(dir, opts)
         return msgs
     end
     function env.acceptPopup(i)
+        W.activate(env)
         local p = table.remove(env.popups, i or 1)
         local dialog = StaticPopupDialogs[p.which]
         dialog.OnAccept(nil, p.data)
@@ -300,7 +329,12 @@ function W.setup(dir, opts)
         env.runTimers()
     end
 
-    function env.slash(msg) SlashCmdList.FOREVERCHRONICALLER(msg) end
+    env.globals = {}
+    for k, v in pairs(_G) do if before[k] ~= v then env.globals[k] = v end end
+    env.globals.ForeverChronicallerDB = env.FC.db
+
+    function env.slash(msg) W.activate(env); SlashCmdList.FOREVERCHRONICALLER(msg) end
+    function env.activate() W.activate(env) end
     function env.chatContains(s)
         for _, line in ipairs(env.chat) do if line:find(s, 1, true) then return true end end
         return false

@@ -98,6 +98,8 @@ function FC:GoalProgressText(g)
     elseif g.kind == "location" then
         local d = FC.goalDistance and FC.goalDistance[g]
         if d then text = string.format("%s |cffaaaaaa- %s|r", text, formatDistance(d)) end
+    elseif g.kind == "shared" and FC.SharedProgressText then
+        text = string.format("%s |cffaaaaaa%s|r", text, FC:SharedProgressText(g))
     end
     return text
 end
