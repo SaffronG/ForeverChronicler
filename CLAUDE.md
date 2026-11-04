@@ -37,7 +37,9 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 - `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `Journey.lua`: progress samples (`FC.db.samples`, `FC:TakeSample`), stats (`FC:JourneyStats`) and the Journey tab charts. Loads after UI.lua and adds its tab on READY.
 - `UI.lua`: main window (Chronicle tab, quest-log-style Goals tab, `FC:AddWindowTab` for extra tabs) and basic slash commands.
-- `scripts/package.sh` (release zip from the `.toc` file list), `scripts/release_notes.sh`, `.github/workflows/ci.yml` (tests on Lua 5.1 + 5.4, releases on `v*` tags). **Every new addon file must be listed in the `.toc`**, otherwise it won't load or be packaged.
+- `scripts/package.sh` (release zips from the `.toc` file list), `scripts/release_notes.sh`.
+- `.github/workflows/ci.yml`: tests on every push to main and on PRs. It's also reusable (`workflow_call`).
+- `.github/workflows/release.yml`: when a push to main has a `.toc` version with no `v<version>` tag yet, it runs ci.yml, builds the addon zips, builds standalone installers with PyInstaller on Windows and Ubuntu 24.04, smoke-tests them, and publishes the release. A release needs a matching `## [x.y.z]` Changelog section. Lint workflows with `actionlint`. **Every new addon file must be listed in the `.toc`**, otherwise it won't load or be packaged.
 - Versions: when releasing, bump `## Version:` in the `.toc` **and** `VERSION` in `companion/fcompanion.py` together (a test checks they match).
 - `companion/`: separate Python 3.8+ app (standard library only): `fcompanion.py` (setup/test/watch, SavedVariables parser, Discord/ntfy), tests in `companion/tests` (`python3 -m unittest discover -s companion/tests`). Never execute SavedVariables content, and never log secrets such as the webhook URL.
 - `tests/`: `run.lua` (runner), `wow_stub.lua` (fake WoW API), `test_*.lua` (tests). Not loaded by the game. Several fake players can exist at once: `setup({ name = "Buddy" })`, then `transfer(a, b)` delivers a's addon messages to b.

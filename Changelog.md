@@ -11,6 +11,11 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
   - Messages show the program's real name instead of `python fcompanion.py`.
 - The companion updates from `SaffronG/ForeverChronicaller` by default.
 - Tests for standalone mode, plus a check that the companion's `VERSION` matches the `.toc` version.
+- **Automatic releases** (`.github/workflows/release.yml`): pushing a new `.toc` version to `main` runs all checks, then builds standalone installers on real Windows and Linux machines with PyInstaller (Python bundled in, so players don't need it). Each one is smoke-tested by installing into a fake WoW folder, both normally and in double-click mode. Then GitHub release `v<version>` is published with the Windows `.exe`, the Linux `.tar.gz`, the addon zip, the Python installer bundle, and download instructions plus the changelog as notes. The Linux binary is built on Ubuntu 24.04 so it also runs on older distros.
+
+### Changed
+- CI (`.github/workflows/ci.yml`) runs on pushes to `main` and on pull requests, and the release workflow can reuse it. Companion tests now run on **Linux and Windows** with the current Python 3. The old 3.8 setting failed because `ubuntu-latest` (Ubuntu 26.04) no longer has Python 3.8.
+- Releases no longer need a hand-pushed tag. The release workflow creates the tag.
 ## [0.3.0] - 2026-11-03
 
 Adds the companion app: installer, Discord/phone notifications and auto-update. Give friends the **Installer** zip.

@@ -3,7 +3,13 @@
 Automatically chronicles your adventure and tracks personal goals.
 
 ## Install
-**Easiest:** unzip `ForeverChronicaller-Installer-<version>.zip` anywhere and double-click **`Install.bat`** (Windows; needs [Python](https://www.python.org/downloads/) with "Add python.exe to PATH" ticked) or run `./install.sh` (Linux/macOS). It finds your WoW: Forever folder (or asks you for it) and installs the addon. Close the game first.
+**Easiest:** from the [latest release](https://github.com/SaffronG/ForeverChronicaller/releases/latest), close WoW and then:
+- **Windows:** download `ForeverChronicaller-Installer-<version>-windows.exe` and double-click it. If SmartScreen warns about an unknown publisher, click *More info* → *Run anyway*.
+- **Linux:** download `ForeverChronicaller-Installer-<version>-linux.tar.gz`, then `tar xzf` it and run `./ForeverChronicaller-Installer`.
+
+No Python needed. It finds your WoW: Forever folder (or asks you for it) and installs the addon.
+
+(The `ForeverChronicaller-Installer-<version>.zip` bundle does the same with your own Python: `Install.bat` / `install.sh`.)
 
 **Manually:**
 1. Unzip `ForeverChronicaller-<version>.zip` (from `scripts/package.sh` or a GitHub release) into your WoW: Forever folder's `Interface/AddOns/`, so you end up with `Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc`.
@@ -78,11 +84,17 @@ Every open location goal appears as a gold star on the world map. Click a star t
 
 ## Development / releasing
 - Build an installable zip: `scripts/package.sh` → `dist/ForeverChronicaller-<version>.zip`. Unzip it into `Interface/AddOns/`.
-- Release:
-  1. Bump `## Version:` in the `.toc`.
-  2. Move the `[Unreleased]` changelog section under the new version.
-  3. Commit, then `git tag vX.Y.Z && git push --tags`.
-  4. CI tests it and publishes a GitHub Release with the zip.
+- Every push to `main` runs the tests (Lua 5.1 and 5.4, plus the companion on Linux and Windows).
+- **Release (automatic):**
+  1. Bump `## Version:` in the `.toc` and `VERSION` in `companion/fcompanion.py`.
+  2. Rename `## [Unreleased]` in `Changelog.md` to `## [x.y.z] - date`, and add a fresh `## [Unreleased]` above it.
+  3. Commit and push to `main`.
+  4. The **Release** workflow notices the new version, runs all checks, and builds standalone installers on real Windows and Linux machines (Python bundled in, no install needed). It test-installs each one into a fake WoW folder, then publishes release `vx.y.z` with:
+     - `ForeverChronicaller-Installer-x.y.z-windows.exe`
+     - `ForeverChronicaller-Installer-x.y.z-linux.tar.gz`
+     - `ForeverChronicaller-x.y.z.zip` (manual install)
+     - `ForeverChronicaller-Installer-x.y.z.zip` (the Python version, for macOS or anyone else)
+- Pushes that don't change the version publish nothing. You can also start the Release workflow by hand from the Actions tab.
 
 Run the tests with `lua tests/run.lua .` from the repo root (Lua 5.1+). They use a fake WoW API, so in-game testing is still needed for frames, the options page and the world map.
 

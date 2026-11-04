@@ -1,15 +1,19 @@
 name: CI
 
+# Runs on every push to main and on pull requests. release.yml also calls it
+# (workflow_call) so nothing is published unless these checks pass.
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
+  workflow_call:
 
 jobs:
-  test:
+  addon:
+    name: Addon tests (Lua ${{ matrix.lua }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         lua: ["5.1", "5.4"]   # 5.1 is what the game runs
     steps:
@@ -30,37 +34,22 @@ jobs:
         run: scripts/package.sh
 
   companion:
-    runs-on: ubuntu-latest
+    name: Companion tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.8"   # oldest supported
+          python-version: "3.x"
       - name: Build the addon zip (the installer tests check it)
+        if: runner.os == 'Linux'
         run: scripts/package.sh
       - name: Companion tests
         run: python -m unittest discover -s companion/tests -v
-
-  release:
-    needs: [test, companion]
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Tag must match the .toc version
-        run: |
-          V=$(sed -n 's/^## Version: *//p' ForeverChronicaller.toc | tr -d '\r')
-          if [ "v$V" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match .toc version $V" >&2
-            exit 1
-          fi
-      - name: Package
-        run: scripts/package.sh
-      - name: Release notes
-        run: scripts/release_notes.sh > release-notes.md
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.zip
-          body_path: release-notes.md

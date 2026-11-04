@@ -1,0 +1,168 @@
+name: Release
+
+# Publishes a release automatically when a push to main carries a new version:
+# bump "## Version:" in ForeverChronicaller.toc (and VERSION in
+# companion/fcompanion.py), add a "## [x.y.z]" section to Changelog.md, push.
+# If tag v<version> already exists, nothing happens.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  version:
+    name: Is there a new version?
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      release: ${{ steps.check.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # includes tags
+      - id: check
+        run: |
+          V=$(sed -n 's/^## Version: *//p' ForeverChronicaller.toc | tr -d '\r')
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$V" >/dev/null; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$V is already released. Bump '## Version:' in the .toc to publish a new release."
+            exit 0
+          fi
+          if [ -z "$(scripts/release_notes.sh "$V" | tr -d '[:space:]')" ]; then
+            echo "::error::Changelog.md has no '## [$V]' section. Add one before releasing."
+            exit 1
+          fi
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::Releasing v$V"
+
+  checks:
+    name: Checks
+    needs: version
+    if: needs.version.outputs.release == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  addon-zip:
+    name: Addon zip
+    needs: [version, checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: addon
+          path: dist/*.zip
+          if-no-files-found: error
+
+  installer:
+    name: Installer (${{ matrix.platform }})
+    needs: [version, addon-zip]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            exe: .exe
+          - platform: linux
+            os: ubuntu-24.04   # older glibc than ubuntu-latest, so the binary runs on more distros
+            exe: ""
+    env:
+      V: ${{ needs.version.outputs.version }}
+      BIN: dist/ForeverChronicaller-Installer${{ matrix.exe }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: addon
+          path: dist
+      - name: Build standalone installer (Python is bundled in)
+        run: |
+          python -m pip install "pyinstaller==6.*"
+          SEP=":"; [ "$RUNNER_OS" = "Windows" ] && SEP=";"
+          # absolute path: PyInstaller resolves relative data paths against the spec folder
+          pyinstaller --onefile --clean --noconfirm --name ForeverChronicaller-Installer \
+            --add-data "$GITHUB_WORKSPACE/dist/ForeverChronicaller-$V.zip${SEP}." \
+            companion/fcompanion.py
+      - name: Smoke test the real binary
+        run: |
+          test "$("$BIN" --version | tr -d '\r')" = "$V"
+          mkdir -p "fake/WoW Forever" && touch "fake/WoW Forever/Wow.exe"
+          "$BIN" install --wow "$GITHUB_WORKSPACE/fake/WoW Forever" --yes
+          test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
+          grep -q "## Version: $V" "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
+          # double-click mode: no arguments, answers the folder prompt, then "Press Enter to close"
+          rm -rf "fake/WoW Forever/Interface"
+          printf '%s\n\n' "$GITHUB_WORKSPACE/fake/WoW Forever" | "$BIN"
+          test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
+      - name: Name the download
+        run: |
+          mkdir -p out
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cp "$BIN" "out/ForeverChronicaller-Installer-$V-windows.exe"
+          else
+            chmod +x "$BIN"
+            tar -czf "out/ForeverChronicaller-Installer-$V-linux.tar.gz" -C dist ForeverChronicaller-Installer
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.platform }}
+          path: out/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: [version, addon-zip, installer]
+    runs-on: ubuntu-latest
+    env:
+      V: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Release notes
+        run: |
+          {
+            echo "## Download"
+            echo
+            echo "| You have | Download | Then |"
+            echo "|---|---|---|"
+            echo "| **Windows** | \`ForeverChronicaller-Installer-$V-windows.exe\` | Close WoW, double-click it. If Windows SmartScreen warns about an unknown publisher: *More info* then *Run anyway*. |"
+            echo "| **Linux** | \`ForeverChronicaller-Installer-$V-linux.tar.gz\` | \`tar xzf ForeverChronicaller-Installer-$V-linux.tar.gz && ./ForeverChronicaller-Installer\` |"
+            echo "| Any (manual) | \`ForeverChronicaller-$V.zip\` | Unzip into \`Interface/AddOns/\` |"
+            echo
+            echo "No Python needed for the installers. They find your WoW: Forever folder (or ask for it) and install the addon. The same program also does Discord/phone notifications and updates: run it with \`setup\`, \`watch\` or \`update\`."
+            echo
+            scripts/release_notes.sh "$V"
+          } > release-notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.V }}
+          target_commitish: ${{ github.sha }}
+          name: Forever Chronicaller ${{ env.V }}
+          body_path: release-notes.md
+          make_latest: "true"
+          fail_on_unmatched_files: true
+          files: |
+            out/ForeverChronicaller-${{ env.V }}.zip
+            out/ForeverChronicaller-Installer-${{ env.V }}.zip
+            out/ForeverChronicaller-Installer-${{ env.V }}-windows.exe
+            out/ForeverChronicaller-Installer-${{ env.V }}-linux.tar.gz

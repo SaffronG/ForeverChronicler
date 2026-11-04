@@ -27,7 +27,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 
 - [x] **#6b Together goals for locations** – needs MapGoals' arrival check to report "my part done" for shared goals
 
-- [ ] Create the GitHub repository and push (`git remote add origin …`, `git push -u origin main --tags`). Needs the user, since there's no remote or `gh` CLI here. CI starts working once it's pushed
+- [x] Create the GitHub repository and push (`git remote add origin …`, `git push -u origin main --tags`). Needs the user, since there's no remote or `gh` CLI here. CI starts working once it's pushed
 
 ## Separate project: companion app (outside the game)
 - [x] **#10 Discord webhooks / push notifications** – done by watching the SavedVariables files (reliable) instead of the chat log (unclear whether addon output is logged). Posts on logout or `/chron sync`. Still to do: check WoW: Forever rules on external tools (it only reads files)
