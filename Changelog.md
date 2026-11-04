@@ -5,6 +5,14 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- Quest-log-style Goals tab: the main window is wider (640 px), with the goal list on the left and a details panel on the right showing:
+  - the goal's title and type, for example "Level goal - reach level 30" or "Location goal - arrive within 20 yd"
+  - status: open with created date and age, or completed with date and how long it took
+  - live progress (level, distance)
+  - an editable **Notes** box (up to 500 characters), also shown in the tracker tooltip
+  - Arrow / Done (Reopen) / Delete buttons
+  - New goals are selected automatically. Clicking a row selects it.
+- `FC:SetGoalDescription`, `FC:DescribeGoalType`, and `FC:AddWindowTab(name, label, view)` so other modules can add their own tabs to the main window.
 - On-screen goal tracker (new `Tracker.lua`), like the quest objective tracker:
   - Lists open goals (up to 8, then "+N more"). Level goals show progress, for example `(24/30)`, and location goals show live distance, for example `- 230 yd`.
   - Click a location goal to point the arrow at it. Click any other goal to open the Goals tab.

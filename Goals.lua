@@ -70,6 +70,14 @@ function FC:RemoveGoal(index)
     end
 end
 
+-- Optional free-text notes on a goal (shown in the goal log and tracker tooltip).
+function FC:SetGoalDescription(index, text)
+    local g = self.db.goals[index]
+    if not g then return end
+    text = text and text:gsub("^%s+", ""):gsub("%s+$", "") or ""
+    g.description = text ~= "" and text or nil
+end
+
 function FC:ToggleGoal(index)
     local g = self.db.goals[index]
     if not g then return end

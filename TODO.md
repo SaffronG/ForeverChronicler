@@ -14,9 +14,9 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [x] **#1 Configure auto-chronicaller** – Settings API options page; on/off per event type (level, zone, quest, death, achievement), optional entry cap
 - [x] **#7 Map goals** – modifier + right-click on world map → context menu "Set as goal"; use built-in user waypoint + super-tracking for the arrow; custom map pins for goals; auto-complete on proximity (open world only)
 - [x] **#7b Map pins for all location goals** – custom world-map pins (MapCanvas data provider + XML pin template) so every open location goal shows on the map, not just the one with the active waypoint. Deferred from #7 because it needs an XML template that can only really be checked in game
-- [ ] **#2 Goal tracker / quest-style menu**
+- [x] **#2 Goal tracker / quest-style menu** (categories were left out; notes cover it for now)
   - [x] #2a On-screen tracker frame (own frame, not Blizzard's objective tracker)
-  - [ ] #2b Quest-log-style goal log with details (description, type, created/completed dates, progress)
+  - [x] #2b Quest-log-style goal log with details (description, type, created/completed dates, progress)
 - [ ] **#3 Share goals with party** – register addon message prefix; send/accept popup; chunk messages >255 bytes; validate incoming data; outgoing queue that waits while messaging is restricted (instances during encounters / M+ / PvP)
 
 ## Later

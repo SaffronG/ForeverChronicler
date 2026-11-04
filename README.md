@@ -35,6 +35,7 @@ Anything else is a free-form goal you tick off yourself.
 
 Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal here` or `/chron goal 45.2 63.1`.
 The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
+The **Goals** tab works like the quest log: pick a goal on the left to see its details and progress, write notes for it, or point the arrow, complete or delete it.
 Open goals are listed in a small on-screen tracker (drag the title to move it, click to collapse, `/chron tracker` to hide it).
 Every open location goal appears as a gold star on the world map. Click a star to point the arrow at it.
 

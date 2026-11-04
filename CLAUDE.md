@@ -30,6 +30,6 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 - `MapPins.lua` / `MapPins.xml`: world map data provider and pin template. The pin mixin global (`ForeverChronicallerGoalPinMixin`) must be defined in the `.lua`, which loads before the `.xml`.
 - `Tracker.lua`: on-screen goal tracker (`FC:GoalProgressText`, `FC.RefreshTracker`). Distances come from `FC.goalDistance` (set by `MapGoals.lua`, which fires `LOCATIONS_UPDATED`).
 - `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
-- `UI.lua`: window and slash commands (`/chron`, `/fc`).
+- `UI.lua`: main window (Chronicle tab, quest-log-style Goals tab, `FC:AddWindowTab` for extra tabs) and basic slash commands.
 - `tests/`: `run.lua` (runner), `wow_stub.lua` (fake WoW API), `test_*.lua` (tests). Not loaded by the game.
 - `main.lua`, `persistance.lua`: original prototype. Not loaded, can be deleted.
