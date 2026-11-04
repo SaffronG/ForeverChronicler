@@ -5,6 +5,12 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- Export and import (new `Export.lua`) for backups or moving to another computer:
+  - `/chron export` opens a window with your chronicle, goals, visited zones and stats as one text string, already highlighted for Ctrl+C.
+  - `/chron import`: paste the string, then **Merge** (adds only missing entries and goals, so importing twice is safe) or **Replace** (asks first). `/chron import undo` reverts the last import until you log out.
+  - Uses the game's built-in serialize, compress and Base64 tools when the client has them (`FC1C:` strings). Otherwise it uses a built-in text format (`FC1T:`).
+  - The importer never runs code from the string. It parses and validates every record (types, lengths, ranges, nesting depth) and skips anything malformed. Truncated or damaged strings are rejected with a message.
+  - Not yet tested in game, including the real `C_EncodingUtil` format.
 - Goal sharing (new `Sharing.lua`): a **Share** button in the goal log, or `/chron share <n>`, sends a goal to your party, raid or instance group. `/chron share <n> <name>` whispers it to a friend instead.
   - Receivers get an Accept/Decline popup. Accepting adds a copy ("Shared by …" in the goal log) and tells the sender.
   - Level, zone, quest, location and free goals can be shared, including notes.

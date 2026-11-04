@@ -4,7 +4,7 @@
 --
 -- Usage: local W = dofile("tests/wow_stub.lua"); local env = W.setup(addonDir, opts)
 
-local W = {}
+local W = { cbor = {} }
 
 local function vec(x, y) return { x = x, y = y, GetXY = function(s) return s.x, s.y end } end
 
@@ -206,8 +206,9 @@ function W.setup(dir, opts)
     -- Encoding (11.1.5+ C_EncodingUtil); tests use a reversible fake
     if not opts.noEncoding then
         C_EncodingUtil = {
-            SerializeCBOR = function(t) env._ser = env._ser or {}; table.insert(env._ser, t); return "CBOR" .. #env._ser end,
-            DeserializeCBOR = function(s) local n = tonumber(s:match("^CBOR(%d+)$")); return n and env._ser[n] end,
+            -- shared across setups so one fake character can import another's export
+            SerializeCBOR = function(t) table.insert(W.cbor, t); return "CBOR" .. #W.cbor end,
+            DeserializeCBOR = function(s) local n = tonumber(s:match("^CBOR(%d+)$")); return n and W.cbor[n] end,
             CompressString = function(s) return "Z" .. s end,
             DecompressString = function(s) return s:sub(1, 1) == "Z" and s:sub(2) or nil end,
             EncodeBase64 = function(s) return "B" .. s end,

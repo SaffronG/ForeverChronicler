@@ -26,6 +26,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron way <n>` | point the waypoint arrow at location goal n |
 | `/chron tracker` | show/hide the on-screen goal tracker |
 | `/chron share <n> [name]` | share goal n with your group, or whisper it to a friend (they need the addon) |
+| `/chron export` / `/chron import [undo]` | back up / restore your chronicle as a text string |
 | `/chron config` | open the options page |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
 | `/chron help` | list all commands |
@@ -49,8 +50,13 @@ Every open location goal appears as a gold star on the world map. Click a star t
 - `Tracker.lua` – on-screen goal tracker
 - `Comms.lua` – addon-to-addon messaging (chunking, queue, restrictions)
 - `Sharing.lua` – share goals with your group / friends
+- `Export.lua` – export/import strings and their window
 - `Settings.lua` – options page (Settings API)
 - `UI.lua` – window and slash commands
+
+## Backup / moving to another computer
+- **In game:** `/chron export` and copy the text (Ctrl+C). On the other computer, `/chron import`, paste (Ctrl+V), then **Merge** or **Replace**. `/chron import undo` reverts the last import until you log out.
+- **By file:** your data lives in `WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicaller.lua`. Copy that file (with the game closed) to the same place on the other computer.
 
 ## Development
 Run the tests with `lua tests/run.lua .` from the repo root (Lua 5.1+). They use a fake WoW API, so in-game testing is still needed for frames, the options page and the world map.
