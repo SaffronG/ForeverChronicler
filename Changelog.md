@@ -4,6 +4,13 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Added
+- The companion can be built as a standalone program (no Python needed):
+  - It finds the addon zip embedded inside itself.
+  - Run with no arguments (double-clicked), it starts the installer, shows any error instead of just closing, and waits for Enter at the end.
+  - Messages show the program's real name instead of `python fcompanion.py`.
+- The companion updates from `SaffronG/ForeverChronicaller` by default.
+- Tests for standalone mode, plus a check that the companion's `VERSION` matches the `.toc` version.
 ## [0.3.0] - 2026-11-03
 
 Adds the companion app: installer, Discord/phone notifications and auto-update. Give friends the **Installer** zip.

@@ -34,6 +34,18 @@ from typing import Any, Callable, Dict, List, Optional
 ADDON = "ForeverChronicaller"
 VERSION = "0.3.0"
 USER_AGENT = f"ForeverChronicallerCompanion/{VERSION}"
+DEFAULT_REPO = "SaffronG/ForeverChronicaller"
+
+# True when running as a standalone program built with PyInstaller (no Python needed).
+FROZEN = bool(getattr(sys, "frozen", False))
+
+
+def prog() -> str:
+    """How the player runs this program, for messages."""
+    if FROZEN:
+        name = Path(sys.executable).name
+        return name if os.name == "nt" else f"./{name}"
+    return "python fcompanion.py"
 
 # Entry kinds the addon writes, and whether they're posted by default.
 DEFAULT_KINDS = {
@@ -61,7 +73,7 @@ def default_config() -> Dict[str, Any]:
         "post_kinds": dict(DEFAULT_KINDS),
         "characters": [],          # empty = all characters
         "poll_seconds": 5,
-        "github_repo": "",         # "owner/repo" for updates
+        "github_repo": DEFAULT_REPO,  # "owner/repo" for updates
     }
 
 
@@ -583,9 +595,18 @@ def find_wow_dirs(roots: Optional[List[Path]] = None) -> List[Path]:
 
 
 def bundled_zip() -> Optional[Path]:
-    """An addon zip shipped next to this script (installer bundle)."""
-    here = Path(__file__).resolve().parent
-    zips = sorted(here.glob(f"{ADDON}-[0-9]*.zip"), key=lambda p: version_tuple(p.name))
+    """The addon zip shipped with the installer: inside the standalone program,
+    or next to the script / program."""
+    places = []
+    if FROZEN and getattr(sys, "_MEIPASS", None):
+        places.append(Path(sys._MEIPASS))           # embedded in the .exe / binary
+    if FROZEN:
+        places.append(Path(sys.executable).resolve().parent)
+    places.append(Path(__file__).resolve().parent)
+    zips = []
+    for place in places:
+        zips += place.glob(f"{ADDON}-[0-9]*.zip")
+    zips.sort(key=lambda p: version_tuple(p.name))
     return zips[-1] if zips else None
 
 
@@ -628,7 +649,7 @@ def update(cfg: Dict[str, Any], fetch: Fetch = _http_get, check_only: bool = Fal
         return False
     log(f"New version available: {latest['version']} (installed: {current or 'none'}).")
     if check_only:
-        log("Run `python fcompanion.py update` to install it.")
+        log(f"Run `{prog()} update` to install it.")
         return False
     if running() and not force:
         log("WoW seems to be running. Close it first (or use --force, then restart the game: "
@@ -666,7 +687,7 @@ def cmd_setup(cfg: Dict[str, Any], args) -> int:
     cfg["github_repo"] = ask("GitHub repository for updates, owner/repo (empty to skip)", cfg["github_repo"])
     path = save_config(cfg)
     print(f"\nSaved to {path}")
-    print("Next: run `python fcompanion.py test`, then `python fcompanion.py watch` while you play.")
+    print(f"Next: run `{prog()} test`, then `{prog()} watch` while you play.")
     return 0
 
 
@@ -682,7 +703,7 @@ def cmd_test(cfg: Dict[str, Any], args) -> int:
 
 def cmd_watch(cfg: Dict[str, Any], args) -> int:
     if not cfg.get("wow_path"):
-        print("Run `python fcompanion.py setup` first.")
+        print(f"Run `{prog()} setup` first.")
         return 1
     if not cfg.get("discord_webhook") and not cfg.get("ntfy_topic"):
         print("No Discord webhook or ntfy topic configured; entries will only be listed here.")
@@ -708,7 +729,7 @@ def cmd_watch(cfg: Dict[str, Any], args) -> int:
 
 def cmd_update(cfg: Dict[str, Any], args) -> int:
     if not cfg.get("wow_path"):
-        print("Run `python fcompanion.py setup` first.")
+        print(f"Run `{prog()} setup` first.")
         return 1
     try:
         if args.zip:
@@ -776,7 +797,7 @@ def cmd_install(cfg: Dict[str, Any], args) -> int:
     save_config(cfg)
     print(f"\nForever Chronicaller {version} is installed in {addon_dir(wow)}")
     print("Start the game, make sure it's enabled in the AddOns list, and type /chron in game.")
-    print("Optional: `python fcompanion.py setup` for Discord / phone notifications.")
+    print(f"Optional: `{prog()} setup` for Discord / phone notifications.")
     return 0
 
 
@@ -804,9 +825,30 @@ COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": 
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    args = build_parser().parse_args(argv)
-    cfg = load_config()
-    return COMMANDS[args.command](cfg, args)
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # Double-clicked standalone program (no arguments): run the installer and keep
+    # the window open at the end so the player can read what happened.
+    double_clicked = FROZEN and not argv
+    if double_clicked:
+        argv = ["install"]
+        print(f"Forever Chronicaller installer {VERSION}\n")
+    try:
+        args = build_parser().parse_args(argv)
+        cfg = load_config()
+        return COMMANDS[args.command](cfg, args)
+    except KeyboardInterrupt:
+        return 1
+    except Exception as e:  # show the problem instead of a window that just vanishes
+        if not double_clicked:
+            raise
+        print(f"\nSomething went wrong: {type(e).__name__}: {e}")
+        return 1
+    finally:
+        if double_clicked:
+            try:
+                input("\nPress Enter to close...")
+            except EOFError:
+                pass
 
 
 if __name__ == "__main__":
