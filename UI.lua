@@ -1,5 +1,4 @@
--- Forever Chronicaller: window + slash commands
--- Uses only templates that exist from 3.3.5 through modern clients.
+-- Forever Chronicaller: main window + basic slash commands
 
 local _, FC = ...
 
@@ -192,42 +191,35 @@ local function printGoals()
     end
 end
 
-SLASH_FOREVERCHRONICALLER1 = "/chron"
-SLASH_FOREVERCHRONICALLER2 = "/fc"
-SlashCmdList["FOREVERCHRONICALLER"] = function(msg)
-    local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
-    cmd = (cmd or ""):lower()
-    if cmd == "" then
-        FC:Toggle()
-    elseif cmd == "note" and rest ~= "" then
-        FC:AddEntry("note", "|cffdddddd\"" .. rest .. "\"|r")
-        FC:Print("Noted.")
-    elseif cmd == "goal" and rest ~= "" then
+FC:Command("", "/chron - open/close the window", function() FC:Toggle() end, 1)
+
+FC:Command("note", "/chron note <text> - add a note to your chronicle", function(rest)
+    if rest == "" then return false end
+    FC:AddEntry("note", "|cffdddddd\"" .. rest .. "\"|r")
+    FC:Print("Noted.")
+end)
+
+FC:Command("goal", "/chron goal <text> - add a goal (level 20 / zone <name> / quest <name or ID> / here / 45.2 63.1 / anything)",
+    function(rest)
+        if rest == "" then return false end
         FC:AddGoal(rest)
-    elseif cmd == "goals" then
-        printGoals()
-    elseif cmd == "done" and tonumber(rest) then
-        FC:CompleteGoal(tonumber(rest))
-    elseif cmd == "del" and tonumber(rest) then
-        FC:RemoveGoal(tonumber(rest))
-        printGoals()
-    elseif cmd == "way" and tonumber(rest) then
-        if FC:SetGoalWaypoint(tonumber(rest)) then FC:Print("Waypoint set.") end
-    elseif cmd == "config" or cmd == "options" then
-        FC:OpenSettings()
-    elseif cmd == "recent" then
-        local n = tonumber(rest) or 10
-        local e = FC.db.entries
-        for i = math.max(1, #e - n + 1), #e do FC:Print(FC:FormatEntry(e[i])) end
-    else
-        FC:Print("Commands:")
-        FC:Print("/chron - open/close the window")
-        FC:Print("/chron note <text> - add a note to your chronicle")
-        FC:Print("/chron goal <text> - add a goal (level 20 / zone <name> / quest <name> auto-complete)")
-        FC:Print("/chron goals - list goals    /chron done <n>    /chron del <n>")
-        FC:Print("/chron recent [n] - print last n chronicle entries")
-        FC:Print("/chron goal here  |  /chron goal 45.2 63.1 - location goal (or Ctrl+right-click the world map)")
-        FC:Print("/chron way <n> - point the arrow at location goal n")
-        FC:Print("/chron config - open the options page")
-    end
-end
+    end)
+
+FC:Command("goals", "/chron goals - list goals", printGoals)
+
+FC:Command("done", "/chron done <n> - mark goal n as done", function(rest)
+    if not tonumber(rest) then return false end
+    FC:CompleteGoal(tonumber(rest))
+end)
+
+FC:Command("del", "/chron del <n> - delete goal n", function(rest)
+    if not tonumber(rest) then return false end
+    FC:RemoveGoal(tonumber(rest))
+    printGoals()
+end)
+
+FC:Command("recent", "/chron recent [n] - print the last n chronicle entries", function(rest)
+    local n = tonumber(rest) or 10
+    local e = FC.db.entries
+    for i = math.max(1, #e - n + 1), #e do FC:Print(FC:FormatEntry(e[i])) end
+end, 20)

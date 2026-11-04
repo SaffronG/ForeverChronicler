@@ -5,6 +5,11 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- Error isolation: every event handler, internal listener and slash command now runs through `FC:SafeCall`. An error in one feature is logged and the user is told once, but the chronicle and everything else keep working.
+  - `/chron errors` lists logged errors, and `/chron errors clear` clears them. Repeated identical errors are merged with a count. Up to 30 are kept, with short stack traces, in the saved data for bug reports.
+  - Errors are also passed to the game's error handler, so BugSack and the Lua error window still see them.
+- Slash command registry `FC:Command(names, usage, fn, order)`. Each module registers its own commands. `/chron help` (or an unknown command) lists them, and a command used without its required text prints its usage.
+- Test suite in `tests/` (`lua tests/run.lua .`): a fake WoW API plus 18 tests covering the chronicle, goals, settings, location goals, map pins, error isolation and commands.
 - Location goals (new `MapGoals.lua`):
   - **Ctrl + right-click** on a zone in the world map opens a menu with "Set as goal: travel here". The map's normal zoom-out from right-clicking is undone so you stay on the map you clicked.
   - `/chron goal here` sets a goal at your current position. `/chron goal 45.2 63.1` sets one at those coordinates in your current zone.

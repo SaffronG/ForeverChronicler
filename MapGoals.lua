@@ -210,7 +210,7 @@ end
 -- Run fn once the world map exists (it may load after this addon).
 function FC:WhenWorldMap(fn)
     if WorldMapFrame then
-        fn()
+        self:SafeCall(fn)
     else
         self:RegisterEvent("ADDON_LOADED", function(name)
             if name == "Blizzard_WorldMap" then fn() end
@@ -219,3 +219,8 @@ function FC:WhenWorldMap(fn)
 end
 
 FC:WhenWorldMap(hookWorldMap)
+
+FC:Command("way", "/chron way <n> - point the waypoint arrow at location goal n", function(rest)
+    if not tonumber(rest) then return false end
+    if FC:SetGoalWaypoint(tonumber(rest)) then FC:Print("Waypoint set.") end
+end)

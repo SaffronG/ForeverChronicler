@@ -65,3 +65,5 @@ function FC:OpenSettings()
     end
     Settings.OpenToCategory(category:GetID())
 end
+
+FC:Command({ "config", "options" }, "/chron config - open the options page", function() FC:OpenSettings() end, 90)
