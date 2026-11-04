@@ -19,6 +19,7 @@ local function defaults()
             maxEntries = 0, -- 0 = unlimited; otherwise oldest entries are dropped as new ones arrive
             arrivalYards = 20, -- how close you must get to complete a location goal
             showTracker = true, -- on-screen goal tracker
+            acceptShares = true, -- show popups when group members share goals
             trackerCollapsed = false,
             trackerPos = nil, -- { point, relativePoint, x, y } once the tracker has been moved
         },

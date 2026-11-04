@@ -5,6 +5,13 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- Goal sharing (new `Sharing.lua`): a **Share** button in the goal log, or `/chron share <n>`, sends a goal to your party, raid or instance group. `/chron share <n> <name>` whispers it to a friend instead.
+  - Receivers get an Accept/Decline popup. Accepting adds a copy ("Shared by …" in the goal log) and tells the sender.
+  - Level, zone, quest, location and free goals can be shared, including notes.
+  - Incoming goals are validated (types, lengths, number ranges). Duplicates of goals you already have open are ignored, and at most 5 offers wait at once.
+  - "Allow shared goals" option to ignore all offers.
+- Addon messaging layer (new `Comms.lua`): `FC:SendComm` and `FC:OnComm`. It splits messages into chunks under the 255-byte limit and reassembles them, escapes every special and non-ASCII byte, and keeps an outgoing queue that waits while addon messages are restricted (instances during encounters, M+ or PvP) and sends at most 4 messages per second. Your own and malformed messages are ignored.
+- Both players need the addon. Not yet tested in game.
 - Quest-log-style Goals tab: the main window is wider (640 px), with the goal list on the left and a details panel on the right showing:
   - the goal's title and type, for example "Level goal - reach level 30" or "Location goal - arrive within 20 yd"
   - status: open with created date and age, or completed with date and how long it took

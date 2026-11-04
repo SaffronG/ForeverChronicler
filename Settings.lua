@@ -65,6 +65,10 @@ local function register()
     createCheckbox(category, tracker, "Show your open goals in a small box on screen (drag its title to move it).")
     watch(trackerVar, tracker)
 
+    local shares = Settings.RegisterAddOnSetting(category, ADDON .. "_AcceptShares", "acceptShares",
+        FC.db.settings, Settings.VarType.Boolean, "Allow shared goals", true)
+    createCheckbox(category, shares, "Show a popup when someone shares a goal with you. Turn off to ignore all shared goals.")
+
     Settings.RegisterAddOnCategory(category)
 end
 

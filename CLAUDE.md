@@ -22,13 +22,15 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 8. **Don't** delete user files, rewrite history or push to a remote unless the user asks.
 
 ## Layout
-- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Settings → UI.
+- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → Settings → UI.
 - `Core.lua`: saved data (`ForeverChronicallerDB`), error isolation (`FC:SafeCall`, `/chron errors`), event dispatch, internal message system (`FC:On` / `FC:Fire`), slash command registry (`FC:Command(names, usage, fn, order)`).
 - `Chronicle.lua`: automatic logging (`FC:AddEntry`).
 - `Goals.lua`: goal parsing and auto-completion (`FC:CreateGoal`, `FC:AddGoal`). Fires `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED` and `GOALS_CHANGED`.
 - `MapGoals.lua`: location goals (`kind = "location"`), world map Ctrl + right-click menu, waypoint/super-track, arrival polling.
 - `MapPins.lua` / `MapPins.xml`: world map data provider and pin template. The pin mixin global (`ForeverChronicallerGoalPinMixin`) must be defined in the `.lua`, which loads before the `.xml`.
 - `Tracker.lua`: on-screen goal tracker (`FC:GoalProgressText`, `FC.RefreshTracker`). Distances come from `FC.goalDistance` (set by `MapGoals.lua`, which fires `LOCATIONS_UPDATED`).
+- `Comms.lua`: addon messages (`FC:SendComm(type, fields, channel, target)`, `FC:OnComm(type, fn)`), prefix `FChron`. Incoming data is untrusted, so always validate it.
+- `Sharing.lua`: goal sharing (`FC.GoalToFields` / `FC.FieldsToGoal` validate and convert goals for messages).
 - `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `UI.lua`: main window (Chronicle tab, quest-log-style Goals tab, `FC:AddWindowTab` for extra tabs) and basic slash commands.
 - `tests/`: `run.lua` (runner), `wow_stub.lua` (fake WoW API), `test_*.lua` (tests). Not loaded by the game.

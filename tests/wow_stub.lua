@@ -133,7 +133,9 @@ function W.setup(dir, opts)
     GetTitleText = function() return env.questTitle end
     GetAchievementInfo = function(id) return id, "Achievement " .. id end
     RequestTimePlayed = function() env.timePlayedRequested = true end
-    IsInGroup = function() return env.inGroup or false end
+    IsInGroup = function(category) if category == 2 then return env.inInstanceGroup or false end return env.inGroup or false end
+    LE_PARTY_CATEGORY_HOME, LE_PARTY_CATEGORY_INSTANCE = 1, 2
+    Ambiguate = function(name) return (name:gsub("%-.*$", "")) end
     IsInRaid = function() return false end
     IsInInstance = function() return env.inInstance or false, env.inInstance and "party" or "none" end
     GetNumGroupMembers = function() return env.inGroup and 2 or 0 end
@@ -278,6 +280,24 @@ function W.setup(dir, opts)
     env.fire("ADDON_LOADED", "ForeverChronicaller")
     env.fire("PLAYER_LOGIN")
     env.fire("PLAYER_ENTERING_WORLD")
+
+    -- Deliver every sent addon message to ourselves as if it came from `sender`.
+    function env.deliver(sender, filter)
+        local msgs = env.addonMessages; env.addonMessages = {}
+        for _, m in ipairs(msgs) do
+            if not filter or filter(m) then
+                env.fire("CHAT_MSG_ADDON", m.prefix, m.msg, m.channel, sender or "Friend-Forever")
+            end
+        end
+        return msgs
+    end
+    function env.acceptPopup(i)
+        local p = table.remove(env.popups, i or 1)
+        local dialog = StaticPopupDialogs[p.which]
+        dialog.OnAccept(nil, p.data)
+        if dialog.OnHide then dialog.OnHide() end
+        env.runTimers()
+    end
 
     function env.slash(msg) SlashCmdList.FOREVERCHRONICALLER(msg) end
     function env.chatContains(s)

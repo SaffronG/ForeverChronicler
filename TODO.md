@@ -17,7 +17,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [x] **#2 Goal tracker / quest-style menu** (categories were left out; notes cover it for now)
   - [x] #2a On-screen tracker frame (own frame, not Blizzard's objective tracker)
   - [x] #2b Quest-log-style goal log with details (description, type, created/completed dates, progress)
-- [ ] **#3 Share goals with party** – register addon message prefix; send/accept popup; chunk messages >255 bytes; validate incoming data; outgoing queue that waits while messaging is restricted (instances during encounters / M+ / PvP)
+- [x] **#3 Share goals with party** – register addon message prefix; send/accept popup; chunk messages >255 bytes; validate incoming data; outgoing queue that waits while messaging is restricted (instances during encounters / M+ / PvP)
 
 ## Later
 - [ ] **#4 Backup / load elsewhere** – export/import string (serialize + compress + Base64 if available); merge rules; document copying the SavedVariables file; consider account-wide data

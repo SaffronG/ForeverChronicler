@@ -25,6 +25,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron recent [n]` | print last n entries to chat |
 | `/chron way <n>` | point the waypoint arrow at location goal n |
 | `/chron tracker` | show/hide the on-screen goal tracker |
+| `/chron share <n> [name]` | share goal n with your group, or whisper it to a friend (they need the addon) |
 | `/chron config` | open the options page |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
 | `/chron help` | list all commands |
@@ -46,6 +47,8 @@ Every open location goal appears as a gold star on the world map. Click a star t
 - `MapGoals.lua` – location goals, world map menu, waypoint arrow
 - `MapPins.lua` / `MapPins.xml` – world map pins for open location goals
 - `Tracker.lua` – on-screen goal tracker
+- `Comms.lua` – addon-to-addon messaging (chunking, queue, restrictions)
+- `Sharing.lua` – share goals with your group / friends
 - `Settings.lua` – options page (Settings API)
 - `UI.lua` – window and slash commands
 

@@ -167,14 +167,16 @@ end)
 
 local function detailButton(label, x)
     local b = CreateFrame("Button", nil, details, "UIPanelButtonTemplate")
-    b:SetSize(80, 22)
+    b:SetSize(60, 22)
     b:SetPoint("BOTTOMLEFT", x, 10)
     b:SetText(label)
     return b
 end
 local btnArrow = detailButton("Arrow", 10)
-local btnDone = detailButton("Done", 95)
-local btnDelete = detailButton("Delete", 180)
+local btnShare = detailButton("Share", 72)
+local btnDone = detailButton("Done", 134)
+local btnDelete = detailButton("Delete", 196)
+btnShare:SetScript("OnClick", function() if selected and FC.ShareGoal then FC:SafeCall(FC.ShareGoal, FC, selected) end end)
 btnArrow:SetScript("OnClick", function() if selected then FC:SafeCall(FC.SetGoalWaypoint, FC, selected) end end)
 btnDone:SetScript("OnClick", function() if selected then FC:SafeCall(FC.ToggleGoal, FC, selected) end end)
 btnDelete:SetScript("OnClick", function() if selected then FC:SafeCall(FC.RemoveGoal, FC, selected) end end)
@@ -215,7 +217,7 @@ end
 local function showDetails()
     local g = selected and FC.db.goals[selected]
     if not g then
-        for _, w in ipairs({ dTitle, dType, dStatus, dProgress, dDescLabel, desc, btnArrow, btnDone, btnDelete }) do w:Hide() end
+        for _, w in ipairs({ dTitle, dType, dStatus, dProgress, dDescLabel, desc, btnArrow, btnShare, btnDone, btnDelete }) do w:Hide() end
         dEmpty:Show()
         return
     end
@@ -223,6 +225,9 @@ local function showDetails()
     for _, w in ipairs({ dTitle, dType, dStatus, dProgress, dDescLabel, desc, btnDone, btnDelete }) do w:Show() end
     dTitle:SetText(g.text)
     dType:SetText(FC:DescribeGoalType(g))
+    if g.sharedBy then
+        dType:SetText(FC:DescribeGoalType(g) .. "\n|cff88ccffShared by " .. g.sharedBy .. "|r")
+    end
     if g.done then
         dStatus:SetText(string.format("|cff00ff00Completed|r %s (took %s)",
             date("%Y-%m-%d %H:%M", g.completed or time()), duration((g.completed or time()) - g.created)))
@@ -234,6 +239,7 @@ local function showDetails()
     if not desc:HasFocus() then desc:SetText(g.description or "") end
     btnDone:SetText(g.done and "Reopen" or "Done")
     btnArrow:SetShown(g.kind == "location" and not g.done)
+    btnShare:SetShown(not g.done and g.kind ~= "shared")
 end
 
 -- Input box at the bottom ----------------------------------------------------------
