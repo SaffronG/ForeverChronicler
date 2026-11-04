@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-03
+
+First release published automatically, with **standalone installers for Windows and Linux** (no Python needed).
+
 ### Added
 - The companion can be built as a standalone program (no Python needed):
   - It finds the addon zip embedded inside itself.

@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 ADDON = "ForeverChronicaller"
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 USER_AGENT = f"ForeverChronicallerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicaller"
 
