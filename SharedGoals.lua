@@ -19,7 +19,7 @@
 
 local _, FC = ...
 
-local INNER_KINDS = { level = true, zone = true, quest = true, free = true }
+local INNER_KINDS = { level = true, zone = true, quest = true, free = true, location = true }
 local MAX_MEMBERS = 10
 local SYNC_EVERY = 60
 
@@ -78,6 +78,16 @@ function FC.CleanSharedTarget(t)
     if inner.kind == "level" then
         inner.target = tonumber(t.inner.target)
         if not inner.target then return nil end
+    elseif inner.kind == "location" then
+        local l = t.inner.target
+        if type(l) == "string" then -- "mapID,x,y" from a message
+            local m, x, y = l:match("^(%d+),([%d%.]+),([%d%.]+)$")
+            l = m and { mapID = tonumber(m), x = tonumber(x), y = tonumber(y) } or nil
+        end
+        if type(l) ~= "table" then return nil end
+        local m, x, y = tonumber(l.mapID), tonumber(l.x), tonumber(l.y)
+        if not (m and x and y) or x < 0 or x > 1 or y < 0 or y > 1 then return nil end
+        inner.target = { mapID = m, x = x, y = y, armed = l.armed == true }
     elseif inner.kind ~= "free" then
         if type(t.inner.target) ~= "string" or #t.inner.target > 200 then return nil end
         inner.target = t.inner.target
@@ -131,7 +141,11 @@ end
 -- Sending --------------------------------------------------------------------------------
 local function stateFields(g)
     local t = g.target
-    return { id = t.id, text = g.text, ikind = t.inner.kind, itarget = t.inner.target or "",
+    local itarget = t.inner.target or ""
+    if t.inner.kind == "location" then
+        itarget = string.format("%d,%.4f,%.4f", itarget.mapID, itarget.x, itarget.y)
+    end
+    return { id = t.id, text = g.text, ikind = t.inner.kind, itarget = itarget,
         members = encodeMembers(t.members) }
 end
 
@@ -215,6 +229,7 @@ function FC:MarkSharedPartDone(g)
     local m = g.target.members[me()]
     if not m or m.done then return end
     m.done = time()
+    self:Fire("SHARED_PART_DONE", g)
     self:Print(string.format("Your part of \"%s\" is done! %s", g.text, self:SharedProgressText(g)))
     syncGoal(g)
     self:Fire("GOALS_CHANGED")
@@ -228,7 +243,7 @@ local function innerSatisfied(inner, questTitle, questID, level)
         if questID and tonumber(inner.target) == questID then return true end
         return questTitle and questTitle:lower() == tostring(inner.target):lower()
     end
-    return false -- free: ticked off by hand
+    return false -- free: ticked off by hand; location: checked by MapGoals.lua
 end
 
 local function checkMine(questTitle, questID, level)
@@ -256,7 +271,7 @@ function FC:CreateSharedGoal(friend, goalText)
     local kind, target, text = FC.ParseGoalText(goalText)
     if not kind then self:Print(target) return end
     if not INNER_KINDS[kind] then
-        self:Print("Location goals can't be done together yet. Try level, zone, quest or a personal goal.")
+        self:Print("That kind of goal can't be done together.")
         return
     end
     local t = { id = newId(), inner = { kind = kind, target = target },

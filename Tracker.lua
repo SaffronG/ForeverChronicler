@@ -64,7 +64,7 @@ local function getLine(i)
         FC:SafeCall(function()
             local g = self.index and FC.db.goals[self.index]
             if not g then return end
-            if g.kind == "location" then
+            if FC:GoalLocation(g, true) then
                 if FC:SetGoalWaypoint(self.index) then FC:Print("Arrow pointing to: " .. g.text) end
             else
                 FC:Toggle("goals")
@@ -77,7 +77,7 @@ local function getLine(i)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:SetText(g.text, 1, 0.82, 0)
         if g.description and g.description ~= "" then GameTooltip:AddLine(g.description, 1, 1, 1, true) end
-        GameTooltip:AddLine(g.kind == "location" and "Click to point the arrow here." or "Click to open your goals.", 0.6, 0.6, 0.6)
+        GameTooltip:AddLine(FC:GoalLocation(g, true) and "Click to point the arrow here." or "Click to open your goals.", 0.6, 0.6, 0.6)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -95,10 +95,12 @@ function FC:GoalProgressText(g)
     local text = g.text
     if g.kind == "level" then
         text = string.format("%s |cffaaaaaa(%d/%d)|r", text, UnitLevel("player") or 0, g.target)
-    elseif g.kind == "location" then
+    end
+    if FC:GoalLocation(g, true) then
         local d = FC.goalDistance and FC.goalDistance[g]
         if d then text = string.format("%s |cffaaaaaa- %s|r", text, formatDistance(d)) end
-    elseif g.kind == "shared" and FC.SharedProgressText then
+    end
+    if g.kind == "shared" and FC.SharedProgressText then
         text = string.format("%s |cffaaaaaa%s|r", text, FC:SharedProgressText(g))
     end
     return text

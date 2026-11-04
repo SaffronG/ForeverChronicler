@@ -5,6 +5,7 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- Together goals can be locations ("meet me here"): `/chron together Buddy here` or `/chron together Buddy 45.2 63.1`. Each member gets the waypoint arrow and a map pin, and their part is done on arrival (their arrow clears then). The tracker shows both distance and member progress. New `FC:GoalLocation(g, active)` gives the position for plain and together location goals.
 - `scripts/package.sh` builds `dist/ForeverChronicaller-<version>.zip` containing only the files the game needs (the `.toc` and everything it lists, plus README and Changelog) in a `ForeverChronicaller/` folder. It fails if a listed file is missing.
 - `scripts/release_notes.sh [version]` prints that version's Changelog section.
 - GitHub Actions CI (`.github/workflows/ci.yml`):
@@ -20,7 +21,6 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
   - **Offline friends:** progress is only sent to members who are online (in your group, online on your friend list, or seen in the last 5 minutes). Anything else is remembered (saved) and sent when they come online, join your group, or every minute. Updates can arrive in any order, because state only moves forward.
   - Safety: only members can update a goal, nobody can mark *your* part done for you, the number of members is capped, and every message is validated. A sync can't loop forever. Progress is still trust-based: each client reports its own part.
   - Deleting a together goal tells the others you left.
-  - Location goals can't be together goals yet.
   - Not yet tested in game. **Add each other as friends** so syncing works automatically.
 - Tests can now run two fake players talking to each other (`transfer(a, b)`).
 - Journey tab with graphs and statistics (new `Journey.lua`, also `/chron journey`):

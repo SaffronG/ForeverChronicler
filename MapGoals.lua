@@ -60,15 +60,30 @@ function FC:ParseLocation(text)
     return false
 end
 
+-- The map position a goal points to: its own target for location goals, or the
+-- inner target for together goals about a location. With `active`, together
+-- goals only count while *your* part isn't done yet.
+function FC:GoalLocation(g, active)
+    if not g or type(g.target) ~= "table" then return nil end
+    if g.kind == "location" then return g.target end
+    if g.kind == "shared" and type(g.target.inner) == "table" and g.target.inner.kind == "location" then
+        if active then
+            local mine = g.target.members and g.target.members[UnitName("player")]
+            if mine and mine.done then return nil end
+        end
+        return g.target.inner.target
+    end
+end
+
 -- Waypoint / arrow ----------------------------------------------------------
 
 function FC:SetGoalWaypoint(index)
     local g = self.db.goals[index]
-    if not g or g.kind ~= "location" then
+    local t = self:GoalLocation(g)
+    if not t then
         self:Print("That isn't a location goal.")
         return false
     end
-    local t = g.target
     if not C_Map.CanSetUserWaypointOnMap(t.mapID) then
         self:Print("Can't place a waypoint on " .. mapName(t.mapID) .. ".")
         return false
@@ -84,20 +99,21 @@ end
 local function clearWaypointFor(g)
     if not (C_Map.HasUserWaypoint and C_Map.HasUserWaypoint()) then return end
     local wp = C_Map.GetUserWaypoint()
-    local t = g.target
-    if wp and wp.uiMapID == t.mapID and wp.position
+    local t = FC:GoalLocation(g)
+    if t and wp and wp.uiMapID == t.mapID and wp.position
         and math.abs(wp.position.x - t.x) < 0.001 and math.abs(wp.position.y - t.y) < 0.001 then
         C_Map.ClearUserWaypoint()
     end
 end
 
 FC:On("GOAL_ADDED", function(g, index)
-    if g.kind == "location" then FC:SetGoalWaypoint(index) end
+    if FC:GoalLocation(g) then FC:SetGoalWaypoint(index) end
 end)
 -- Completed (incl. ticked by hand) or deleted: remove our arrow.
 local function onGoalGone(g)
-    if g.kind == "location" then clearWaypointFor(g) end
+    if FC:GoalLocation(g) then clearWaypointFor(g) end
 end
+FC:On("SHARED_PART_DONE", onGoalGone)
 FC:On("GOAL_COMPLETED", onGoalGone)
 FC:On("GOAL_REMOVED", onGoalGone)
 
@@ -116,8 +132,8 @@ local function checkLocations()
     if not pCont then return end
     local radius = FC.db.settings.arrivalYards or 20
     for i, g in ipairs(FC.db.goals) do
-        if g.kind == "location" and not g.done then
-            local t = g.target
+        local t = not g.done and FC:GoalLocation(g, true)
+        if t then
             local gCont, gwx, gwy = worldPos(t.mapID, t.x, t.y)
             if gCont ~= pCont then
                 FC.goalDistance[g] = nil -- other continent
@@ -150,7 +166,7 @@ local function updateTicker()
     if positionBroken then return end
     local open = false
     for _, g in ipairs(FC.db.goals) do
-        if g.kind == "location" and not g.done then open = true break end
+        if not g.done and FC:GoalLocation(g, true) then open = true break end
     end
     if open and not ticker then
         ticker = C_Timer.NewTicker(1, safeCheck)

@@ -238,7 +238,7 @@ local function showDetails()
     dProgress:SetText(progress ~= g.text and ("Progress: " .. progress:sub(#g.text + 2)) or "")
     if not desc:HasFocus() then desc:SetText(g.description or "") end
     btnDone:SetText(g.done and "Reopen" or "Done")
-    btnArrow:SetShown(g.kind == "location" and not g.done)
+    btnArrow:SetShown(not g.done and FC:GoalLocation(g, true) ~= nil)
     btnShare:SetShown(not g.done and g.kind ~= "shared")
 end
 

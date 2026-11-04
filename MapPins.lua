@@ -77,8 +77,9 @@ function Provider:RefreshAllData()
     local viewMapID = map:GetMapID()
     if not viewMapID then return end
     for i, g in ipairs(FC.db.goals) do
-        if g.kind == "location" and not g.done then
-            local ok, x, y = pcall(projectOnto, g.target, viewMapID)
+        local target = not g.done and FC:GoalLocation(g, true)
+        if target then
+            local ok, x, y = pcall(projectOnto, target, viewMapID)
             if ok and x then map:AcquirePin(TEMPLATE, i, g, x, y) end
         end
     end

@@ -25,7 +25,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [x] **#6 Shared goals with a friend** – builds on #3; offline sync queue, resync on login/group join, conflict rules; progress is trust-based
 - [x] **#8 CI/CD** – GitHub repo; Actions: luacheck, stub-API smoke test, package zip + GitHub Release on tag
 
-- [ ] **#6b Together goals for locations** – needs MapGoals' arrival check to report "my part done" for shared goals
+- [x] **#6b Together goals for locations** – needs MapGoals' arrival check to report "my part done" for shared goals
 
 - [ ] Create the GitHub repository and push (`git remote add origin …`, `git push -u origin main --tags`). Needs the user, since there's no remote or `gh` CLI here. CI starts working once it's pushed
 
