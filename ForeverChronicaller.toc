@@ -8,5 +8,6 @@
 Core.lua
 Chronicle.lua
 Goals.lua
+MapGoals.lua
 Settings.lua
 UI.lua

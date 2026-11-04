@@ -16,6 +16,7 @@ local function defaults()
             -- which automatic entry types get written (notes and the opening entry are always kept)
             chronicle = { level = true, zone = true, quest = true, death = true, achievement = true, goal = true },
             maxEntries = 0, -- 0 = unlimited; otherwise oldest entries are dropped as new ones arrive
+            arrivalYards = 20, -- how close you must get to complete a location goal
         },
     }
 end

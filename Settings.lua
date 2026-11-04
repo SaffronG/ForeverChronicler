@@ -40,6 +40,15 @@ local function register()
         "Maximum number of chronicle entries to keep. When a new entry pushes the chronicle over the limit, " ..
         "the oldest entries are permanently deleted. 0 = unlimited.")
 
+    local arrival = Settings.RegisterAddOnSetting(category, ADDON .. "_ArrivalYards", "arrivalYards",
+        FC.db.settings, Settings.VarType.Number, "Location goal arrival distance", 20)
+    local arrivalOptions = Settings.CreateSliderOptions(5, 100, 5)
+    arrivalOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return tostring(value) .. " yd"
+    end)
+    Settings.CreateSlider(category, arrival, arrivalOptions,
+        "How close (in yards) you need to get to a location goal for it to complete.")
+
     Settings.RegisterAddOnCategory(category)
 end
 

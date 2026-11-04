@@ -211,6 +211,8 @@ SlashCmdList["FOREVERCHRONICALLER"] = function(msg)
     elseif cmd == "del" and tonumber(rest) then
         FC:RemoveGoal(tonumber(rest))
         printGoals()
+    elseif cmd == "way" and tonumber(rest) then
+        if FC:SetGoalWaypoint(tonumber(rest)) then FC:Print("Waypoint set.") end
     elseif cmd == "config" or cmd == "options" then
         FC:OpenSettings()
     elseif cmd == "recent" then
@@ -224,6 +226,8 @@ SlashCmdList["FOREVERCHRONICALLER"] = function(msg)
         FC:Print("/chron goal <text> - add a goal (level 20 / zone <name> / quest <name> auto-complete)")
         FC:Print("/chron goals - list goals    /chron done <n>    /chron del <n>")
         FC:Print("/chron recent [n] - print last n chronicle entries")
+        FC:Print("/chron goal here  |  /chron goal 45.2 63.1 - location goal (or Ctrl+right-click the world map)")
+        FC:Print("/chron way <n> - point the arrow at location goal n")
         FC:Print("/chron config - open the options page")
     end
 end

@@ -23,16 +23,21 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron goals` | list goals |
 | `/chron done <n>` / `/chron del <n>` | complete / delete goal n |
 | `/chron recent [n]` | print last n entries to chat |
+| `/chron way <n>` | point the waypoint arrow at location goal n |
 | `/chron config` | open the options page |
 
 Goals that complete automatically:
 `level 30`, `zone Stranglethorn Vale`, `quest The Defias Brotherhood` (or `quest <questID>` for an exact match).
 Anything else is a free-form goal you tick off yourself.
 
+Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal here` or `/chron goal 45.2 63.1`.
+The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
+
 ## Files
 - `Core.lua` – SavedVariables (persistence), event dispatch
 - `Chronicle.lua` – automatic event logging
 - `Goals.lua` – goal parsing / auto-completion
+- `MapGoals.lua` – location goals, world map menu, waypoint arrow
 - `Settings.lua` – options page (Settings API)
 - `UI.lua` – window and slash commands
 

@@ -4,14 +4,20 @@
 --   "zone Stranglethorn Vale" -> completes when you enter that zone
 --   "quest The Defias Brotherhood" -> completes when you turn in that quest
 --   "quest 12345"         -> same, matched by quest ID (exact, language-proof)
+--   "here" / "45.2 63.1"  -> location goal, see MapGoals.lua
 --   anything else         -> free-form goal, mark done manually
 
 local _, FC = ...
 
 local function trim(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end
 
+-- Returns kind, target, displayText; or nil, errorMessage.
 local function parseGoal(text)
     text = trim(text)
+    if FC.ParseLocation then
+        local kind, target, display = FC:ParseLocation(text)
+        if kind ~= false then return kind, target, display end -- false = not location syntax
+    end
     local lvl = text:match("^[Ll]evel%s+(%d+)$")
     if lvl then return "level", tonumber(lvl), "Reach level " .. lvl end
     local zone = text:match("^[Zz]one%s+(.+)$")
@@ -21,15 +27,25 @@ local function parseGoal(text)
     return "free", nil, text
 end
 
-function FC:AddGoal(rawText)
-    if not rawText or trim(rawText) == "" then return end
-    local kind, target, text = parseGoal(rawText)
+-- Create a goal from already-parsed parts (used by AddGoal and the map menu).
+function FC:CreateGoal(kind, target, text)
     local g = { text = text, kind = kind, target = target, done = false, created = time() }
     table.insert(self.db.goals, g)
     self:Print("New goal: " .. text)
+    self:Fire("GOAL_ADDED", g, #self.db.goals)
     self:Fire("GOALS_CHANGED")
     self:CheckGoals() -- e.g. "level 10" when you're already 12
     return g
+end
+
+function FC:AddGoal(rawText)
+    if not rawText or trim(rawText) == "" then return end
+    local kind, target, text = parseGoal(rawText)
+    if not kind then
+        self:Print(target) -- error message
+        return
+    end
+    return self:CreateGoal(kind, target, text)
 end
 
 function FC:CompleteGoal(index)
@@ -37,6 +53,7 @@ function FC:CompleteGoal(index)
     if not g or g.done then return end
     g.done = true
     g.completed = time()
+    self:Fire("GOAL_COMPLETED", g)
     local days = math.floor((g.completed - g.created) / 86400)
     local took = days > 0 and string.format(" (after %d day%s)", days, days == 1 and "" or "s") or ""
     self:AddEntry("goal", string.format("|cffff80ffGoal achieved: %s%s|r", g.text, took))
@@ -47,7 +64,8 @@ end
 
 function FC:RemoveGoal(index)
     if self.db.goals[index] then
-        table.remove(self.db.goals, index)
+        local g = table.remove(self.db.goals, index)
+        self:Fire("GOAL_REMOVED", g)
         self:Fire("GOALS_CHANGED")
     end
 end
