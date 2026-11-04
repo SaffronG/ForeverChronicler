@@ -5,6 +5,13 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- On-screen goal tracker (new `Tracker.lua`), like the quest objective tracker:
+  - Lists open goals (up to 8, then "+N more"). Level goals show progress, for example `(24/30)`, and location goals show live distance, for example `- 230 yd`.
+  - Click a location goal to point the arrow at it. Click any other goal to open the Goals tab.
+  - Drag the title to move it (position is saved). Click the title to collapse it.
+  - Hidden automatically when there are no open goals. "Show goal tracker" option and `/chron tracker` toggle it.
+  - Not yet tested in game.
+- Settings can now notify the addon when they change (`SETTINGS_CHANGED`), so changes apply straight away.
 - Error isolation: every event handler, internal listener and slash command now runs through `FC:SafeCall`. An error in one feature is logged and the user is told once, but the chronicle and everything else keep working.
   - `/chron errors` lists logged errors, and `/chron errors clear` clears them. Repeated identical errors are merged with a count. Up to 30 are kept, with short stack traces, in the saved data for bug reports.
   - Errors are also passed to the game's error handler, so BugSack and the Lua error window still see them.

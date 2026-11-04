@@ -32,7 +32,9 @@ local function newObject(name)
         if k == "SetChecked" then return function(s, v) s.checked = v end end
         if k == "GetChecked" then return function(s) return s.checked end end
         if k == "GetName" then return function(s) return s.name end end
-        if k == "GetStringHeight" or k == "GetHeight" or k == "GetWidth" then return function() return 10 end end
+        if k == "SetHeight" then return function(s, h) s.height = h end end
+        if k == "GetHeight" then return function(s) return s.height or 10 end end
+        if k == "GetStringHeight" or k == "GetWidth" then return function() return 10 end end
         if k == "GetStringWidth" then return function(s) return #tostring(s.text) * 6 end end
         if k == "CreateFontString" or k == "CreateTexture" or k == "CreateLine" then
             return function(s) local c = newObject(); c.shown = true; table.insert(s.children, c); return c end

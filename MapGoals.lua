@@ -105,6 +105,10 @@ FC:On("GOAL_REMOVED", onGoalGone)
 
 local ticker, positionBroken
 
+-- Latest distance (yards) to each open location goal, for the tracker.
+-- Weak keys so deleted goals disappear; never written to saved data.
+FC.goalDistance = setmetatable({}, { __mode = "k" })
+
 local function checkLocations()
     local pMap, px, py = playerMapPos()
     if not pMap then return end -- instance / loading screen
@@ -115,8 +119,11 @@ local function checkLocations()
         if g.kind == "location" and not g.done then
             local t = g.target
             local gCont, gwx, gwy = worldPos(t.mapID, t.x, t.y)
-            if gCont == pCont then
+            if gCont ~= pCont then
+                FC.goalDistance[g] = nil -- other continent
+            else
                 local dist = math.sqrt((gwx - pwx) ^ 2 + (gwy - pwy) ^ 2)
+                FC.goalDistance[g] = dist
                 if not t.armed then
                     if dist > radius * 2 then t.armed = true end
                 elseif dist <= radius then
@@ -131,6 +138,7 @@ end
 -- If the check ever errors, stop polling instead of spamming errors.
 local function safeCheck()
     local ok, err = pcall(checkLocations)
+    if ok then FC:Fire("LOCATIONS_UPDATED") end
     if not ok and not positionBroken then
         positionBroken = true
         if ticker then ticker:Cancel(); ticker = nil end

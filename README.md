@@ -24,6 +24,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron done <n>` / `/chron del <n>` | complete / delete goal n |
 | `/chron recent [n]` | print last n entries to chat |
 | `/chron way <n>` | point the waypoint arrow at location goal n |
+| `/chron tracker` | show/hide the on-screen goal tracker |
 | `/chron config` | open the options page |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
 | `/chron help` | list all commands |
@@ -34,6 +35,7 @@ Anything else is a free-form goal you tick off yourself.
 
 Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal here` or `/chron goal 45.2 63.1`.
 The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
+Open goals are listed in a small on-screen tracker (drag the title to move it, click to collapse, `/chron tracker` to hide it).
 Every open location goal appears as a gold star on the world map. Click a star to point the arrow at it.
 
 ## Files
@@ -42,6 +44,7 @@ Every open location goal appears as a gold star on the world map. Click a star t
 - `Goals.lua` – goal parsing / auto-completion
 - `MapGoals.lua` – location goals, world map menu, waypoint arrow
 - `MapPins.lua` / `MapPins.xml` – world map pins for open location goals
+- `Tracker.lua` – on-screen goal tracker
 - `Settings.lua` – options page (Settings API)
 - `UI.lua` – window and slash commands
 

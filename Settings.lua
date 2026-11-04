@@ -15,6 +15,16 @@ local TOGGLES = {
 
 local category
 
+-- Tell the rest of the addon when a setting changes, so it can update live.
+local function watch(variable, setting)
+    local notify = function() FC:Fire("SETTINGS_CHANGED", variable) end
+    if setting and setting.SetValueChangedCallback then
+        setting:SetValueChangedCallback(notify)
+    elseif Settings.SetOnValueChangedCallback then
+        Settings.SetOnValueChangedCallback(variable, notify)
+    end
+end
+
 local function register()
     if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then
         return -- Settings API missing; /chron config will say so
@@ -48,6 +58,12 @@ local function register()
     end)
     Settings.CreateSlider(category, arrival, arrivalOptions,
         "How close (in yards) you need to get to a location goal for it to complete.")
+
+    local trackerVar = ADDON .. "_ShowTracker"
+    local tracker = Settings.RegisterAddOnSetting(category, trackerVar, "showTracker",
+        FC.db.settings, Settings.VarType.Boolean, "Show goal tracker", true)
+    createCheckbox(category, tracker, "Show your open goals in a small box on screen (drag its title to move it).")
+    watch(trackerVar, tracker)
 
     Settings.RegisterAddOnCategory(category)
 end

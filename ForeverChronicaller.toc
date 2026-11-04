@@ -11,5 +11,6 @@ Goals.lua
 MapGoals.lua
 MapPins.lua
 MapPins.xml
+Tracker.lua
 Settings.lua
 UI.lua
