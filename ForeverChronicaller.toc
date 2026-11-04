@@ -1,0 +1,11 @@
+## Interface: 30300
+## Title: Forever Chronicaller
+## Notes: Chronicles your adventures automatically and tracks your personal goals.
+## Author: K. Chase Harmer
+## Version: 0.1.0
+## SavedVariablesPerCharacter: ForeverChronicallerDB
+
+Core.lua
+Chronicle.lua
+Goals.lua
+UI.lua
