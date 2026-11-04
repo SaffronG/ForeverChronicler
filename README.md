@@ -65,7 +65,14 @@ Every open location goal appears as a gold star on the world map. Click a star t
 - **In game:** `/chron export` and copy the text (Ctrl+C). On the other computer, `/chron import`, paste (Ctrl+V), then **Merge** or **Replace**. `/chron import undo` reverts the last import until you log out.
 - **By file:** your data lives in `WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicaller.lua`. Copy that file (with the game closed) to the same place on the other computer.
 
-## Development
+## Development / releasing
+- Build an installable zip: `scripts/package.sh` → `dist/ForeverChronicaller-<version>.zip`. Unzip it into `Interface/AddOns/`.
+- Release:
+  1. Bump `## Version:` in the `.toc`.
+  2. Move the `[Unreleased]` changelog section under the new version.
+  3. Commit, then `git tag vX.Y.Z && git push --tags`.
+  4. CI tests it and publishes a GitHub Release with the zip.
+
 Run the tests with `lua tests/run.lua .` from the repo root (Lua 5.1+). They use a fake WoW API, so in-game testing is still needed for frames, the options page and the world map.
 
 Data is saved per character in `WTF/Account/<acct>/<realm>/<char>/SavedVariables/ForeverChronicaller.lua`.

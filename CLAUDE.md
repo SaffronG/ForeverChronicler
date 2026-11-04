@@ -36,5 +36,6 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 - `Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `Journey.lua`: progress samples (`FC.db.samples`, `FC:TakeSample`), stats (`FC:JourneyStats`) and the Journey tab charts. Loads after UI.lua and adds its tab on READY.
 - `UI.lua`: main window (Chronicle tab, quest-log-style Goals tab, `FC:AddWindowTab` for extra tabs) and basic slash commands.
+- `scripts/package.sh` (release zip from the `.toc` file list), `scripts/release_notes.sh`, `.github/workflows/ci.yml` (tests on Lua 5.1 + 5.4, releases on `v*` tags). **Every new addon file must be listed in the `.toc`**, otherwise it won't load or be packaged.
 - `tests/`: `run.lua` (runner), `wow_stub.lua` (fake WoW API), `test_*.lua` (tests). Not loaded by the game. Several fake players can exist at once: `setup({ name = "Buddy" })`, then `transfer(a, b)` delivers a's addon messages to b.
 - `main.lua`, `persistance.lua`: original prototype. Not loaded, can be deleted.

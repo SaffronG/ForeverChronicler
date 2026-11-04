@@ -5,6 +5,15 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- `scripts/package.sh` builds `dist/ForeverChronicaller-<version>.zip` containing only the files the game needs (the `.toc` and everything it lists, plus README and Changelog) in a `ForeverChronicaller/` folder. It fails if a listed file is missing.
+- `scripts/release_notes.sh [version]` prints that version's Changelog section.
+- GitHub Actions CI (`.github/workflows/ci.yml`):
+  - Every push and pull request runs syntax checks, XML checks and all tests on Lua **5.1** (the game's version) and 5.4, and checks that the package builds.
+  - Pushing a tag `vX.Y.Z` checks it matches the `.toc` version, then publishes a GitHub Release with the zip and the changelog section as notes.
+- `.gitignore` for `dist/`.
+
+### Fixed
+- The `.toc` had no newline after its last line. The game doesn't mind, but some tools skipped `Journey.lua` because of it.
 - Together goals (new `SharedGoals.lua`): goals you complete with friends.
   - `/chron together <name> <goal>` (for example `/chron together Buddy level 30`) creates the goal and invites your friend, who gets a Join popup. `/chron invite <n> <name>` adds more friends (up to 10 members).
   - Each player's addon checks its own part (level, zone or quest, or "Done" for personal goals) and tells the others. The goal completes for everyone once every member who joined has done their part. The tracker and goal log show progress, for example `(1/2: Buddy ..., Chase done)`.
