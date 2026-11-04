@@ -4,6 +4,14 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Added
+- Companion app (new `companion/fcompanion.py`, Python 3.8+, standard library only) for things addons can't do:
+  - `watch` posts new chronicle entries to a **Discord webhook** and/or **ntfy** (phone push notifications). It reads the addon's SavedVariables files with a Lua-table parser that never executes anything, and remembers what it already posted, so it doesn't repeat and doesn't flood the channel with old history on first run.
+  - Removes WoW colour codes and links, splits long messages under Discord's limit, blocks @mentions, and retries on rate limits. Errors never print the webhook URL.
+  - `setup` (guided configuration, stored with private file permissions on Linux and macOS) and `test`.
+  - Which entry types are posted can be configured (quests are off by default), as can which characters.
+- `/chron sync` in game: asks, then reloads the UI so the saved data is written and the companion posts straight away.
+- CI runs the companion's 14 tests on Python 3.8.
 ## [0.2.0] - 2026-11-03
 
 First version meant for playing. Everything below is tested against a fake game API (56 tests on Lua 5.1 and 5.4) but **not yet in the real game**. If something misbehaves, `/chron errors` lists what went wrong, and the rest of the addon keeps working.

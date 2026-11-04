@@ -91,3 +91,14 @@ test("export and import commands open the window", function()
     env.slash("import undo")
     ok(env.chatContains("Nothing to undo"), "undo without import")
 end)
+
+test("/chron sync asks before reloading", function()
+    local env = setup()
+    local reloaded = false
+    ReloadUI = function() reloaded = true end
+    env.slash("sync")
+    eq(env.popups[1].which, "FOREVERCHRONICALLER_SYNC", "confirmation popup")
+    eq(reloaded, false, "not reloaded without confirmation")
+    env.acceptPopup()
+    eq(reloaded, true, "reloaded after confirming")
+end)

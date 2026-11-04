@@ -384,3 +384,18 @@ FC:Command("import", "/chron import [undo] - paste an export to merge or replace
     end
     FC:ShowImport()
 end, 41)
+
+-- /chron sync: the game only writes saved data on logout or reload. Reloading
+-- lets the companion app (companion/fcompanion.py) post your latest entries now.
+StaticPopupDialogs["FOREVERCHRONICALLER_SYNC"] = {
+    text = "Reload your UI now to save your chronicle?\n\n(The companion app posts new entries as soon as they're saved.)",
+    button1 = "Reload",
+    button2 = "Cancel",
+    OnAccept = function() ReloadUI() end,
+    timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
+}
+
+FC:Command("sync", "/chron sync - save now (reloads the UI) so the companion app can post your latest entries", function()
+    if InCombatLockdown() then FC:Print("Not during combat.") return end
+    StaticPopup_Show("FOREVERCHRONICALLER_SYNC")
+end, 42)

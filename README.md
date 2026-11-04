@@ -33,6 +33,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron journey` | open the Journey graphs and statistics |
 | `/chron together <name> <goal>` | a goal you complete together with a friend |
 | `/chron invite <n> <name>` | invite another friend to together goal n |
+| `/chron sync` | save now (reloads the UI) so the companion app posts your latest entries |
 | `/chron config` | open the options page |
 | `/chron version` | show your version (you're told automatically if a group member has a newer one) |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
@@ -68,6 +69,9 @@ Every open location goal appears as a gold star on the world map. Click a star t
 ## Backup / moving to another computer
 - **In game:** `/chron export` and copy the text (Ctrl+C). On the other computer, `/chron import`, paste (Ctrl+V), then **Merge** or **Replace**. `/chron import undo` reverts the last import until you log out.
 - **By file:** your data lives in `WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicaller.lua`. Copy that file (with the game closed) to the same place on the other computer.
+
+## Companion app (optional)
+`companion/fcompanion.py` posts your new chronicle entries to **Discord** or your **phone** (ntfy). It runs outside the game and only reads the addon's saved files. See [companion/README.md](companion/README.md).
 
 ## Development / releasing
 - Build an installable zip: `scripts/package.sh` → `dist/ForeverChronicaller-<version>.zip`. Unzip it into `Interface/AddOns/`.
