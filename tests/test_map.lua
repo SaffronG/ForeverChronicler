@@ -1,17 +1,18 @@
 test("goal here arms after leaving and completes on return", function()
     local env = setup()
     local FC = env.FC
+    local base = env.activeTickers() -- other modules' timers
     env.slash("goal here")
     local g = FC.db.goals[1]
     eq(g.kind, "location", "kind")
     eq(env.waypoint.uiMapID, 1, "waypoint placed")
     eq(env.supertracked, true, "super-tracked")
-    eq(env.activeTickers(), 1, "ticker running")
+    eq(env.activeTickers(), base + 1, "ticker running")
     env.runTickers(); eq(g.done, false, "not done at start")
     env.player.x = 0.6; env.runTickers(); eq(g.target.armed, true, "armed 100 yd away")
     env.player.x = 0.51; env.runTickers(); eq(g.done, true, "done within 10 yd")
     eq(env.waypoint, nil, "waypoint cleared")
-    eq(env.activeTickers(), 0, "ticker stopped")
+    eq(env.activeTickers(), base, "ticker stopped")
 end)
 
 test("coordinate goals and bad input", function()
@@ -54,10 +55,11 @@ end)
 
 test("position errors stop polling with one message", function()
     local env = setup()
+    local base = env.activeTickers()
     env.slash("goal 10 10")
     C_Map.GetPlayerMapPosition = function() error("secret value") end
     env.runTickers(); env.runTickers()
-    eq(env.activeTickers(), 0, "ticker stopped")
+    eq(env.activeTickers(), base, "ticker stopped")
 end)
 
 test("map pins: zone, continent, off-map, click, refresh", function()

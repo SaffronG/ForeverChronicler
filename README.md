@@ -27,6 +27,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron tracker` | show/hide the on-screen goal tracker |
 | `/chron share <n> [name]` | share goal n with your group, or whisper it to a friend (they need the addon) |
 | `/chron export` / `/chron import [undo]` | back up / restore your chronicle as a text string |
+| `/chron journey` | open the Journey graphs and statistics |
 | `/chron config` | open the options page |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
 | `/chron help` | list all commands |
@@ -38,6 +39,7 @@ Anything else is a free-form goal you tick off yourself.
 Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal here` or `/chron goal 45.2 63.1`.
 The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
 The **Goals** tab works like the quest log: pick a goal on the left to see its details and progress, write notes for it, or point the arrow, complete or delete it.
+The **Journey** tab (`/chron journey`) graphs your level, gold, quests, zones and deaths over time, and sums up your path through the world and how long each level took.
 Open goals are listed in a small on-screen tracker (drag the title to move it, click to collapse, `/chron tracker` to hide it).
 Every open location goal appears as a gold star on the world map. Click a star to point the arrow at it.
 
@@ -52,6 +54,7 @@ Every open location goal appears as a gold star on the world map. Click a star t
 - `Sharing.lua` – share goals with your group / friends
 - `Export.lua` – export/import strings and their window
 - `Settings.lua` – options page (Settings API)
+- `Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)
 - `UI.lua` – window and slash commands
 
 ## Backup / moving to another computer

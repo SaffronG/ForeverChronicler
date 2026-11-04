@@ -21,7 +21,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 
 ## Later
 - [x] **#4 Backup / load elsewhere** – export/import string (serialize + compress + Base64 if available); merge rules; document copying the SavedVariables file; consider account-wide data
-- [ ] **#5 Graphs / visualizers** – record samples (level, played time, gold) over time; in-game line/bar charts
+- [x] **#5 Graphs / visualizers** – record samples (level, played time, gold) over time; in-game line/bar charts
 - [ ] **#6 Shared goals with a friend** – builds on #3; offline sync queue, resync on login/group join, conflict rules; progress is trust-based
 - [ ] **#8 CI/CD** – GitHub repo; Actions: luacheck, stub-API smoke test, package zip + GitHub Release on tag
 

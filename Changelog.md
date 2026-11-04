@@ -5,6 +5,11 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 ## [Unreleased]
 
 ### Added
+- Journey tab with graphs and statistics (new `Journey.lua`, also `/chron journey`):
+  - Line charts over time for **Level** (including XP progress, for example 12.4), **Gold**, **Quests**, **Zones** and **Deaths**, drawn with the client's line API, with min/max and date labels.
+  - Summary: time adventuring, totals, average/fastest/slowest time per level, and **your path**: zones in the order you discovered them.
+  - Progress snapshots are stored in `samples`: at login, level up, quest turn-in, new zone, death, and every 10 minutes, but only when something changed. They're capped at 2000 by thinning the oldest half, so the whole history stays. Samples are included in exports.
+  - The chart needs at least a minute of history and fills in as you play. Not yet tested in game.
 - Export and import (new `Export.lua`) for backups or moving to another computer:
   - `/chron export` opens a window with your chronicle, goals, visited zones and stats as one text string, already highlighted for Ctrl+C.
   - `/chron import`: paste the string, then **Merge** (adds only missing entries and goals, so importing twice is safe) or **Replace** (asks first). `/chron import undo` reverts the last import until you log out.
