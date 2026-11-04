@@ -3,8 +3,11 @@
 Automatically chronicles your adventure and tracks personal goals.
 
 ## Install
-Copy (or symlink) this folder into `World of Warcraft/Interface/AddOns/ForeverChronicaller/`.
-The folder name must match `ForeverChronicaller.toc`.
+1. Unzip `ForeverChronicaller-<version>.zip` (from `scripts/package.sh` or a GitHub release) into your WoW: Forever folder's `Interface/AddOns/`, so you end up with `Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc`.
+2. Start the game, check that **Forever Chronicaller** is enabled in the AddOns list on the character screen, and log in.
+3. Type `/chron` to open it, or `/chron help` for all commands.
+
+(Developers: you can also copy or symlink this repo folder into `Interface/AddOns/ForeverChronicaller/`.)
 
 If the addon shows as "out of date", either tick "Load out of date AddOns" on the
 character select AddOns screen or change `## Interface:` in the .toc to your client's
@@ -31,6 +34,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron together <name> <goal>` | a goal you complete together with a friend |
 | `/chron invite <n> <name>` | invite another friend to together goal n |
 | `/chron config` | open the options page |
+| `/chron version` | show your version (you're told automatically if a group member has a newer one) |
 | `/chron errors [clear]` | show (or clear) errors the addon caught; include these in bug reports |
 | `/chron help` | list all commands |
 

@@ -127,6 +127,7 @@ function W.setup(dir, opts)
     UIErrorsFrame = { AddMessage = function() end }
     GameTooltip = { SetOwner = function() end, SetText = function(_, t) env.tooltip = t end,
         AddLine = function() end, Show = function() end, Hide = function() end, ClearLines = function() end }
+    C_AddOns = { GetAddOnMetadata = function(_, field) if field == "Version" then return opts.version or "0.2.0" end end }
     PlaySound = function() end
     SOUNDKIT = {}
     InCombatLockdown = function() return env.inCombat or false end
