@@ -496,14 +496,18 @@ def check_zip(zip_path: Path) -> str:
 
 def game_running() -> bool:
     """Best effort: is a WoW client process running?"""
+    # Only look at process *names* (not full command lines), so e.g. an editor
+    # with a path to Wow.exe open doesn't count.
     try:
         if os.name == "nt":
-            out = subprocess.run(["tasklist"], capture_output=True, text=True, timeout=10).stdout
+            out = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=10).stdout
+            names = [line.split('","')[0].strip('"') for line in out.splitlines() if line]
         else:
-            out = subprocess.run(["ps", "-eo", "comm,args"], capture_output=True, text=True, timeout=10).stdout
+            out = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=10).stdout
+            names = [line.strip() for line in out.splitlines()]
     except (OSError, subprocess.SubprocessError):
         return False
-    return bool(re.search(r"\bwow[\w-]*\.exe\b", out, re.I))
+    return any(re.fullmatch(r"wow[\w-]*\.exe", n, re.I) for n in names)
 
 
 def install_zip(zip_path: Path, wow_path: str, log: Callable[[str], None] = print) -> str:
@@ -533,6 +537,56 @@ def install_zip(zip_path: Path, wow_path: str, log: Callable[[str], None] = prin
     if backup:
         log(f"Previous version backed up to {backup}")
     return version
+
+
+def looks_like_wow(path: Path) -> bool:
+    """A WoW client folder has a Wow*.exe (or at least Interface/ or WTF/)."""
+    if not path.is_dir():
+        return False
+    if any(p.is_file() for p in path.glob("Wow*.exe")) or any(p.is_file() for p in path.glob("wow*.exe")):
+        return True
+    return (path / "WTF").is_dir() or (path / "Interface" / "AddOns").is_dir()
+
+
+def wow_search_roots() -> List[Path]:
+    roots: List[Path] = []
+    if os.name == "nt":
+        for drive in "CDEFGH":
+            base = Path(f"{drive}:/")
+            if base.exists():
+                roots += [base, base / "Program Files (x86)", base / "Program Files", base / "Games"]
+    else:
+        home = Path.home()
+        roots += [home / "Games", home / "games", home / ".wine" / "drive_c" / "Program Files (x86)",
+                  home / ".wine" / "drive_c" / "Program Files", home / ".local" / "share" / "lutris"]
+        roots += [Path(p) for p in glob.glob(str(home / "Games" / "*" / "drive_c" / "Program Files*"))]
+    return roots
+
+
+def find_wow_dirs(roots: Optional[List[Path]] = None) -> List[Path]:
+    """Look for WoW client folders (incl. _retail_-style subfolders) under common install locations."""
+    found: List[Path] = []
+    for root in roots if roots is not None else wow_search_roots():
+        try:
+            children = [c for c in root.iterdir() if c.is_dir()]
+        except OSError:
+            continue
+        for child in children:
+            name = child.name.lower()
+            if "warcraft" not in name and "wow" not in name and "forever" not in name:
+                continue
+            candidates = [child] + [c for c in child.glob("_*_") if c.is_dir()]
+            for c in candidates:
+                if any(x.is_file() for x in c.glob("[Ww]ow*.exe")) and c not in found:
+                    found.append(c)
+    return found
+
+
+def bundled_zip() -> Optional[Path]:
+    """An addon zip shipped next to this script (installer bundle)."""
+    here = Path(__file__).resolve().parent
+    zips = sorted(here.glob(f"{ADDON}-[0-9]*.zip"), key=lambda p: version_tuple(p.name))
+    return zips[-1] if zips else None
 
 
 Fetch = Callable[[str], bytes]
@@ -671,6 +725,61 @@ def cmd_update(cfg: Dict[str, Any], args) -> int:
     return 0
 
 
+def choose_wow_path(cfg: Dict[str, Any], given: Optional[str], assume_yes: bool) -> Optional[str]:
+    if given:
+        return given
+    if cfg.get("wow_path") and looks_like_wow(Path(cfg["wow_path"])):
+        return cfg["wow_path"]
+    found = find_wow_dirs()
+    if len(found) == 1 and (assume_yes or input(f"Install into {found[0]}? [Y/n]: ").strip().lower() in ("", "y", "yes")):
+        return str(found[0])
+    if len(found) > 1:
+        print("Found several WoW folders:")
+        for i, p in enumerate(found, 1):
+            print(f"  {i}. {p}")
+        pick = input("Which one? (number, or paste a path): ").strip()
+        if pick.isdigit() and 1 <= int(pick) <= len(found):
+            return str(found[int(pick) - 1])
+        return pick or None
+    print("Couldn't find WoW: Forever automatically.")
+    path = input("Paste the WoW: Forever folder (the one with Wow.exe in it): ").strip().strip('"')
+    return path or None
+
+
+def cmd_install(cfg: Dict[str, Any], args) -> int:
+    wow = choose_wow_path(cfg, args.wow, args.yes)
+    if not wow:
+        print("No folder chosen; nothing installed.")
+        return 1
+    if not looks_like_wow(Path(wow)):
+        print(f"{wow} doesn't look like a WoW folder (no Wow*.exe, Interface or WTF).")
+        if args.yes or input("Install there anyway? [y/N]: ").strip().lower() not in ("y", "yes"):
+            return 1
+    if game_running() and not args.force:
+        print("WoW seems to be running. Close it, then run the installer again.")
+        return 1
+    cfg["wow_path"] = wow
+    try:
+        if args.zip:
+            version = install_zip(Path(args.zip), wow)
+        elif bundled_zip():
+            version = install_zip(bundled_zip(), wow)
+        elif cfg.get("github_repo"):
+            update(cfg, force=args.force)
+            version = installed_version(wow)
+        else:
+            print("No addon zip found next to the installer and no github_repo configured.")
+            return 1
+    except UpdateError as e:
+        print(f"Install failed: {e}")
+        return 1
+    save_config(cfg)
+    print(f"\nForever Chronicaller {version} is installed in {addon_dir(wow)}")
+    print("Start the game, make sure it's enabled in the AddOns list, and type /chron in game.")
+    print("Optional: `python fcompanion.py setup` for Discord / phone notifications.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fcompanion", description="Forever Chronicaller companion app")
     p.add_argument("--version", action="version", version=VERSION)
@@ -679,6 +788,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("test", help="send a test notification")
     w = sub.add_parser("watch", help="post new chronicle entries while you play")
     w.add_argument("--once", action="store_true", help="check once and exit")
+    i = sub.add_parser("install", help="find WoW: Forever and install the addon")
+    i.add_argument("--wow", help="the WoW: Forever folder (skip auto-detection)")
+    i.add_argument("--zip", help="install this addon zip")
+    i.add_argument("--yes", action="store_true", help="don't ask questions")
+    i.add_argument("--force", action="store_true", help="install even if the game is running")
     u = sub.add_parser("update", help="install the latest addon release (or a zip you have)")
     u.add_argument("--check", action="store_true", help="only check, don't install")
     u.add_argument("--force", action="store_true", help="install even if the game is running")
@@ -686,7 +800,7 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": cmd_update}
+COMMANDS = {"setup": cmd_setup, "test": cmd_test, "watch": cmd_watch, "update": cmd_update, "install": cmd_install}
 
 
 def main(argv: Optional[List[str]] = None) -> int:

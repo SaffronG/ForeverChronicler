@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build dist/ForeverChronicaller-<version>.zip containing only what the game needs:
+# Build dist/ForeverChronicaller-<version>.zip containing only what the game needs
+# (plus dist/ForeverChronicaller-Installer-<version>.zip, see the end of this script):
 # the .toc, every file it lists, README and Changelog, inside a ForeverChronicaller/ folder.
 # Unzip it into World of Warcraft/<client>/Interface/AddOns/.
 set -euo pipefail
@@ -26,3 +27,14 @@ OUT="dist/$NAME-$VERSION.zip"
 rm -f "$OUT"
 (cd "$STAGE" && zip -qr - "$NAME") > "$OUT"
 echo "$OUT"
+
+# Installer bundle for players: companion app + launchers + the addon zip.
+# Unzip anywhere, double-click Install.bat (Windows) or run ./install.sh.
+BUNDLE="$NAME-Installer"
+mkdir -p "$STAGE/$BUNDLE"
+cp companion/fcompanion.py companion/README.md companion/Install.bat companion/install.sh "$STAGE/$BUNDLE/"
+cp "$OUT" "$STAGE/$BUNDLE/"
+INSTALLER="dist/$BUNDLE-$VERSION.zip"
+rm -f "$INSTALLER"
+(cd "$STAGE" && zip -qr - "$BUNDLE") > "$INSTALLER"
+echo "$INSTALLER"

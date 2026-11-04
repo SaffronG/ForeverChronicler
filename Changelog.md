@@ -13,7 +13,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 - Companion auto-update: `python fcompanion.py update` installs the newest GitHub release if it's newer than the installed addon (`--check` only reports, and `watch` checks at start). `update --zip <file>` installs a zip you already have.
   - Zips are validated before anything is touched: only `ForeverChronicaller/` paths, no `..` or absolute paths, a size limit, and the `.toc` must be present. Downloads must come from github.com.
   - The previous version is moved to a backups folder, and put back automatically if installing fails.
-  - Refuses while WoW is running (`--force` overrides). After an update, restart the game; `/reload` isn't enough when new files were added.
+  - Refuses while WoW is running (`--force` overrides). Only process names are checked, so an open folder or editor showing `Wow.exe` doesn't count. After an update, restart the game; `/reload` isn't enough when new files were added.
+- Installer: `python fcompanion.py install` finds WoW: Forever (common install folders, including `_retail_`-style subfolders, Wine and Lutris on Linux) or asks for the folder, then installs the addon. It uses a zip shipped next to it, `--zip`, or the latest GitHub release, and remembers the folder for `update` and `watch`.
+  - `companion/Install.bat` (double-click on Windows; it checks for Python and explains how to get it) and `companion/install.sh`.
+  - `scripts/package.sh` now also builds `dist/ForeverChronicaller-Installer-<version>.zip` (companion, launchers, README and the addon zip), and CI attaches it to releases.
 - `/chron sync` in game: asks, then reloads the UI so the saved data is written and the companion posts straight away.
 - CI runs the companion's tests on Python 3.8, including a check that the real addon zip passes the installer's validation.
 ## [0.2.0] - 2026-11-03

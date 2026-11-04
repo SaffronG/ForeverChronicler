@@ -32,4 +32,4 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 ## Separate project: companion app (outside the game)
 - [x] **#10 Discord webhooks / push notifications** – done by watching the SavedVariables files (reliable) instead of the chat log (unclear whether addon output is logged). Posts on logout or `/chron sync`. Still to do: check WoW: Forever rules on external tools (it only reads files)
 - [x] **#11 Auto-update / auto-reload**: in-game version check (0.2.0), plus `fcompanion.py update` (GitHub releases, validated zip, backup and rollback). Auto-*reload* isn't possible safely: the game must restart for new files, so the companion refuses while WoW runs – app pulls GitHub Releases; in-game "reload now?" popup; in-game version check over addon messages
-- [ ] **#9 Simple installer** – locate WoW: Forever install, copy addon (and companion app)
+- [x] **#9 Simple installer**: `fcompanion.py install` plus `Install.bat` / `install.sh`, shipped as the Installer zip

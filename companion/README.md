@@ -1,5 +1,7 @@
 # Forever Chronicaller companion app
 
+**Installing the addon:** double-click `Install.bat` (Windows) or run `./install.sh`, or use `python fcompanion.py install`. It finds your WoW: Forever folder (or asks for it) and installs the addon zip that comes with it.
+
 A small program that runs **outside** the game, next to the addon. It needs Python 3.8 or newer and nothing else.
 
 WoW addons can't use the internet, so the companion does the parts the addon can't:

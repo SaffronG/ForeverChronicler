@@ -3,6 +3,9 @@
 Automatically chronicles your adventure and tracks personal goals.
 
 ## Install
+**Easiest:** unzip `ForeverChronicaller-Installer-<version>.zip` anywhere and double-click **`Install.bat`** (Windows; needs [Python](https://www.python.org/downloads/) with "Add python.exe to PATH" ticked) or run `./install.sh` (Linux/macOS). It finds your WoW: Forever folder (or asks you for it) and installs the addon. Close the game first.
+
+**Manually:**
 1. Unzip `ForeverChronicaller-<version>.zip` (from `scripts/package.sh` or a GitHub release) into your WoW: Forever folder's `Interface/AddOns/`, so you end up with `Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc`.
 2. Start the game, check that **Forever Chronicaller** is enabled in the AddOns list on the character screen, and log in.
 3. Type `/chron` to open it, or `/chron help` for all commands.

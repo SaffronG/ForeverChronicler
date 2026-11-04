@@ -117,10 +117,15 @@ class UpdateTests(unittest.TestCase):
         self.assertLess(fc.version_tuple("0.9.0"), fc.version_tuple("0.10.0"))
 
     def test_game_detection_patterns(self):
-        with mock.patch.object(fc.subprocess, "run") as run:
-            run.return_value = mock.Mock(stdout="Wow.exe   1234 Console\n")
+        with mock.patch.object(fc.subprocess, "run") as run, mock.patch.object(fc.os, "name", "posix"):
+            run.return_value = mock.Mock(stdout="bash\nWow.exe\npython3\n")
             self.assertTrue(fc.game_running())
-            run.return_value = mock.Mock(stdout="python3 fcompanion.py watch\n")
+            run.return_value = mock.Mock(stdout="bash\nvim\n")  # e.g. editing ~/WoW/Wow.exe.txt
+            self.assertFalse(fc.game_running())
+        with mock.patch.object(fc.subprocess, "run") as run, mock.patch.object(fc.os, "name", "nt"):
+            run.return_value = mock.Mock(stdout='"WowClassic.exe","1234","Console","1","2,000 K"\n"explorer.exe","1","Console","1","1 K"\n')
+            self.assertTrue(fc.game_running())
+            run.return_value = mock.Mock(stdout='"notepad.exe","1234","Console","1","2,000 K"\n')
             self.assertFalse(fc.game_running())
 
 
