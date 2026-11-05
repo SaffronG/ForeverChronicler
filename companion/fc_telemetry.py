@@ -283,33 +283,37 @@ class Telemetry:
         for e in log:
             if not isinstance(e, dict) or "msg" not in e:
                 continue
+            # Metric labels are kept low-cardinality (version, code location, handler):
+            # the scrubbed message only goes on the error span, so the number of
+            # metric series stays small.
             attrs = {
                 "source": "addon",
                 "addon.version": str(e.get("v") or installed_version or "unknown"),
                 "error.where": error_location(str(e.get("msg"))),
-                "error.message": scrub(e.get("msg")),
                 "handler": scrub(e.get("label") or "unknown", 60),
             }
             key = tuple(sorted(attrs.items()))
             start = int(e.get("first") or e.get("t") or 0) * 1_000_000_000
             prev = points.get(key)
             count = int(e.get("count") or 1) + (prev[1] if prev else 0)
-            points[key] = (min(start, prev[0]) if prev else start, count, scrub_stack(e.get("stack")))
+            message = prev[3] if prev else scrub(e.get("msg"))
+            points[key] = (min(start, prev[0]) if prev else start, count, scrub_stack(e.get("stack")), message)
         if points:
             self.external_metrics.append({"name": "fc.addon.errors", "unit": "1", "sum": {
                 "aggregationTemporality": 2, "isMonotonic": True, "dataPoints": [
                     {"attributes": _attrs(dict(k)), "startTimeUnixNano": str(start), "timeUnixNano": now, "asInt": str(n)}
-                    for k, (start, n, _) in points.items()]}})
+                    for k, (start, n, _, _) in points.items()]}})
             # one span per distinct error so errors show up in trace views too
             trace = secrets.token_hex(16)
-            for k, (start, n, stack) in points.items():
+            for k, (start, n, stack, message) in points.items():
                 fingerprint = f"{hash_key(k)}:{n}"
                 if seen_errors is not None:
                     if fingerprint in seen_errors:
                         continue
                     seen_errors.add(fingerprint)
                 a = dict(k)
-                sp = _Span(self, "addon.error", trace, None, {**a, "error.count": n, "error.stack": stack})
+                sp = _Span(self, "addon.error", trace, None,
+                           {**a, "error.message": message, "error.count": n, "error.stack": stack})
                 sp.status = (2, a["error.where"])
                 sp.end_ns = sp.start_ns
                 self.spans.append(sp)
@@ -343,7 +347,10 @@ class Telemetry:
 
     # -- export -----------------------------------------------------------------
     def _resource(self) -> Dict[str, Any]:
-        return {"attributes": _attrs({"service.name": SERVICE, "fc.install.id": self.install_id, **self.resource})}
+        # service.instance.id is the standard OpenTelemetry name for "this installation";
+        # fc.install.id is kept for dashboards built on it. Both are the random opt-in ID.
+        return {"attributes": _attrs({"service.name": SERVICE, "service.instance.id": self.install_id,
+                                      "fc.install.id": self.install_id, **self.resource})}
 
     def _scope(self) -> Dict[str, Any]:
         return {"name": "fcompanion", "version": str(self.resource.get("service.version", ""))}

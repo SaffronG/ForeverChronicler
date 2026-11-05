@@ -236,6 +236,7 @@ class Payloads(Base):
         self.assertEqual(attrs["addon.version"], "0.3.1")
         self.assertEqual(attrs["error.where"], "Goals.lua:42")
         self.assertEqual(attrs["handler"], "msg:GOALS_CHANGED")
+        self.assertNotIn("error.message", attrs, "messages stay off metric labels (series count)")
         self.assertEqual(point["asInt"], "3")
         self.assertEqual(errors["sum"]["aggregationTemporality"], 2)  # cumulative
         spans = [s for i in items if i["signal"] == "traces"
@@ -244,6 +245,8 @@ class Payloads(Base):
         self.assertEqual(err_span["status"]["code"], 2)
         stack = next(a for a in err_span["attributes"] if a["key"] == "error.stack")["value"]["stringValue"]
         self.assertEqual(stack, "Goals.lua:42 < Core.lua:70")
+        message = next(a for a in err_span["attributes"] if a["key"] == "error.message")["value"]["stringValue"]
+        self.assertIn("attempt to index field", message, "the scrubbed message is on the span")
 
     def test_addon_latency_histograms(self):
         self.collect(self.wow_with_sv())
@@ -280,6 +283,7 @@ class Payloads(Base):
         self.assertEqual(res["service.name"], "forever-chronicler-companion")
         self.assertEqual(res["service.version"], fc.VERSION)
         self.assertRegex(res["fc.install.id"], r"^[0-9a-f]{32}$")
+        self.assertEqual(res["service.instance.id"], res["fc.install.id"])
 
     def test_sends_to_configured_endpoint_with_headers(self):
         sent = []
@@ -365,6 +369,16 @@ class Robustness(unittest.TestCase):
         t.count("x")
         t.add_addon_data({"errorLog": [{"msg": "x"}]}, "1")
         self.assertEqual((t.spans, t.counters, t.flush()), ([], {}, 0))
+
+    def test_same_location_different_messages_is_one_series(self):
+        db = {"errorLog": [{"msg": "Goals.lua:1: first", "count": 2, "t": 1, "label": "msg:X"},
+                           {"msg": "Goals.lua:1: second", "count": 3, "t": 2, "label": "msg:X"}]}
+        t = ft.Telemetry(enabled=True, install_id="x" * 32)
+        t.add_addon_data(db, "1")
+        errors = next(m for m in t.external_metrics if m["name"] == "fc.addon.errors")
+        points = errors["sum"]["dataPoints"]
+        self.assertEqual(len(points), 1)
+        self.assertEqual(points[0]["asInt"], "5")
 
     def test_error_spans_not_repeated(self):
         db = {"errorLog": [{"msg": "Goals.lua:1: x", "count": 1, "t": 1}]}

@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Changed
+- **Telemetry is ready to switch on, but still off.** Preparation only: the feature flags stay off, nothing is collected or sent. Addon error metrics are now labelled only by addon version, code location and handler; the scrubbed error message moved to the error span only, which keeps the number of metric series small. The telemetry resource also carries the standard `service.instance.id` (the same random opt-in ID as `fc.install.id`). PRIVACY.md §3 lists both. What's left before switching it on is in `docs/TODO.md` (endpoint secrets, a test batch, then the flag and new terms).
+- Still to test: the companion tests (CI runs them; Python wasn't available locally).
+
 ## [0.9.5] - 2026-11-05
 
 Window themes: pick the look you like, Night Elf, Alliance, Horde or Blood Elf, and swap any time. Telemetry stays switched off.

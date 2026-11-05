@@ -79,10 +79,10 @@ Telemetry would help fix bugs: which version failed where, and how long things t
 
 | Kind | Content |
 |---|---|
-| About the program | `service.version` (companion), `fc.addon.version`, `os.type` (windows/linux/darwin), `process.runtime.version` (Python), `fc.build` (standalone/python), `fc.install.id` (the random ID) |
+| About the program | `service.version` (companion), `fc.addon.version`, `os.type` (windows/linux/darwin), `process.runtime.version` (Python), `fc.build` (standalone/python), `service.instance.id` and `fc.install.id` (both the same random ID) |
 | Traces (companion) | One span per operation: `command.<name>`, `install.verify_zip`, `install.swap`, `update.check`, `update.download`, `watch.process`, `watch.read`, `http.post`. Each has start and end time, ok/error status, and a few fixed fields (`fc.target` = discord/ntfy, HTTP status code, download size, whether an update was available). Errors add the exception **type** and a scrubbed message |
 | Metrics (companion) | `fc.operations` (count by operation and outcome), `fc.operation.duration` (latency histogram in ms), `fc.errors` (count by error type, code location such as `fcompanion.py:812`, and operation) |
-| Addon errors | From the addon's own error log: `fc.addon.errors` (count by addon version, code location such as `Goals.lua:42`, handler such as `msg:GOALS_CHANGED`, and a scrubbed message), plus an `addon.error` span with the code locations of the stack (for example `Goals.lua:42 < Core.lua:70`) |
+| Addon errors | From the addon's own error log: `fc.addon.errors` (count by addon version, code location such as `Goals.lua:42`, handler such as `msg:GOALS_CHANGED`), plus an `addon.error` span with the scrubbed error message and the code locations of the stack (for example `Goals.lua:42 < Core.lua:70`) |
 | In-game performance | Only if you **also** turn on *Performance diagnostics* in the addon options (off by default; `/chron diagnostics`): `fc.addon.handler.duration` (latency histogram) and `fc.addon.handler.errors`, by handler name (such as `event:PLAYER_LEVEL_UP`) and addon version |
 
 **Scrubbing:** every message passes through a filter that removes quoted text, file paths, URLs, e-mail addresses, long numbers and WoW colour codes. From stack traces, only code file names and line numbers are kept. Handler names are only accepted if they look like `event:`, `msg:` or `cmd:` code names.

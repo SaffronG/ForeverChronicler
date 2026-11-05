@@ -43,7 +43,14 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [ ] Check the rename in game: an old character's chronicle is carried over after installing 0.6.0 with the installer, and only one copy of the addon is listed
 - [ ] Idea: profession goals (`/chron goal tailoring 300`, `/chron goal recipes tailoring 80%`)
 - [ ] **Grafana dashboard** (free tier): importable dashboard JSON (`grafana/`), with panels for errors by version, error locations, success rate, latency p50/p95 and traces. Waiting on Grafana access
-- [ ] Before switching telemetry on: drop `error.message` from metric labels (keep it on traces) to limit series on the free tier, add `service.instance.id` (= the random install ID), set the `OTEL_ENDPOINT` / `OTEL_HEADERS` secrets, then set `FEATURE_TELEMETRY = True` (+ `FC.FEATURES.diagnostics`), update PRIVACY.md §3 and the DISCLAIMER, and bump `TERMS_VERSION`
+- **Switching telemetry on** (in this order; the flag needs the maintainer's go-ahead):
+  - [x] Drop `error.message` from metric labels (kept on the `addon.error` span) to limit series on the free tier
+  - [x] Add `service.instance.id` (= the random install ID) to the resource
+  - [ ] Set the `OTEL_ENDPOINT` / `OTEL_HEADERS` repository secrets (GitHub → Settings → Secrets → Actions). Needs the maintainer; `release.yml` already bakes them into the standalone builds when present
+  - [ ] Send one test batch to the endpoint with a local build (`OTEL_EXPORTER_OTLP_ENDPOINT=… fcompanion.py telemetry send` with the flag switched on locally) and check it arrives
+  - [ ] Set `FEATURE_TELEMETRY = True` in `companion/fcompanion.py` and `FC.FEATURES.diagnostics = true` in `src/core/Core.lua`
+  - [ ] Rewrite PRIVACY.md §3 from "planned" to "active", update the DISCLAIMER's telemetry line and `/chron privacy`, and bump `TERMS_VERSION`
+  - [ ] Flip the flag-off tests (`FlagOff` in `companion/tests/test_telemetry.py`) to the shipped behaviour
 
 ## Journey journal (epistolary record, 0.6.0+)
 One letter per day (04:00 to 04:00) in a race/class voice, with that day's stats. Each step below adds data to the day's stats and, where it fits, a sentence to the letter. Combat-log and combat data stay off limits (Midnight rules).
