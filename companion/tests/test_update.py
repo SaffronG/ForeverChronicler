@@ -18,7 +18,7 @@ def make_zip(version="0.3.0", extra=None, toc=True):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         if toc:
-            zf.writestr("ForeverChronicaller/ForeverChronicaller.toc", f"## Interface: 120105\n## Version: {version}\n\nCore.lua\n")
+            zf.writestr("ForeverChronicaller/ForeverChronicaller.toc", f"## Interface: 16001\n## Version: {version}\n\nCore.lua\n")
         zf.writestr("ForeverChronicaller/Core.lua", f"-- core {version}\n")
         for name, data in (extra or {}).items():
             zf.writestr(name, data)

@@ -4,6 +4,9 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Fixed
+- **Addon showed as "Incompatible".** The `.toc` `## Interface:` number was a guess (`120105`). WoW: Forever 1.60.1 actually reports `16001` (`select(4, GetBuildInfo())`), so the `.toc` now uses `16001`.
+
 ### Changed
 - **Reorganized the repository.** Addon code moved from the root into `src/`, grouped by feature: `src/core/` (Core, Comms, VersionCheck), `src/chronicle/` (Chronicle, Journey), `src/goals/` (Goals, MapGoals, MapPins, Tracker), `src/sharing/` (Sharing, SharedGoals, Export) and `src/ui/` (Settings, UI). `Topology.md` and `TODO.md` moved to `docs/`. The `.toc` lists the new paths (load order unchanged), CI checks the XML files the `.toc` lists, and the telemetry scrubber also strips the new `src/<folder>/` prefix so error locations stay `File.lua:line`. Nothing changes for players: the release zip still has the `.toc` at the top of the `ForeverChronicaller/` folder. Still to test in game: that the client loads files from subfolders listed with `/` in the `.toc`.
 

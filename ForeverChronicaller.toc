@@ -1,4 +1,4 @@
-## Interface: 120105
+## Interface: 16001
 ## Title: Forever Chronicaller
 ## Notes: Chronicles your adventures automatically and tracks your personal goals.
 ## Author: K. Chase Harmer
