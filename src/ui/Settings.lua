@@ -74,6 +74,19 @@ local function register()
     Settings.CreateSlider(category, arrival, arrivalOptions,
         "How close (in yards) you need to get to a location goal for it to complete.")
 
+    -- window theme (dropdown; /chron theme works too)
+    if Settings.CreateDropdown and Settings.CreateControlTextContainer and Settings.VarType.String then
+        local themeVar = ADDON .. "_Theme"
+        local theme = Settings.RegisterAddOnSetting(category, themeVar, "theme",
+            FC.db.settings, Settings.VarType.String, "Window theme", "nightelf")
+        Settings.CreateDropdown(category, theme, function()
+            local container = Settings.CreateControlTextContainer()
+            for _, id in ipairs(FC.THEME_ORDER) do container:Add(id, FC.THEMES[id].name) end
+            return container:GetData()
+        end, "The look of the Forever Chronicler window: Night Elf, Alliance, Horde or Blood Elf.")
+        watch(themeVar, theme)
+    end
+
     local trackerVar = ADDON .. "_ShowTracker"
     local tracker = Settings.RegisterAddOnSetting(category, trackerVar, "showTracker",
         FC.db.settings, Settings.VarType.Boolean, "Show goal tracker", true)

@@ -59,6 +59,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron together <name> <goal>` | a goal you complete together with a friend |
 | `/chron invite <n> <name>` | invite another friend to together goal n |
 | `/chron sync` | save now (reloads the UI) so the companion app posts your latest entries |
+| `/chron theme [name]` | change the window's look: `nightelf`, `alliance`, `horde` or `bloodelf` (no name lists them) |
 | `/chron config` | open the options page |
 | `/chron version` | show your version (you're told automatically if a group member has a newer one) |
 | `/chron privacy` | what the addon stores and shares |
@@ -71,7 +72,7 @@ Anything else is a free-form goal you tick off yourself.
 
 Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal here` or `/chron goal 45.2 63.1`.
 The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
-The window has a night elf look (moonlit sky, stars and silver borders), and the **Chronicle** tab is written on a parchment scroll. Every event keeps its own colour, shown as a darker ink so it reads well on the paper.
+The window comes in four **themes** to swap between with `/chron theme <name>` or in the options: **Night Elf** (moonlit sky, stars and silver borders, the default), **Alliance** (royal blue and gold, with the Alliance crest), **Horde** (blood red and iron, bronze borders, embers and the Horde crest) and **Blood Elf** (crimson and gold, a golden sun, fel-green highlights). In every theme the **Chronicle** tab is written on a parchment scroll. Every event keeps its own colour, shown as a darker ink so it reads well on the paper.
 The **Goals** tab works like the quest log: pick a goal on the left to see its details and progress, write notes for it, or point the arrow, complete or delete it.
 The **Journey** tab (`/chron journey`) graphs your level, gold, quests, zones, deaths, known recipes and crafts over time, and sums up your path through the world and how long each level took.
 The **Letters** tab (`/chron letters`) turns each day of play into a letter home, written in a voice that fits your race (who you write to and how you sign off) and class (how you tell it). For example, a night elf druid writes "Beloved sister in Darnassus, … Under Elune's light, ever yours". Pick any day on the left to read its letter and that day's stats: time played, levels, gold, zones, quests, deaths and more. A day runs from 04:00 to 04:00, so a late night still counts as the day it started. Days from before this feature get letters too, built from the chronicle.
@@ -94,7 +95,7 @@ Addon code is in `src/`, grouped by feature. Developer docs are in `docs/`.
 - `src/sharing/SharedGoals.lua` – together goals: invites, per-member progress, offline-safe syncing
 - `src/sharing/Export.lua` – export/import strings and their window
 - `src/ui/Settings.lua` – options page (Settings API)
-- `src/ui/Theme.lua` – night elf window style, parchment scroll and ink colours
+- `src/ui/Theme.lua` – window themes (Night Elf, Alliance, Horde, Blood Elf), parchment scroll and ink colours
 - `src/chronicle/Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)
 - `src/chronicle/Letters.lua` – daily ledger, letters in your race/class voice, Letters tab
 - `src/chronicle/Professions.lua` – profession, recipe and crafting entries, recipe completion (Professions tab)

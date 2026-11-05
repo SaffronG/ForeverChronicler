@@ -95,7 +95,7 @@ flowchart TB
         Tracker["Tracker.lua<br/>on-screen goal list"]
         UI["UI.lua<br/>main window (tabs)"]
         Settings["Settings.lua<br/>options page"]
-        Theme["Theme.lua<br/>night elf style · parchment · ink colours"]
+        Theme["Theme.lua<br/>4 themes · parchment · ink colours"]
         Export["Export.lua<br/>export / import / sync"]
     end
 
@@ -180,7 +180,8 @@ flowchart LR
 | `TROPHIES_CHANGED` | Trophies | – (hook for future views) |
 | `BOSS_DEFEATED(name)` | Trophies (every boss kill) | Companions (credit the group and its members) |
 | `COMPANIONS_CHANGED` | Companions | – (hook for future views) |
-| `SETTINGS_CHANGED(var)` | Settings | Tracker |
+| `THEME_CHANGED(id)` | Theme (`FC:ApplyTheme`) | UI (title shadow, goal-row highlight) |
+| `SETTINGS_CHANGED(var)` | Settings | Tracker, Theme (window theme dropdown) |
 
 ### Example: one level-up, end to end
 
@@ -548,7 +549,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `src/core/Core.lua` (diagnostics) | Opt-in handler timing (off by default), version-linked error log | `FC:Dispatch(label, fn, ...)`, `FC.DIAG_BOUNDS`; `/chron diagnostics` | – | – |
 | `src/core/VersionCheck.lua` | Tell players about newer versions in their group | `FC.version`, `FC.CompareVersions`; `/chron version` | `READY`, `GROUP_ROSTER_UPDATE`; comm `VER` | comm `VER` |
 | `src/ui/Settings.lua` | Options page (Settings API) | `FC:OpenSettings`; `/chron config` | `READY` | `SETTINGS_CHANGED` |
-| `src/ui/Theme.lua` | Look: night elf window, parchment scroll, themed buttons, ink colours for the chronicle | `FC.Theme`, `FC:StyleNightElfFrame`, `FC:StylePanel`, `FC:NightButton`, `FC:CreateParchment`, `FC:StyleFont`, `FC.Ink`, `FC.InkColor` | – | – |
+| `src/ui/Theme.lua` | Look: four window themes (Night Elf, Alliance, Horde, Blood Elf) with live repaint, parchment scroll, themed buttons, ink colours for the chronicle | `FC.Theme`, `FC.THEMES`, `FC.THEME_ORDER`, `FC.ThemeID`, `FC:SetTheme`, `FC:ApplyTheme`, `FC:StyleThemedFrame` (alias `StyleNightElfFrame`), `FC:StylePanel`, `FC:NightButton`, `FC:CreateParchment`, `FC:StyleFont`, `FC.Ink`, `FC.InkColor`; `/chron theme` | `READY`, `SETTINGS_CHANGED` | `THEME_CHANGED` |
 | `src/ui/UI.lua` | Main window: Chronicle tab, quest-log-style Goals tab, extra tabs | `FC:Toggle`, `FC.Refresh`, `FC:AddWindowTab`, `FC:DescribeGoalType`; `/chron`, `note`, `goal`, `goals`, `done`, `del`, `recent` | `ENTRY_ADDED`, `GOALS_CHANGED`, `GOAL_ADDED`, `LOCATIONS_UPDATED` | – |
 | `src/chronicle/Journey.lua` | Progress samples (incl. known recipes and crafts), statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
 | `src/chronicle/Letters.lua` | Daily ledger (day = 04:00 to 04:00), per-day stats from entries + ledger, a letter per day in a race/class voice, Letters tab (day list + letter + stats) | `FC.DayKey`, `FC:Today`, `FC:JourneyDays`, `FC:DayStats`, `FC:DayStatsLines`, `FC:ComposeLetter`, `FC:ShowLetter`, `FC.FormatMoney`; `/chron letters`, `/chron letter [date]` | `READY`, `ZONE`, `LEVEL`, `ENTRY_ADDED`, `PLAYER_MONEY`, `PLAYER_LOGOUT` | – |
@@ -580,7 +581,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `journey` | Journey | | `config` / `options` | Settings |
 | `help`, `errors`, `privacy`, `diagnostics` | Core | | `professions` / `prof` | Professions |
 | `letters`, `letter` | Letters | | `trophies` / `slain` | Trophies |
-| `companions` / `party` | Companions | | | |
+| `companions` / `party` | Companions | | `theme` | Theme |
 
 ---
 

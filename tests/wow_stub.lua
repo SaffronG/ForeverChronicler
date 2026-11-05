@@ -361,7 +361,7 @@ function W.setup(dir, opts)
     -- Settings API
     MinimalSliderWithSteppersMixin = { Label = { Right = 1 } }
     Settings = {
-        VarType = { Boolean = "boolean", Number = "number" },
+        VarType = { Boolean = "boolean", Number = "number", String = "string" },
         RegisterVerticalLayoutCategory = function(name) return { GetID = function() return name end } end,
         RegisterAddOnSetting = function(_, var, key, tbl, ty, name)
             assert(type(tbl[key]) == ty, var .. " stored value has wrong type")
@@ -370,6 +370,15 @@ function W.setup(dir, opts)
         end,
         CreateCheckbox = function() end,
         CreateSlider = function() end,
+        CreateDropdown = function(_, setting, options)
+            env.dropdowns = env.dropdowns or {}
+            env.dropdowns[setting.var] = options()
+        end,
+        CreateControlTextContainer = function()
+            local data = {}
+            return { Add = function(_, value, label) data[#data + 1] = { value = value, label = label } end,
+                GetData = function() return data end }
+        end,
         CreateSliderOptions = function() return { SetLabelFormatter = function(_, _, fn) env.sliderLabels = env.sliderLabels or {}; table.insert(env.sliderLabels, fn) end } end,
         RegisterAddOnCategory = function() end,
         OpenToCategory = function(id) env.openedSettings = id end,

@@ -4,6 +4,22 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-11-05
+
+Window themes: pick the look you like, Night Elf, Alliance, Horde or Blood Elf, and swap any time. Telemetry stays switched off.
+
+### Added
+- **Four window themes** to swap between with `/chron theme <name>` or the new *Window theme* dropdown in the options. The choice is saved per character.
+  - **Night Elf** (the default, as before): violet-to-teal night sky, stars, crescent moon, moon-silver borders, Morpheus title.
+  - **Alliance**: royal blue to navy, gold borders, the Alliance crest, Friz Quadrata title.
+  - **Horde**: blood red to iron black, bronze borders, rising embers, the Horde crest, Skurri title.
+  - **Blood Elf**: crimson and wine, sunwell-gold borders, a golden sun, arcane sparkles, fel-green highlights.
+- The theme changes instantly: window, tabs, buttons, panels, title and highlights are repainted without a `/reload`. The chronicle stays on parchment in every theme. "Dark elf" also selects the night elf theme.
+- Still to test in game: how each theme looks, that the crest textures (`Interface\Timer\Alliance-Logo` / `Horde-Logo`) and the Skurri and Friz fonts load on WoW: Forever (a missing font falls back to the standard one), and the options dropdown.
+
+### Changed
+- `FC:StyleNightElfFrame` is now `FC:StyleThemedFrame` (the old name still works). Theme colours are updated in place, so code holding `FC.Theme.<colour>` tables follows theme changes; anything else can listen for the new `THEME_CHANGED` message.
+
 ## [0.9.0] - 2026-11-05
 
 Companions, "the friends you made along the way": your chronicle now remembers who you grouped with, for how long, where, the raids and bosses you shared, and who became your friend. Your daily letters tell of them too. Who you grouped with is stored on your computer only. Telemetry stays switched off.

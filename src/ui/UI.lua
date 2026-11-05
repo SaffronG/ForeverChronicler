@@ -21,15 +21,19 @@ f:SetClampedToScreen(true)
 f:RegisterForDrag("LeftButton")
 f:SetScript("OnDragStart", f.StartMoving)
 f:SetScript("OnDragStop", f.StopMovingOrSizing)
-FC:StyleNightElfFrame(f) -- Theme.lua: night sky, stars, moon, silver border
+FC:StyleThemedFrame(f) -- Theme.lua: sky, decorations and border of the chosen theme
 f:Hide()
 tinsert(UISpecialFrames, f:GetName()) -- Escape closes it
 FC.window = f
 
 local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 title:SetPoint("TOP", 0, -16)
-FC:StyleFont(title, 24, FC.Theme.title, "Fonts\\MORPHEUS.TTF")
-if title.SetShadowColor then title:SetShadowColor(0.2, 0.5, 0.6, 0.9); title:SetShadowOffset(1, -1) end
+FC:StyleFont(title, 24, FC.Theme.title, "title") -- the theme's title font
+local function titleShadow()
+    local c = FC.Theme.shadow
+    if title.SetShadowColor then title:SetShadowColor(c[1], c[2], c[3], 0.9); title:SetShadowOffset(1, -1) end
+end
+titleShadow()
 title:SetText("Forever Chronicler")
 
 local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
@@ -358,6 +362,12 @@ f:SetScript("OnShow", function() FC:SafeCall(setMode, mode) end)
 FC:On("ENTRY_ADDED", refresh)
 FC:On("GOALS_CHANGED", refresh)
 FC:On("GOAL_ADDED", function(_, index) selected = index end)
+FC:On("THEME_CHANGED", function()
+    titleShadow()
+    for _, r in ipairs(rows) do
+        r.selectedBg:SetColorTexture(FC.Theme.accent[1], FC.Theme.accent[2], FC.Theme.accent[3], 0.18)
+    end
+end)
 FC:On("LOCATIONS_UPDATED", function() if mode == "goals" then showDetails() end end)
 
 function FC:Toggle(m)

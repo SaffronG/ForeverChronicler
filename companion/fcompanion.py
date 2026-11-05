@@ -47,7 +47,7 @@ ADDON = "ForeverChronicler"
 LEGACY_ADDON = "ForeverChronicaller"
 LEGACY_REPO = "SaffronG/ForeverChronicaller"
 LEGACY_CONFIG_DIR = "forever-chronicaller"
-VERSION = "0.9.0"
+VERSION = "0.9.5"
 USER_AGENT = f"ForeverChroniclerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicler"
 

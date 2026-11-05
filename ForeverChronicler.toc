@@ -2,7 +2,7 @@
 ## Title: Forever Chronicler
 ## Notes: Chronicles your adventures automatically and tracks your personal goals.
 ## Author: K. Chase Harmer
-## Version: 0.9.0
+## Version: 0.9.5
 ## SavedVariablesPerCharacter: ForeverChroniclerDB, ForeverChronicallerDB
 
 src/core/Core.lua

@@ -57,3 +57,58 @@ test("night buttons route their text and work without backdrop support", functio
     eq(b:GetText(), "Reopen", "relabelled")
     ok(env.FC.window.stars and #env.FC.window.stars > 0, "stars drawn")
 end)
+
+test("themes: swap between Night Elf, Alliance, Horde and Blood Elf", function()
+    local env = setup()
+    local FC = env.FC
+    eq(FC.currentTheme, "nightelf", "night elf by default")
+    local win = FC.window
+    ok(win.moon:IsShown() and not win.emblem:IsShown() and not win.sun:IsShown(), "night elf: moon, no crest, no sun")
+    local titleRef, accentRef = FC.Theme.title, FC.Theme.accent
+    local neAccent = accentRef[1]
+
+    env.slash("theme horde")
+    eq(FC.currentTheme, "horde", "switched")
+    eq(FC.db.settings.theme, "horde", "remembered")
+    ok(win.emblem:IsShown() and not win.moon:IsShown(), "horde crest, no moon")
+    ok(win.stars[1]:IsShown(), "embers")
+    ok(FC.Theme.title == titleRef and FC.Theme.accent == accentRef, "colour tables are updated in place")
+    ok(accentRef[1] ~= neAccent, "accent colour changed")
+
+    env.slash("theme Blood Elf")
+    eq(FC.currentTheme, "bloodelf", "by display name")
+    ok(win.sun:IsShown() and not win.emblem:IsShown(), "blood elf sun")
+    env.slash("theme alliance")
+    ok(win.emblem:IsShown() and not win.stars[1]:IsShown(), "alliance crest, no stars")
+    env.slash("theme dark elf")
+    eq(FC.currentTheme, "nightelf", "'dark elf' is the night elf theme")
+
+    env.chat = {}
+    env.slash("theme pirate")
+    ok(env.chatContains("Usage: /chron theme"), "unknown theme shows usage")
+    eq(FC.currentTheme, "nightelf", "unchanged")
+    env.slash("theme")
+    ok(env.chatContains("Night Elf (current)"), "lists themes")
+
+    -- buttons and panels repaint without errors, tabs keep their selected state
+    env.slash("")
+    FC:Toggle("goals")
+    env.slash("theme horde")
+    eq(#FC.db.errorLog, 0, "no errors while repainting")
+end)
+
+test("the saved theme is applied on login, and the options dropdown lists all four", function()
+    local env = setup({ savedDB = { settings = { theme = "bloodelf" } } })
+    eq(env.FC.currentTheme, "bloodelf", "saved theme applied")
+    local opts = env.dropdowns and env.dropdowns.ForeverChronicler_Theme
+    ok(opts, "dropdown registered")
+    eq(#opts, 4, "four themes")
+    eq(opts[1].label, "Night Elf", "labels")
+    -- the options page changes the saved value, then tells everyone
+    env.FC.db.settings.theme = "alliance"
+    env.FC:Fire("SETTINGS_CHANGED", "ForeverChronicler_Theme")
+    eq(env.FC.currentTheme, "alliance", "applied from the options page")
+    local bad = setup({ savedDB = { settings = { theme = "nope" } } })
+    eq(bad.FC.currentTheme, "nightelf", "unknown saved theme falls back")
+    eq(bad.FC.db.settings.theme, "nightelf", "and is repaired")
+end)
