@@ -147,14 +147,39 @@ function W.setup(dir, opts)
     env.player = { name = opts.name or "Chase", level = opts.level or 10, zone = "Elwynn Forest", map = 1, x = 0.5, y = 0.5,
         money = 0, realm = "Forever" }
     local P = env.player
+    env.roster, env.raid = opts.roster, opts.raid
+    -- Group roster (Companions.lua): env.roster = { { name, realm, class, race, level }, ... } (not you);
+    -- env.raid = true makes it a raid (raid1 = you). Without env.roster the old inGroup flags apply.
+    local function member(unit)
+        if not env.roster then return nil end
+        local i = tonumber(tostring(unit):match("^party(%d+)$"))
+        if i then return env.roster[i] end
+        i = tonumber(tostring(unit):match("^raid(%d+)$"))
+        if i and env.raid then if i == 1 then return "me" end return env.roster[i - 1] end
+    end
     UnitName = function(unit)
-        if unit == "player" then return P.name end
+        if unit == "player" or member(unit) == "me" then return P.name end
         if unit == "target" and env.target then return env.target.name end
+        local m = member(unit)
+        if m then return m.name, m.realm end
         return unit
     end
-    UnitLevel = function() return P.level end
-    UnitRace = function() return P.raceName or "Night Elf", P.race or "NightElf", 4 end
-    UnitClass = function() return P.className or "Druid", P.class or "DRUID", 11 end
+    UnitIsUnit = function(a, b) return a == b or (b == "player" and member(a) == "me") end
+    UnitLevel = function(unit)
+        local m = member(unit)
+        if type(m) == "table" then return m.level or 1 end
+        return P.level
+    end
+    UnitRace = function(unit)
+        local m = member(unit)
+        if type(m) == "table" then return m.race or "Human", "Human", 1 end
+        return P.raceName or "Night Elf", P.race or "NightElf", 4
+    end
+    UnitClass = function(unit)
+        local m = member(unit)
+        if type(m) == "table" then return m.class or "Warrior", "WARRIOR", 1 end
+        return P.className or "Druid", P.class or "DRUID", 11
+    end
     UnitFactionGroup = function() return P.faction or "Alliance" end
     UnitXP = function() return P.xp or 0 end
     UnitXPMax = function() return 1000 end
@@ -166,16 +191,27 @@ function W.setup(dir, opts)
     GetTitleText = function() return env.questTitle end
     GetAchievementInfo = function(id) return id, "Achievement " .. id end
     RequestTimePlayed = function() env.timePlayedRequested = true end
-    IsInGroup = function(category) if category == 2 then return env.inInstanceGroup or false end return env.inGroup or false end
+    IsInGroup = function(category)
+        if category == 2 then return env.inInstanceGroup or false end
+        if env.roster then return #env.roster > 0 end
+        return env.inGroup or false
+    end
     LE_PARTY_CATEGORY_HOME, LE_PARTY_CATEGORY_INSTANCE = 1, 2
     Ambiguate = function(name) return (name:gsub("%-.*$", "")) end
-    IsInRaid = function() return false end
+    IsInRaid = function() return env.roster ~= nil and env.raid == true and #env.roster > 0 end
     IsInInstance = function() return env.inInstance or false, env.inInstance and "party" or "none" end
     env.groupMembers, env.friendsOnline = {}, {}
     UnitInParty = function(name) return env.groupMembers[name] or false end
     UnitInRaid = function() return nil end
-    C_FriendList = { GetFriendInfo = function(name) if env.friendsOnline[name] ~= nil then return { connected = env.friendsOnline[name] } end end }
-    GetNumGroupMembers = function() return env.inGroup and 2 or 0 end
+    -- env.friendList = { "Name", ... } (your friend list, in order)
+    C_FriendList = { GetFriendInfo = function(name) if env.friendsOnline[name] ~= nil then return { connected = env.friendsOnline[name] } end end,
+        GetNumFriends = function() return env.friendList and #env.friendList or 0 end,
+        GetFriendInfoByIndex = function(i) local n = env.friendList and env.friendList[i]; if n then return { name = n, connected = true } end end,
+        ShowFriends = function() end }
+    GetNumGroupMembers = function()
+        if env.roster then return #env.roster > 0 and #env.roster + 1 or 0 end
+        return env.inGroup and 2 or 0
+    end
 
     -- Target, instances and loot (Trophies.lua)
     -- env.target = { guid, name, class = "rare"|"rareelite"|"worldboss"|"elite"|"normal", dead, tapDenied }

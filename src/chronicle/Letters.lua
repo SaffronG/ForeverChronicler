@@ -112,7 +112,8 @@ function FC:DayStats(key)
     local ledger = days()[key]
     local s = { key = key, ledger = ledger ~= nil, entries = 0,
         zonesVisited = {}, firstVisits = {}, quests = {}, deaths = {}, achievements = {}, goals = {},
-        notes = {}, recipes = {}, crafts = {}, professions = {}, levels = {}, loot = {}, slain = {} }
+        notes = {}, recipes = {}, crafts = {}, professions = {}, levels = {}, loot = {}, slain = {},
+        companions = {}, newFriends = {}, groupTime = 0, groupCount = 0, raids = 0 }
     local list = self:JourneyDays()
     for i, k in ipairs(list) do if k == key then s.dayNumber = i end end
 
@@ -134,6 +135,9 @@ function FC:DayStats(key)
             elseif e.kind == "craft" then s.crafts[#s.crafts + 1] = text
             elseif e.kind == "profession" then s.professions[#s.professions + 1] = text
             elseif e.kind == "loot" then s.loot[#s.loot + 1] = text:match("(%[.-%])") or text
+            elseif e.kind == "social" then
+                local friend = text:match("^Became friends with (.-)%.")
+                if friend then s.newFriends[#s.newFriends + 1] = friend end
             elseif e.kind == "slay" then
                 s.slain[#s.slain + 1] = text:match("^Defeated (.-) %(") or text:match("^Defeated (.-) in ")
                     or text:match("^Slew the world boss (.-) in ") or text:match("^Slew (.-), a rare foe") or text
@@ -161,6 +165,22 @@ function FC:DayStats(key)
     end
     s.lastZone = (ledger and ledger.visited and ledger.visited[#ledger.visited]) or lastZone
     if s.money0 and s.money1 then s.moneyChange = s.money1 - s.money0 end
+    -- who you grouped with (Companions.lua)
+    if self.GroupsOnDay then
+        local seen = {}
+        for _, g in ipairs(self:GroupsOnDay(key)) do
+            s.groupCount = s.groupCount + 1
+            s.groupTime = s.groupTime + math.max(0, (g.stop or g.start) - g.start)
+            if g.kind == "raid" then s.raids = s.raids + 1 end
+            for _, k in ipairs(g.members or {}) do
+                if not seen[k] then
+                    seen[k] = true
+                    local c = self.db.companions and self.db.companions[k]
+                    s.companions[#s.companions + 1] = c and c.name or k
+                end
+            end
+        end
+    end
     return s
 end
 
@@ -294,6 +314,15 @@ function FC:ComposeLetter(key)
         body[#body + 1] = count(#s.quests, "I answered one call for help", "I answered %d calls for help")
             .. ", among them \"" .. s.quests[1] .. "\"" .. (s.quests[2] and (" and \"" .. s.quests[2] .. "\"") or "") .. "."
     end
+    if #s.companions > 0 then
+        body[#body + 1] = string.format("I was not alone: I travelled with %s for %s%s.", listText(s.companions, 4),
+            playedText(s.groupTime), s.raids > 0 and (s.raids == 1 and ", and we raided together" or
+            string.format(", across %d raids", s.raids)) or "")
+    end
+    if #s.newFriends > 0 then
+        body[#body + 1] = #s.newFriends == 1 and ("I made a new friend today: " .. s.newFriends[1] .. ".")
+            or ("I made new friends today: " .. listText(s.newFriends, 4) .. ".")
+    end
     if #s.slain > 0 then
         body[#body + 1] = "I stood against mighty foes and prevailed: " .. listText(s.slain, 4) .. "."
     end
@@ -358,6 +387,12 @@ function FC:DayStatsLines(s)
     add("First visits", #s.firstVisits > 0 and table.concat(s.firstVisits, ", ") or "-")
     add("Quests completed", #s.quests .. (#s.quests > 0 and (": " .. table.concat(s.quests, ", ")) or ""))
     add("Deaths", #s.deaths .. (#s.deaths > 0 and (": " .. table.concat(s.deaths, ", ")) or ""))
+    add("Companions", #s.companions > 0 and table.concat(s.companions, ", ") or "-")
+    if s.groupCount > 0 then
+        add("Time in a group", string.format("%s (%d group%s%s)", playedText(s.groupTime), s.groupCount,
+            s.groupCount == 1 and "" or "s", s.raids > 0 and string.format(", %d raid%s", s.raids, s.raids == 1 and "" or "s") or ""))
+    end
+    add("New friends", #s.newFriends > 0 and table.concat(s.newFriends, ", ") or "-")
     add("Bosses and rare foes slain", #s.slain > 0 and table.concat(s.slain, ", ") or "-")
     add("Notable loot", #s.loot > 0 and table.concat(s.loot, ", ") or "-")
     add("Achievements", #s.achievements > 0 and table.concat(s.achievements, ", ") or "-")

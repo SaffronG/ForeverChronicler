@@ -21,11 +21,14 @@ local function defaults()
         days = {},        -- ["YYYY-MM-DD"] = daily ledger for the letters (see Letters.lua)
         loot = {},        -- [itemID] = { n, q, first }: notable items looted (see Trophies.lua)
         slain = {},       -- ["e<encounter>:<difficulty>" | "n<npcID>"] = { name, kind, n, first, last, diff }
+        companions = {},  -- ["Name" | "Name-Realm"] = who you grouped with (see Companions.lua)
+        groups = {},      -- finished group sessions { start, stop, kind, zones, members, size, bosses }
+        friends = {},     -- ["Name"] = time first seen on your friend list
         errorLog = {},  -- recent Lua errors caught by FC:SafeCall, see /chron errors
         settings = {
             -- which automatic entry types get written (notes and the opening entry are always kept)
             chronicle = { level = true, zone = true, quest = true, death = true, achievement = true, goal = true,
-                profession = true, recipe = true, craft = true, loot = true, slay = true },
+                profession = true, recipe = true, craft = true, loot = true, slay = true, social = true },
             lootQuality = 3, -- lowest item quality for loot entries (2 Uncommon .. 5 Legendary)
             maxEntries = 0, -- 0 = unlimited; otherwise oldest entries are dropped as new ones arrive
             arrivalYards = 20, -- how close you must get to complete a location goal
@@ -237,6 +240,7 @@ end, 95)
 -- Privacy summary (full text: PRIVACY.md, shipped with the addon) -------------------
 local PRIVACY = {
     "|cffd4af37Privacy:|r your chronicle, goals and notes stay on this computer (in WoW's saved data).",
+    "It also remembers who you grouped with (names, class, level, time together), only on this computer.",
     "This addon can't use the internet. It only sends hidden addon messages when you",
     "share a goal or do a together goal (the goal and your character name, to the players",
     "you choose) and your addon version to your group. Nothing else leaves the game.",

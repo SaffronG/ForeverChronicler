@@ -47,11 +47,11 @@ ADDON = "ForeverChronicler"
 LEGACY_ADDON = "ForeverChronicaller"
 LEGACY_REPO = "SaffronG/ForeverChronicaller"
 LEGACY_CONFIG_DIR = "forever-chronicaller"
-VERSION = "0.8.0"
+VERSION = "0.9.0"
 USER_AGENT = f"ForeverChroniclerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicler"
 
-TERMS_VERSION = 2  # bump when PRIVACY.md changes in a way users must agree to again
+TERMS_VERSION = 3  # bump when PRIVACY.md changes in a way users must agree to again
 PRIVACY_URL = "https://github.com/SaffronG/ForeverChronicler/blob/main/PRIVACY.md"
 
 DISCLAIMER = f"""\
@@ -71,6 +71,9 @@ DISCLAIMER = f"""\
 
  DATA:
    * Your chronicle and goals stay on your computer.
+   * The addon remembers who you grouped with (other players' names,
+     class, level, time together) on your computer only. Posting these to
+     Discord/ntfy is off unless you turn on the "social" entry type.
    * Nothing is sent anywhere unless you turn it on. Sharing goals sends
      the goal (and your character name) to the players you choose.
    * No telemetry: this version collects no usage or diagnostic data.
@@ -106,6 +109,8 @@ DEFAULT_KINDS = {
     "profession": False, "recipe": False, "craft": False,
     # loot and bosses/rares (0.8.0): off by default too
     "loot": False, "slay": False,
+    # companions (0.9.0): contains other players' names, so off by default
+    "social": False,
 }
 
 

@@ -16,6 +16,7 @@ local TOGGLES = {
     { key = "craft",       name = "Crafting",             tip = "Write an entry the first time you craft each item, and at crafting milestones." },
     { key = "loot",        name = "Notable loot",         tip = "Write an entry the first time you loot each item of the chosen quality or better (see below)." },
     { key = "slay",        name = "Bosses and rare foes", tip = "Write an entry the first time you defeat each dungeon or raid boss (per difficulty) and each rare monster." },
+    { key = "social",      name = "Companions and friends", tip = "Write an entry when a group ends (who you were with and for how long), at time-together milestones, and when you add a friend. Who you grouped with is remembered either way, on this computer only." },
 }
 
 local category

@@ -129,6 +129,9 @@ function FC:ExportString()
         days = self.db.days,
         loot = self.db.loot,
         slain = self.db.slain,
+        companions = self.db.companions,
+        groups = self.db.groups,
+        friends = self.db.friends,
     }
     local enc = E()
     if enc and enc.SerializeCBOR and enc.CompressString and enc.EncodeBase64 then
@@ -294,6 +297,58 @@ local function cleanSlain(list)
     return out
 end
 
+-- companions: ["Name" | "Name-Realm"] = { name, realm, class, race, level, first, last, firstZone, time, groups, raids, bosses, friend }
+local function str(v, max) return type(v) == "string" and v ~= "" and v:sub(1, max) or nil end
+local function count(v) v = tonumber(v); return (v and v >= 0 and v < 1e12) and math.floor(v) or nil end
+local function validName(k) return type(k) == "string" and #k > 0 and #k <= 60 and not k:find("[%c|]") end
+
+local function cleanCompanions(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    local n = 0
+    for key, c in pairs(list) do
+        if validName(key) and type(c) == "table" and validName(c.name) and n < 5000 then
+            out[key] = { name = c.name, realm = str(c.realm, 60), class = str(c.class, 30), race = str(c.race, 30),
+                level = count(c.level), first = count(c.first), last = count(c.last), firstZone = str(c.firstZone, 100),
+                time = count(c.time) or 0, groups = count(c.groups) or 0, raids = count(c.raids) or 0,
+                bosses = count(c.bosses) or 0, friend = count(c.friend) }
+            n = n + 1
+        end
+    end
+    return out
+end
+
+-- groups: { { start, stop, kind = "party"|"raid", zones = {...}, members = { key, ... }, size, bosses }, ... }
+local function cleanGroups(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    for _, g in ipairs(list) do
+        local start, stop = count(g and g.start), count(g and g.stop)
+        if type(g) == "table" and start and stop and stop >= start and (g.kind == "party" or g.kind == "raid") and #out < 1000 then
+            local zones, members = {}, {}
+            if type(g.zones) == "table" then
+                for _, z in ipairs(g.zones) do if type(z) == "string" and #zones < 10 then zones[#zones + 1] = z:sub(1, 100) end end
+            end
+            if type(g.members) == "table" then
+                for _, m in ipairs(g.members) do if validName(m) and #members < 40 then members[#members + 1] = m end end
+            end
+            out[#out + 1] = { start = start, stop = stop, kind = g.kind, zones = zones, members = members,
+                size = count(g.size), bosses = count(g.bosses) }
+        end
+    end
+    return out
+end
+
+-- friends: ["Name"] = time first seen on the friend list
+local function cleanFriends(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    for name, t in pairs(list) do
+        if validName(name) and count(t) then out[name] = count(t) end
+    end
+    return out
+end
+
 local function deepCopy(v)
     if type(v) ~= "table" then return v end
     local t = {}
@@ -308,10 +363,13 @@ function FC:ImportString(str, mode)
     local entries, goals = cleanEntries(data.entries), cleanGoals(data.goals)
     local db = self.db
     self.lastImportBackup = deepCopy({ entries = db.entries, goals = db.goals, zones = db.zones, stats = db.stats, samples = db.samples,
-        professions = db.professions, crafted = db.crafted, days = db.days, loot = db.loot, slain = db.slain })
+        professions = db.professions, crafted = db.crafted, days = db.days, loot = db.loot, slain = db.slain,
+        companions = db.companions, groups = db.groups, friends = db.friends })
     local importedDays = cleanDays(data.days)
     local professions, crafted = cleanProfessions(data.professions), cleanCrafted(data.crafted)
     local importedLoot, importedSlain = cleanLoot(data.loot), cleanSlain(data.slain)
+    local importedCompanions, importedGroups, importedFriends =
+        cleanCompanions(data.companions), cleanGroups(data.groups), cleanFriends(data.friends)
 
     if mode == "replace" then
         db.entries, db.goals = entries, goals
@@ -319,6 +377,7 @@ function FC:ImportString(str, mode)
         db.stats = { deaths = 0, quests = 0, recipes = 0, crafts = 0, bosses = 0, rares = 0, notableLoot = 0 }
         db.samples = {}
         db.professions, db.crafted, db.days, db.loot, db.slain = {}, {}, {}, {}, {}
+        db.companions, db.groups, db.friends = {}, {}, {}
     else
         local seen = {}
         for _, e in ipairs(db.entries) do seen[e.t .. "\1" .. e.kind .. "\1" .. e.text] = true end
@@ -380,6 +439,31 @@ function FC:ImportString(str, mode)
             if r.first and (not mine.first or r.first < mine.first) then mine.first = r.first end
             if r.last and (not mine.last or r.last > mine.last) then mine.last = r.last end
         end
+    end
+    -- companions: keep the bigger counters and the earliest first meeting / friendship
+    db.companions = db.companions or {}
+    for key, c in pairs(importedCompanions) do
+        local mine = db.companions[key]
+        if not mine then db.companions[key] = c
+        else
+            for _, k in ipairs({ "time", "groups", "raids", "bosses" }) do
+                if (c[k] or 0) > (mine[k] or 0) then mine[k] = c[k] end
+            end
+            if c.first and (not mine.first or c.first < mine.first) then mine.first, mine.firstZone = c.first, c.firstZone end
+            if c.last and (not mine.last or c.last > mine.last) then mine.last = c.last end
+            if c.friend and (not mine.friend or c.friend < mine.friend) then mine.friend = c.friend end
+        end
+    end
+    db.groups = db.groups or {}
+    local haveGroup = {}
+    for _, g in ipairs(db.groups) do haveGroup[g.start .. g.kind] = true end
+    for _, g in ipairs(importedGroups) do
+        if not haveGroup[g.start .. g.kind] then db.groups[#db.groups + 1] = g; haveGroup[g.start .. g.kind] = true end
+    end
+    table.sort(db.groups, function(a, b) return a.start < b.start end)
+    db.friends = db.friends or {}
+    for name, t in pairs(importedFriends) do
+        if not db.friends[name] or t < db.friends[name] then db.friends[name] = t end
     end
     if type(data.samples) == "table" then
         db.samples = db.samples or {}

@@ -59,6 +59,7 @@ function FC:RecordBossKill(encounterID, name, difficultyID, groupSize)
     if recentKill[encounterID] and now - recentKill[encounterID] < 30 then return end
     recentKill[encounterID] = now
     lastBoss = { name = name, t = now }
+    FC:Fire("BOSS_DEFEATED", name) -- every kill (Companions credits the group)
     difficultyID = tonumber(difficultyID) or 0
     local key = "e" .. encounterID .. ":" .. difficultyID
     local list = slain()

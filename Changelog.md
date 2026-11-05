@@ -4,6 +4,23 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-05
+
+Companions, "the friends you made along the way": your chronicle now remembers who you grouped with, for how long, where, the raids and bosses you shared, and who became your friend. Your daily letters tell of them too. Who you grouped with is stored on your computer only. Telemetry stays switched off.
+
+### Added
+- **Group sessions in the chronicle** (new `src/chronicle/Companions.lua`). When a party ends: "Adventured with Buddy and Pal for 1 h 5 min in Elwynn Forest and Westfall. First time with Pal." Raids are summed up in one line: "Raided with 24 companions for 2 h 3 min in Molten Core, and defeated 5 bosses together." Groups shorter than 5 minutes are recorded but get no entry, and members who stayed less than a minute aren't listed. A `/reload` doesn't split a group; if you log out for longer than 10 minutes, the group ends when you were last seen.
+- **Time together** is added up for each companion, with milestone entries ("You have now adventured 10 hours with Buddy.") at 1, 5, 10, 24, 100, 250 and 500 hours.
+- **Friends made along the way:** adding someone to your friend list writes "Became friends with Buddy. You met in Westfall on 2026-11-05 and have adventured 3 h 10 min together." Your existing friends are recorded silently the first time.
+- `/chron companions` (or `/chron party`) lists your companions by time together, with groups, raids and who became a friend. `/chron companions <name>` shows one companion: class, race and level, when and where you met, time together, groups, raids, bosses defeated together, and friends since.
+- **Letters:** the day's letter mentions who you travelled with and new friends ("I was not alone: I travelled with Buddy and Pal for 2 h 5 min."), and the day's stats list *Companions*, *Time in a group* and *New friends*.
+- A new entry type, *Companions and friends*, can be switched off in the options; who you grouped with is still remembered. Companions, group history and friends are included in export/import (validated). The companion app knows the new `social` entry type but **doesn't post it unless you turn it on** in `post_kinds`.
+
+### Changed
+- **Privacy:** the addon now stores other players' names, realm, class, race and level (for the players you group with), your group history and your friend list's names, on your computer only. PRIVACY.md, `/chron privacy` and the installer's summary say so. `TERMS_VERSION` 3, so the installer asks you to agree again.
+- Bosses defeated (0.8.0) are now also credited to the group you're in.
+- Still to test in game: that `GROUP_ROSTER_UPDATE`, `UnitName`/`UnitClass`/`UnitRace`/`UnitLevel` on `party`/`raid` units and `C_FriendList.GetFriendInfoByIndex` work as expected on WoW: Forever, and that the roster is known by `PLAYER_ENTERING_WORLD` after a login. Also the companion tests (CI runs them; Python wasn't available locally).
+
 ## [0.8.0] - 2026-11-05
 
 Trophies: your chronicle now records the notable loot you find, the dungeon and raid bosses you defeat, and the rare monsters and world bosses you slay. They show up in your daily letters too. Telemetry stays switched off.

@@ -52,7 +52,9 @@ One letter per day (04:00 to 04:00) in a race/class voice, with that day's stats
 - [ ] **Step 3: growth**: gear changes and item level milestones (`PLAYER_EQUIPMENT_CHANGED`, `GetAverageItemLevel`), first rare/epic loot (done in 0.8.0), reputation standings (`UPDATE_FACTION`), new mounts/pets/toys/titles, gold earned vs spent
 - [ ] **Step 4: atmosphere**: in-game time of day in the letter (`GetGameTime`), holidays (`C_Calendar`), screenshots taken (`SCREENSHOT_SUCCEEDED`), chapter headings at new zones/level bands
 - [ ] **Step 5: dungeons and bosses**: instances entered (`GetInstanceInfo`); bosses defeated is done in 0.8.0 (check `ENCOUNTER_END` is allowed on WoW: Forever)
-- [ ] **Step 6: companions**: who you grouped with and for how long (local only; never posted by the companion by default)
+- [x] **Step 6: companions (0.9.0)**: who you grouped with and for how long, where, raids and bosses shared, time-together milestones, friends made (with shared history), group history, `/chron companions [name]`, letter sentences + day stats, export/import (local only; never posted by the companion by default)
+- [ ] Check companions in game: roster names/class/race/level on `party`/`raid` units, roster known by `PLAYER_ENTERING_WORLD` (no split sessions on login), `C_FriendList.GetFriendInfoByIndex` names, cross-realm names
+- [ ] Idea: a Companions tab in the window (the tab row is full at 640 px; needs a wider window or a "More" menu)
 - [ ] **Step 7: companion**: post each finished day's letter to Discord/ntfy (off by default; needs the letter stored when the day ends)
 - [ ] Check in game: Letters tab layout, race/class tokens from `UnitRace`/`UnitClass`, active-time ticker
 

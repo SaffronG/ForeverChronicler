@@ -1,6 +1,6 @@
 # Privacy, permissions and risks
 
-**Terms version 1.** The installer shows a summary of this page and asks you to agree before it installs anything.
+**Terms version 3.** The installer shows a summary of this page and asks you to agree before it installs anything.
 
 Forever Chronicler has two parts:
 - **The addon** runs inside WoW: Forever.
@@ -24,7 +24,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 |---|---|
 | Your character's level, XP, zone, money, quests turned in, deaths, achievements, map position, your own loot messages, bosses you defeat, and your target's name, type (rare/world boss) and whether it's dead | To write the chronicle, check goals and draw graphs |
 | Its own saved data (`WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicler.lua`) | To remember your chronicle, goals and settings. WoW writes this file on logout or `/reload`. It also loads data saved under the old name (`ForeverChronicallerDB`, up to 0.5.0) once, to carry it over |
-| Your friend list's online status and group roster | To know when friends can receive together-goal updates |
+| Your friend list (names, online status) and group roster (names, realm, class, race, level of the players in your party or raid) | To know when friends can receive together-goal updates, and to remember who you adventured with and who became your friend (Companions) |
 | **Hidden addon messages** to your group, or whispers to players you choose | Only when you share a goal, use together goals, or are in a group (version check). See [section 2](#2-what-data-exists-and-where-it-goes) |
 | The world map and the game's waypoint arrow | Location goals |
 
@@ -47,7 +47,8 @@ Administrator rights are not required. If WoW is installed in a protected folder
 
 | Data | Stored | Leaves your computer? |
 |---|---|---|
-| Chronicle entries, goals, notes, stats, progress samples, professions (skill, recipe counts, crafted item IDs and counts), a daily ledger for the letters (time played, level, gold and zones visited per day), trophies (notable item IDs and counts, names and counts of bosses and rare monsters you defeated) | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
+| Chronicle entries, goals, notes, stats, progress samples, professions (skill, recipe counts, crafted item IDs and counts), a daily ledger for the letters (time played, level, gold and zones visited per day), trophies (notable item IDs and counts, names and counts of bosses and rare monsters you defeated) |
+| **Companions** (0.9.0+): the names, realm, class, race and level of **other players** you grouped with, when and where you met, time spent together, number of groups, raids and bosses shared, your group history (who, when, where), your friend list's names and when each became your friend | Your SavedVariables file (local) | **No.** Nothing about other players is ever sent by the addon. The companion only posts these entries ("social") to Discord/ntfy if you turn them on in `post_kinds` (off by default). Exports include them, so treat export strings as private | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
 | Settings, error log | SavedVariables (local) | No |
 | Companion config: WoW folder, Discord webhook URL, ntfy topic | `config.json` (local; readable only by you on Linux/macOS) | No. The webhook URL is never printed or logged |
 | **Shared goals** (`/chron share`) | Sent as an addon message | **Yes, to the players you share with**: goal text, notes and type, and your character name, which the game attaches to every message |
