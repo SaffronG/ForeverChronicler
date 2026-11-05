@@ -170,7 +170,7 @@ end)
 
 FC:RegisterEvent("ADDON_LOADED", function(name)
     if name ~= ADDON then return end
-    -- Until 0.5.0 the addon was spelled "ForeverChronicaller". If the old saved
+    -- Up to 0.5.0 the addon was spelled "ForeverChronicaller". If the old saved
     -- table was loaded (the companion copies the old saved file across on
     -- install), adopt it once and drop the old name so it isn't saved again.
     local legacy = rawget(_G, "ForeverChronicallerDB")

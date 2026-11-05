@@ -23,7 +23,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 | Accesses | Why |
 |---|---|
 | Your character's level, XP, zone, money, quests turned in, deaths, achievements, map position | To write the chronicle, check goals and draw graphs |
-| Its own saved data (`WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicler.lua`) | To remember your chronicle, goals and settings. WoW writes this file on logout or `/reload`. It also loads data saved under the old name (`ForeverChronicallerDB`, before 0.5.0) once, to carry it over |
+| Its own saved data (`WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicler.lua`) | To remember your chronicle, goals and settings. WoW writes this file on logout or `/reload`. It also loads data saved under the old name (`ForeverChronicallerDB`, up to 0.5.0) once, to carry it over |
 | Your friend list's online status and group roster | To know when friends can receive together-goal updates |
 | **Hidden addon messages** to your group, or whispers to players you choose | Only when you share a goal, use together goals, or are in a group (version check). See [section 2](#2-what-data-exists-and-where-it-goes) |
 | The world map and the game's waypoint arrow | Location goals |
@@ -33,7 +33,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 |---|---|---|
 | **Read** files | The addon's SavedVariables files under your WoW folder's `WTF` folder | `watch` and `telemetry send` (telemetry only reads the error log and diagnostics, if you opt in) |
 | **Write** files | `Interface/AddOns/ForeverChronicler/` (installing and updating the addon). Its own folder: `%APPDATA%\forever-chronicler\` on Windows, `~/.config/forever-chronicler/` on Linux (config, state, backups, telemetry spool) | `install`, `update`, `setup`, `watch` |
-| **Copy** files (once, after the 0.5.0 rename) | If you used the old **ForeverChronicaller** version: its addon folder is moved into the companion's backups, and each character's `SavedVariables/ForeverChronicaller.lua` is copied to `ForeverChronicler.lua` (only if that file doesn't exist yet). Originals are kept. An old `forever-chronicaller` config folder is copied to the new name | `install`, `update` |
+| **Copy** files (once, after the 0.5.1 rename) | If you used the old **ForeverChronicaller** version: its addon folder is moved into the companion's backups, and each character's `SavedVariables/ForeverChronicaller.lua` is copied to `ForeverChronicler.lua` (only if that file doesn't exist yet). Originals are kept. An old `forever-chronicaller` config folder is copied to the new name | `install`, `update` |
 | **List running programs** | Process **names** only (`tasklist` / `ps`), to check whether WoW is running before replacing files | `install`, `update` |
 | **Network** | `api.github.com` and `github.com` (update checks and downloads); your Discord webhook; your ntfy server | Only for the features you use |
 

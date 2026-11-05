@@ -22,9 +22,9 @@ No Python needed. It finds your WoW: Forever folder (or asks you for it) and ins
 
 (Developers: you can also copy or symlink this repo folder into `Interface/AddOns/ForeverChronicler/`.)
 
-**Upgrading from 0.4.x (spelled "Forever Chronicaller"):** the addon was renamed in 0.5.0, and WoW keeps saved data under the addon's folder name.
-- **With the installer (recommended):** download the 0.5.0 installer once and run it. The updater built into 0.4.x looks for the old name and can't find 0.5.0. The installer moves the old `ForeverChronicaller` folder to its backups, so the two don't load side by side, and copies each character's saved chronicle to the new name. The originals are kept. On your next login the addon says "Your chronicle from the old "Forever Chronicaller" was carried over."
-- **Manually:** with WoW closed, delete `Interface/AddOns/ForeverChronicaller/`. Then, in each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/` folder, copy `ForeverChronicaller.lua` to `ForeverChronicler.lua` and keep the original. Do this before logging in with 0.5.0.
+**Upgrading from 0.5.0 or older (spelled "Forever Chronicaller"):** the addon was renamed in 0.5.1, and WoW keeps saved data under the addon's folder name.
+- **With the installer (recommended):** download the 0.5.1 installer once and run it. The updater built into 0.5.0 and older looks for the old name and can't find 0.5.1. The installer moves the old `ForeverChronicaller` folder to its backups, so the two don't load side by side, and copies each character's saved chronicle to the new name. The originals are kept. On your next login the addon says "Your chronicle from the old "Forever Chronicaller" was carried over."
+- **Manually:** with WoW closed, delete `Interface/AddOns/ForeverChronicaller/`. Then, in each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/` folder, copy `ForeverChronicaller.lua` to `ForeverChronicler.lua` and keep the original. Do this before logging in with 0.5.1.
 
 If the addon shows as "out of date", either tick "Load out of date AddOns" on the
 character select AddOns screen or change `## Interface:` in the .toc to your client's

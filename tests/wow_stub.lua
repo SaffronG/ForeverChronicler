@@ -343,7 +343,7 @@ function W.setup(dir, opts)
 
     -- Load the addon in .toc order (Lua files only)
     _G.ForeverChroniclerDB = opts.savedDB
-    _G.ForeverChronicallerDB = opts.legacyDB -- saved data from before the 0.5.0 rename
+    _G.ForeverChronicallerDB = opts.legacyDB -- saved data from before the 0.5.1 rename
     _G.ForeverChroniclerAccountDB = opts.savedAccountDB
     env.FC = {}
     local toc = assert(io.open(dir .. "/ForeverChronicler.toc")):read("*a")

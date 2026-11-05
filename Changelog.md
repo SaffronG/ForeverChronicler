@@ -4,15 +4,17 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
-## [0.5.0] - 2026-11-05
-
-The addon's name is fixed (**Forever Chronicler**, previously misspelled "Forever Chronicaller"), your chronicle is carried over, and there's a new look: the window is styled after the night elves, and the chronicle is written on a parchment scroll, with every event keeping its colour. Telemetry stays switched off.
-
 ### Changed
 - **Fixed the addon's name: "Forever Chronicaller" is now "Forever Chronicler"** (`ForeverChronicler.toc`, `Interface/AddOns/ForeverChronicler/`, saved table `ForeverChroniclerDB`, chat prefix `[Chronicler]`, release files `ForeverChronicler-<version>.zip` / `ForeverChronicler-Installer-…`, companion config folder `forever-chronicler`, repository `SaffronG/ForeverChronicler`). Slash commands (`/chron`, `/fc`) and the addon-message prefix `FChron` are unchanged, so players on older versions still sync with you.
 - **Your chronicle is carried over.** The addon also loads the old `ForeverChronicallerDB` and adopts it if this character's new chronicle is still fresh. Otherwise the old data is left alone, never deleted. The installer moves the old `ForeverChronicaller` addon folder to its backups (both would load otherwise), copies each character's `ForeverChronicaller.lua` saved file to `ForeverChronicler.lua` (originals kept), copies the old config folder, and switches the update repository to the new name. The companion's watcher reads either name. `TERMS_VERSION` 2: the disclaimer lists the one-time copy.
-- **Upgrading from 0.4.x:** the updater built into older installers looks for the old file names and can't find 0.5.0, so download the 0.5.0 installer once. Manual installs: see "Upgrading from 0.4.x" in the README. Released Changelog sections keep the old name, because that's what those versions were called.
+- **Upgrading from 0.5.0 or older:** the updater built into older installers looks for the old file names and can't find this version, so download the new installer once. Manual installs: see "Upgrading from 0.5.0 or older" in the README. Released Changelog sections keep the old name, because that's what those versions were called.
 - Still to test: the companion tests (CI runs them, Python wasn't available locally), and the carry-over in game.
+
+## [0.5.0] - 2026-11-05
+
+A new look: the window is styled after the night elves, and the chronicle is written on a parchment scroll, with every event keeping its colour. Telemetry stays switched off.
+
+### Changed
 - **New look: night elf style.** The main window has a moonlit sky (violet to deep teal), stars, a crescent moon, moon-silver borders and a Morpheus title. Tabs and buttons in the window (Goals, Journey, Professions) are restyled to match, and the active tab glows teal (new `src/ui/Theme.lua`).
 - **The chronicle is written on a parchment scroll**, with aged edges and wooden rollers. Every event keeps its colour: bright colours made for dark backgrounds are shown as darker ink of the same hue (dates, levels and notes as brown ink), so they're readable on the paper. Saved entries and chat output are unchanged.
 - Still to test in game: whether the parchment atlas is found (otherwise a drawn parchment is used), the Morpheus font, the crescent moon, and that every entry colour reads well.

@@ -38,7 +38,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [x] **Night elf window and parchment chronicle**: themed window (sky gradient, stars, crescent moon, silver borders, Morpheus title, themed buttons and tabs), chronicle on a parchment scroll with rollers, event colours kept as readable ink
 - [ ] Check the new look in game: parchment atlas or fallback colours, Morpheus title font, crescent moon mask, button states, ink colours readable for every entry type
 - [x] **Fix the misspelled name**: `ForeverChronicaller` → `ForeverChronicler` everywhere (toc, folder, saved data, globals, slash/popup names, release assets, companion, docs), with carry-over of old saved data and installs
-- [ ] Check the rename in game: an old character's chronicle is carried over after installing 0.5.0 with the installer, and only one copy of the addon is listed
+- [ ] Check the rename in game: an old character's chronicle is carried over after installing 0.5.1 with the installer, and only one copy of the addon is listed
 - [ ] Idea: profession goals (`/chron goal tailoring 300`, `/chron goal recipes tailoring 80%`)
 - [ ] **Grafana dashboard** (free tier): importable dashboard JSON (`grafana/`), with panels for errors by version, error locations, success rate, latency p50/p95 and traces. Waiting on Grafana access
 - [ ] Before switching telemetry on: drop `error.message` from metric labels (keep it on traces) to limit series on the free tier, add `service.instance.id` (= the random install ID), set the `OTEL_ENDPOINT` / `OTEL_HEADERS` secrets, then set `FEATURE_TELEMETRY = True` (+ `FC.FEATURES.diagnostics`), update PRIVACY.md §3 and the DISCLAIMER, and bump `TERMS_VERSION`
