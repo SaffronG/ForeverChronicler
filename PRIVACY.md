@@ -22,7 +22,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 
 | Accesses | Why |
 |---|---|
-| Your character's level, XP, zone, money, quests turned in, deaths, achievements, map position | To write the chronicle, check goals and draw graphs |
+| Your character's level, XP, zone, money, quests turned in, deaths, achievements, map position, your own loot messages, bosses you defeat, and your target's name, type (rare/world boss) and whether it's dead | To write the chronicle, check goals and draw graphs |
 | Its own saved data (`WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicler.lua`) | To remember your chronicle, goals and settings. WoW writes this file on logout or `/reload`. It also loads data saved under the old name (`ForeverChronicallerDB`, up to 0.5.0) once, to carry it over |
 | Your friend list's online status and group roster | To know when friends can receive together-goal updates |
 | **Hidden addon messages** to your group, or whispers to players you choose | Only when you share a goal, use together goals, or are in a group (version check). See [section 2](#2-what-data-exists-and-where-it-goes) |
@@ -47,7 +47,7 @@ Administrator rights are not required. If WoW is installed in a protected folder
 
 | Data | Stored | Leaves your computer? |
 |---|---|---|
-| Chronicle entries, goals, notes, stats, progress samples, professions (skill, recipe counts, crafted item IDs and counts), a daily ledger for the letters (time played, level, gold and zones visited per day) | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
+| Chronicle entries, goals, notes, stats, progress samples, professions (skill, recipe counts, crafted item IDs and counts), a daily ledger for the letters (time played, level, gold and zones visited per day), trophies (notable item IDs and counts, names and counts of bosses and rare monsters you defeated) | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
 | Settings, error log | SavedVariables (local) | No |
 | Companion config: WoW folder, Discord webhook URL, ntfy topic | `config.json` (local; readable only by you on Linux/macOS) | No. The webhook URL is never printed or logged |
 | **Shared goals** (`/chron share`) | Sent as an addon message | **Yes, to the players you share with**: goal text, notes and type, and your character name, which the game attaches to every message |

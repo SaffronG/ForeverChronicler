@@ -14,6 +14,8 @@ local TOGGLES = {
     { key = "profession",  name = "Profession milestones", tip = "Write an entry when you learn a profession and every 25 skill points." },
     { key = "recipe",      name = "Recipes learned",      tip = "Write an entry when you learn a recipe (a trainer visit is summed up in one line)." },
     { key = "craft",       name = "Crafting",             tip = "Write an entry the first time you craft each item, and at crafting milestones." },
+    { key = "loot",        name = "Notable loot",         tip = "Write an entry the first time you loot each item of the chosen quality or better (see below)." },
+    { key = "slay",        name = "Bosses and rare foes", tip = "Write an entry the first time you defeat each dungeon or raid boss (per difficulty) and each rare monster." },
 }
 
 local category
@@ -52,6 +54,15 @@ local function register()
     Settings.CreateSlider(category, cap, options,
         "Maximum number of chronicle entries to keep. When a new entry pushes the chronicle over the limit, " ..
         "the oldest entries are permanently deleted. 0 = unlimited.")
+
+    local lootQ = Settings.RegisterAddOnSetting(category, ADDON .. "_LootQuality", "lootQuality",
+        FC.db.settings, Settings.VarType.Number, "Notable loot: lowest quality", 3)
+    local lootOptions = Settings.CreateSliderOptions(2, 5, 1)
+    lootOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return (FC.QUALITY_NAMES and FC.QUALITY_NAMES[value]) or tostring(value)
+    end)
+    Settings.CreateSlider(category, lootQ, lootOptions,
+        "Items of this quality or better get a chronicle entry the first time you loot them.")
 
     local arrival = Settings.RegisterAddOnSetting(category, ADDON .. "_ArrivalYards", "arrivalYards",
         FC.db.settings, Settings.VarType.Number, "Location goal arrival distance", 20)

@@ -47,7 +47,7 @@ ADDON = "ForeverChronicler"
 LEGACY_ADDON = "ForeverChronicaller"
 LEGACY_REPO = "SaffronG/ForeverChronicaller"
 LEGACY_CONFIG_DIR = "forever-chronicaller"
-VERSION = "0.6.0"
+VERSION = "0.8.0"
 USER_AGENT = f"ForeverChroniclerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicler"
 
@@ -104,6 +104,8 @@ DEFAULT_KINDS = {
     "zone": True, "quest": False, "note": True,
     # professions: off by default, so nothing new is posted unless you turn it on
     "profession": False, "recipe": False, "craft": False,
+    # loot and bosses/rares (0.8.0): off by default too
+    "loot": False, "slay": False,
 }
 
 

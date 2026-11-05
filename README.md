@@ -33,6 +33,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 ## What gets chronicled automatically
 - Level ups, first visit to each zone, quest turn-ins, deaths, achievements, goals achieved
 - Professions: learning a profession, every 25 skill points, max skill. Recipes you learn (a trainer visit is summed up in one line). The first time you craft each item, and crafting milestones (10, 50, 100, 250, 500, then every 1000 items)
+- Trophies: the first time you loot each notable item (Rare or better by default, adjustable in the options), with the boss it dropped from. The first time you defeat each dungeon or raid boss (per difficulty) and each rare monster or world boss in the open world. Repeat kills and loot are counted
 - Each type can be switched off, and the chronicle size can be limited, in Options → AddOns → Forever Chronicler (`/chron config`)
 
 ## Commands (`/chron` or `/fc`)
@@ -52,6 +53,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron professions [list]` | open the Professions tab (or print it to chat with `list`) |
 | `/chron letters` | read your daily letters and each day's stats |
 | `/chron letter [YYYY-MM-DD]` | print a day's letter to chat (today if no date) |
+| `/chron trophies` | bosses and rare foes you've slain, and how much notable loot you've found |
 | `/chron together <name> <goal>` | a goal you complete together with a friend |
 | `/chron invite <n> <name>` | invite another friend to together goal n |
 | `/chron sync` | save now (reloads the UI) so the companion app posts your latest entries |
@@ -94,6 +96,7 @@ Addon code is in `src/`, grouped by feature. Developer docs are in `docs/`.
 - `src/chronicle/Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)
 - `src/chronicle/Letters.lua` – daily ledger, letters in your race/class voice, Letters tab
 - `src/chronicle/Professions.lua` – profession, recipe and crafting entries, recipe completion (Professions tab)
+- `src/chronicle/Trophies.lua` – notable loot, bosses and rare monsters slain (`/chron trophies`)
 - `src/ui/UI.lua` – window and slash commands
 
 ## Backup / moving to another computer

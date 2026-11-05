@@ -82,6 +82,7 @@ flowchart TB
         Journey["Journey.lua<br/>samples · stats · graphs"]
         Professions["Professions.lua<br/>skill · recipes · crafting"]
         Letters["Letters.lua<br/>daily ledger · letters · day viewer"]
+        Trophies["Trophies.lua<br/>notable loot · bosses · rares"]
     end
     subgraph Social["Social (player-to-player)"]
         Comms["Comms.lua<br/>addon message transport"]
@@ -109,10 +110,12 @@ flowchart TB
     Professions --> Journey
     Chronicle --> Letters
     Theme --> Letters
+    Chronicle --> Trophies
+    Trophies --> Letters
     Goals --> Export
 ```
 
-`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → Theme → UI → Journey → Professions → Letters`
+`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → Theme → UI → Journey → Professions → Letters → Trophies`
 
 Modules rarely call each other directly. They communicate through **Core's three hubs**:
 
@@ -147,6 +150,9 @@ flowchart LR
 | `NEW_RECIPE_LEARNED` | Professions | recipe counter; entries batched for 2 s (more than 3 → one line per profession) |
 | `PLAYER_MONEY`, `PLAYER_LOGOUT` (+ messages `ZONE`, `LEVEL`, a 60 s ticker) | Letters | update today's ledger: gold, level, zones visited, time played |
 | `TRADE_SKILL_ITEM_CRAFTED_RESULT` | Professions | craft counters, first-craft and milestone entries |
+| `ENCOUNTER_END` (success), `BOSS_KILL` | Trophies | boss kill per encounter + difficulty (deduplicated) → first-kill `slay` entry, counter; remembered for 3 min to credit loot |
+| `PLAYER_TARGET_CHANGED`, `UNIT_HEALTH`/`UNIT_FLAGS` (target), `LOOT_OPENED` | Trophies | rare / world-boss targets are watched; dead and not tap-denied, or their corpse looted → first-kill `slay` entry (no combat log) |
+| `CHAT_MSG_LOOT` (own loot), `ENCOUNTER_LOOT_RECEIVED` (own) | Trophies | first loot of each item at or above `settings.lootQuality` → `loot` entry; secret values ignored |
 | `CHAT_MSG_ADDON` | Comms | reassemble chunks → `FC:OnComm` handlers |
 | `GROUP_ROSTER_UPDATE` | SharedGoals, VersionCheck | catch-up sync · announce version |
 | `FRIENDLIST_UPDATE` | SharedGoals | catch-up sync for friends who came online |
@@ -164,6 +170,7 @@ flowchart LR
 | `LOCATIONS_UPDATED` | MapGoals (every 1 s while needed) | Tracker, UI (live distance) |
 | `SAMPLES_CHANGED` | Journey | Journey (redraw chart) |
 | `PROFESSIONS_CHANGED` | Professions, Export | Professions (redraw tab) |
+| `TROPHIES_CHANGED` | Trophies | – (hook for future views) |
 | `SETTINGS_CHANGED(var)` | Settings | Tracker |
 
 ### Example: one level-up, end to end
@@ -199,6 +206,8 @@ All data for each character lives in one SavedVariables table, `ForeverChronicle
 
 **Rename (0.6.0):** the addon used to be spelled `ForeverChronicaller`. The `.toc` also declares the old table `ForeverChronicallerDB`. If it's loaded (the companion's `migrate_legacy` copies each old `SavedVariables/ForeverChronicaller.lua` to the new file name on install) and the new table is fresh (at most the opening entry and no goals), Core adopts it and drops the old name. Otherwise the old table is left as it is, so nothing is lost. The companion also moves the old addon folder to its backups, copies the old `forever-chronicaller` config folder, and reads either table name.
 
+**Trophies (0.8.0):** `loot[itemID]` only holds items that were notable when first looted. `slain` is keyed `e<encounterID>:<difficultyID>` for dungeon/raid bosses and `n<npcID>` for rare monsters and world bosses (from the creature GUID).
+
 ```mermaid
 classDiagram
     class ForeverChroniclerDB {
@@ -206,17 +215,19 @@ classDiagram
         entries : Entry[]
         goals : Goal[]
         zones : map zone → first-visit time
-        stats : deaths, quests, recipes, crafts
+        stats : deaths, quests, recipes, crafts, bosses, rares, notableLoot
         samples : Sample[]
         professions : map skillLineID → Profession
         crafted : map itemID → times crafted
+        loot : map itemID → n, quality, first
+        slain : map bossOrNpcKey → name, kind, n, first, last, diff
         settings : Settings
         errorLog : Error[]
         diagnostics : opt-in handler timings
     }
     class Entry {
         t : unix time
-        kind : start|level|zone|quest|death|achievement|goal|note|profession|recipe|craft
+        kind : start|level|zone|quest|death|achievement|goal|note|profession|recipe|craft|loot|slay
         text
         zone
         level
@@ -527,6 +538,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `src/chronicle/Journey.lua` | Progress samples (incl. known recipes and crafts), statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
 | `src/chronicle/Letters.lua` | Daily ledger (day = 04:00 to 04:00), per-day stats from entries + ledger, a letter per day in a race/class voice, Letters tab (day list + letter + stats) | `FC.DayKey`, `FC:Today`, `FC:JourneyDays`, `FC:DayStats`, `FC:DayStatsLines`, `FC:ComposeLetter`, `FC:ShowLetter`, `FC.FormatMoney`; `/chron letters`, `/chron letter [date]` | `READY`, `ZONE`, `LEVEL`, `ENTRY_ADDED`, `PLAYER_MONEY`, `PLAYER_LOGOUT` | – |
 | `src/chronicle/Professions.lua` | Profession, recipe and crafting entries; recipe % completion; Professions tab (bars) | `FC:ScanProfessions`, `FC:ScanRecipes`, `FC:RecordCraft`, `FC:RecipeCompletion`, `FC:ProfessionRows`, `FC:ProfessionBars`, `FC:KnownRecipes`; `/chron professions [list]` | `READY`, `PLAYER_ENTERING_WORLD`, `SKILL_LINES_CHANGED`, `TRADE_SKILL_SHOW`, `TRADE_SKILL_LIST_UPDATE`, `NEW_RECIPE_LEARNED`, `TRADE_SKILL_ITEM_CRAFTED_RESULT`, `PROFESSIONS_CHANGED` | `PROFESSIONS_CHANGED` |
+| `src/chronicle/Trophies.lua` | Notable loot (first loot per item at or above the chosen quality, credited to a just-defeated boss), bosses defeated (first kill per difficulty), rare monsters and world bosses slain (first kill per NPC); counters | `FC:RecordLoot`, `FC:RecordBossKill`, `FC:RecordRareKill`, `FC:SlainList`, `FC.QUALITY_NAMES`; `/chron trophies` | `ENCOUNTER_END`, `BOSS_KILL`, `PLAYER_TARGET_CHANGED`, `UNIT_HEALTH`, `UNIT_FLAGS`, `LOOT_OPENED`, `CHAT_MSG_LOOT`, `ENCOUNTER_LOOT_RECEIVED` | `TROPHIES_CHANGED` |
 
 ### Outside the game
 | Path | Responsibility |
@@ -551,7 +563,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `tracker` | Tracker | | `version` | VersionCheck |
 | `journey` | Journey | | `config` / `options` | Settings |
 | `help`, `errors`, `privacy`, `diagnostics` | Core | | `professions` / `prof` | Professions |
-| `letters`, `letter` | Letters | | | |
+| `letters`, `letter` | Letters | | `trophies` / `slain` | Trophies |
 
 ---
 

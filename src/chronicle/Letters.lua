@@ -112,7 +112,7 @@ function FC:DayStats(key)
     local ledger = days()[key]
     local s = { key = key, ledger = ledger ~= nil, entries = 0,
         zonesVisited = {}, firstVisits = {}, quests = {}, deaths = {}, achievements = {}, goals = {},
-        notes = {}, recipes = {}, crafts = {}, professions = {}, levels = {} }
+        notes = {}, recipes = {}, crafts = {}, professions = {}, levels = {}, loot = {}, slain = {} }
     local list = self:JourneyDays()
     for i, k in ipairs(list) do if k == key then s.dayNumber = i end end
 
@@ -133,6 +133,10 @@ function FC:DayStats(key)
             elseif e.kind == "recipe" then s.recipes[#s.recipes + 1] = text
             elseif e.kind == "craft" then s.crafts[#s.crafts + 1] = text
             elseif e.kind == "profession" then s.professions[#s.professions + 1] = text
+            elseif e.kind == "loot" then s.loot[#s.loot + 1] = text:match("(%[.-%])") or text
+            elseif e.kind == "slay" then
+                s.slain[#s.slain + 1] = text:match("^Defeated (.-) %(") or text:match("^Defeated (.-) in ")
+                    or text:match("^Slew the world boss (.-) in ") or text:match("^Slew (.-), a rare foe") or text
             end
         end
     end
@@ -290,6 +294,13 @@ function FC:ComposeLetter(key)
         body[#body + 1] = count(#s.quests, "I answered one call for help", "I answered %d calls for help")
             .. ", among them \"" .. s.quests[1] .. "\"" .. (s.quests[2] and (" and \"" .. s.quests[2] .. "\"") or "") .. "."
     end
+    if #s.slain > 0 then
+        body[#body + 1] = "I stood against mighty foes and prevailed: " .. listText(s.slain, 4) .. "."
+    end
+    if #s.loot > 0 then
+        body[#body + 1] = count(#s.loot, "Among the spoils I found ", "Among the spoils were %d treasures, ")
+            .. (#s.loot == 1 and s.loot[1] or ("among them " .. listText(s.loot, 3))) .. "."
+    end
     if #s.achievements > 0 then
         body[#body + 1] = "Word of my deeds will spread: " .. listText(s.achievements, 3) .. "."
     end
@@ -347,6 +358,8 @@ function FC:DayStatsLines(s)
     add("First visits", #s.firstVisits > 0 and table.concat(s.firstVisits, ", ") or "-")
     add("Quests completed", #s.quests .. (#s.quests > 0 and (": " .. table.concat(s.quests, ", ")) or ""))
     add("Deaths", #s.deaths .. (#s.deaths > 0 and (": " .. table.concat(s.deaths, ", ")) or ""))
+    add("Bosses and rare foes slain", #s.slain > 0 and table.concat(s.slain, ", ") or "-")
+    add("Notable loot", #s.loot > 0 and table.concat(s.loot, ", ") or "-")
     add("Achievements", #s.achievements > 0 and table.concat(s.achievements, ", ") or "-")
     add("Goals achieved", #s.goals > 0 and table.concat(s.goals, ", ") or "-")
     add("Recipes learned", tostring(#s.recipes))

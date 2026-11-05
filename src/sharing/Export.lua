@@ -127,6 +127,8 @@ function FC:ExportString()
         professions = self.db.professions,
         crafted = self.db.crafted,
         days = self.db.days,
+        loot = self.db.loot,
+        slain = self.db.slain,
     }
     local enc = E()
     if enc and enc.SerializeCBOR and enc.CompressString and enc.EncodeBase64 then
@@ -258,6 +260,40 @@ local function cleanDays(list)
     return out
 end
 
+-- loot: [itemID] = { n, q, first }
+local function cleanLoot(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    local n = 0
+    for id, r in pairs(list) do
+        if type(id) == "number" and id > 0 and id < 1e9 and type(r) == "table" and n < 20000 then
+            local q, count = tonumber(r.q), tonumber(r.n)
+            if q and q >= 0 and q <= 8 and count and count > 0 then
+                out[math.floor(id)] = { n = math.floor(math.min(count, 1e9)), q = math.floor(q), first = tonumber(r.first) }
+                n = n + 1
+            end
+        end
+    end
+    return out
+end
+
+-- slain: ["e<encounterID>:<difficultyID>" | "n<npcID>"] = { name, kind, n, first, last, diff }
+local SLAIN_KINDS = { boss = true, rare = true, worldboss = true }
+local function cleanSlain(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    local n = 0
+    for key, r in pairs(list) do
+        if type(key) == "string" and (key:match("^e%d+:%d+$") or key:match("^n%d+$")) and type(r) == "table"
+            and type(r.name) == "string" and SLAIN_KINDS[r.kind] and tonumber(r.n) and tonumber(r.n) > 0 and n < 5000 then
+            out[key] = { name = r.name:sub(1, 80), kind = r.kind, n = math.floor(math.min(tonumber(r.n), 1e9)),
+                first = tonumber(r.first), last = tonumber(r.last), diff = tonumber(r.diff) }
+            n = n + 1
+        end
+    end
+    return out
+end
+
 local function deepCopy(v)
     if type(v) ~= "table" then return v end
     local t = {}
@@ -272,16 +308,17 @@ function FC:ImportString(str, mode)
     local entries, goals = cleanEntries(data.entries), cleanGoals(data.goals)
     local db = self.db
     self.lastImportBackup = deepCopy({ entries = db.entries, goals = db.goals, zones = db.zones, stats = db.stats, samples = db.samples,
-        professions = db.professions, crafted = db.crafted, days = db.days })
+        professions = db.professions, crafted = db.crafted, days = db.days, loot = db.loot, slain = db.slain })
     local importedDays = cleanDays(data.days)
     local professions, crafted = cleanProfessions(data.professions), cleanCrafted(data.crafted)
+    local importedLoot, importedSlain = cleanLoot(data.loot), cleanSlain(data.slain)
 
     if mode == "replace" then
         db.entries, db.goals = entries, goals
         db.zones = {}
-        db.stats = { deaths = 0, quests = 0, recipes = 0, crafts = 0 }
+        db.stats = { deaths = 0, quests = 0, recipes = 0, crafts = 0, bosses = 0, rares = 0, notableLoot = 0 }
         db.samples = {}
-        db.professions, db.crafted, db.days = {}, {}, {}
+        db.professions, db.crafted, db.days, db.loot, db.slain = {}, {}, {}, {}, {}
     else
         local seen = {}
         for _, e in ipairs(db.entries) do seen[e.t .. "\1" .. e.kind .. "\1" .. e.text] = true end
@@ -303,7 +340,7 @@ function FC:ImportString(str, mode)
         end
     end
     if type(data.stats) == "table" then
-        for _, k in ipairs({ "deaths", "quests", "recipes", "crafts" }) do
+        for _, k in ipairs({ "deaths", "quests", "recipes", "crafts", "bosses", "rares", "notableLoot" }) do
             local v = tonumber(data.stats[k])
             if v and v > (db.stats[k] or 0) then db.stats[k] = v end
         end
@@ -323,6 +360,26 @@ function FC:ImportString(str, mode)
     db.crafted = db.crafted or {}
     for id, count in pairs(crafted) do
         if count > (db.crafted[id] or 0) then db.crafted[id] = count end
+    end
+    -- loot and slain foes: keep the higher count and the earlier first time
+    db.loot = db.loot or {}
+    for id, r in pairs(importedLoot) do
+        local mine = db.loot[id]
+        if not mine then db.loot[id] = r
+        else
+            if r.n > (mine.n or 0) then mine.n = r.n end
+            if r.first and (not mine.first or r.first < mine.first) then mine.first = r.first end
+        end
+    end
+    db.slain = db.slain or {}
+    for key, r in pairs(importedSlain) do
+        local mine = db.slain[key]
+        if not mine then db.slain[key] = r
+        else
+            if r.n > (mine.n or 0) then mine.n = r.n end
+            if r.first and (not mine.first or r.first < mine.first) then mine.first = r.first end
+            if r.last and (not mine.last or r.last > mine.last) then mine.last = r.last end
+        end
     end
     if type(data.samples) == "table" then
         db.samples = db.samples or {}

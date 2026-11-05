@@ -4,6 +4,19 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-05
+
+Trophies: your chronicle now records the notable loot you find, the dungeon and raid bosses you defeat, and the rare monsters and world bosses you slay. They show up in your daily letters too. Telemetry stays switched off.
+
+### Added
+- **Notable loot** (new `src/chronicle/Trophies.lua`): the first time you loot each item of Rare quality or better, e.g. "Claimed the epic [Flamewaker Belt] from Lucifron." Loot within 3 minutes of a boss kill names the boss. The lowest quality is a new option (*Notable loot: lowest quality*, Uncommon to Legendary). Repeat loot is only counted. Personal loot from raid bosses (`ENCOUNTER_LOOT_RECEIVED`) is recognised too.
+- **Bosses defeated:** the first time you defeat each dungeon or raid boss on each difficulty, e.g. "Defeated Lucifron (Normal, 20 players) in Molten Core!". Later kills are counted.
+- **Rare monsters and world bosses slain** in the open world: the first kill of each gets an entry. Without the combat log (Midnight rules), a rare counts as slain when your target dies and wasn't tapped by someone else, or when you loot its corpse.
+- `/chron trophies` (or `/chron slain`): bosses and rare foes you've slain, and how much notable loot you've found.
+- Daily letters mention the day's mighty foes and spoils, and the day's stats list *Bosses and rare foes slain* and *Notable loot*.
+- Two new entry types (*Notable loot*, *Bosses and rare foes*) that can be switched off in the options. New saved data (`db.loot`, `db.slain`, counters) is included in export/import (validated). Stored locally only. The companion knows the new entry types (`loot`, `slay`) but **doesn't post them unless you turn them on** in `post_kinds`.
+- Still to test in game: that `ENCOUNTER_END`, `BOSS_KILL`, `CHAT_MSG_LOOT` and `ENCOUNTER_LOOT_RECEIVED` fire and aren't secret on WoW: Forever, that `UnitClassification`/`UnitIsDead` work on rare targets, and the loot message format on non-English clients (it uses the client's `LOOT_ITEM_SELF` strings).
+
 ### Fixed
 - **CI no longer fails when lua.org is slow.** The addon tests installed Lua by downloading its source from lua.org, which sometimes timed out (`Failed to install Lua: read ECONNRESET`). CI now installs Lua 5.1 / 5.4 from Ubuntu's packages, served by GitHub's mirrors, with retries. The release workflow uses the same checks.
 

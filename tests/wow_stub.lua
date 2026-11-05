@@ -147,7 +147,11 @@ function W.setup(dir, opts)
     env.player = { name = opts.name or "Chase", level = opts.level or 10, zone = "Elwynn Forest", map = 1, x = 0.5, y = 0.5,
         money = 0, realm = "Forever" }
     local P = env.player
-    UnitName = function(unit) if unit == "player" then return P.name end return unit end
+    UnitName = function(unit)
+        if unit == "player" then return P.name end
+        if unit == "target" and env.target then return env.target.name end
+        return unit
+    end
     UnitLevel = function() return P.level end
     UnitRace = function() return P.raceName or "Night Elf", P.race or "NightElf", 4 end
     UnitClass = function() return P.className or "Druid", P.class or "DRUID", 11 end
@@ -172,6 +176,28 @@ function W.setup(dir, opts)
     UnitInRaid = function() return nil end
     C_FriendList = { GetFriendInfo = function(name) if env.friendsOnline[name] ~= nil then return { connected = env.friendsOnline[name] } end end }
     GetNumGroupMembers = function() return env.inGroup and 2 or 0 end
+
+    -- Target, instances and loot (Trophies.lua)
+    -- env.target = { guid, name, class = "rare"|"rareelite"|"worldboss"|"elite"|"normal", dead, tapDenied }
+    -- env.lootSources = { guid, ... } for LOOT_OPENED; env.secret[value] = true marks a value as secret
+    env.secret = {}
+    issecretvalue = function(v) return env.secret[v] == true end
+    UnitExists = function(unit) if unit == "target" then return env.target ~= nil end return unit == "player" end
+    UnitGUID = function(unit)
+        if unit == "target" then return env.target and env.target.guid end
+        if unit == "player" then return "Player-1-00000001" end
+    end
+    UnitClassification = function(unit) return unit == "target" and env.target and env.target.class or "normal" end
+    UnitIsDead = function(unit) return unit == "target" and env.target and env.target.dead or false end
+    UnitIsTapDenied = function(unit) return unit == "target" and env.target and env.target.tapDenied or false end
+    GetDifficultyInfo = function(id) return ({ [1] = "Normal", [2] = "Heroic", [14] = "Normal", [15] = "Heroic", [16] = "Mythic" })[id] end
+    GetInstanceInfo = function() return env.instanceName or "Nowhere", "raid", env.difficultyID or 14 end
+    GetNumLootItems = function() return #(env.lootSources or {}) end
+    GetLootSourceInfo = function(slot) local g = env.lootSources and env.lootSources[slot]; if g then return g, 1 end end
+    LOOT_ITEM_SELF = "You receive loot: %s."
+    LOOT_ITEM_SELF_MULTIPLE = "You receive loot: %sx%d."
+    LOOT_ITEM_PUSHED_SELF = "You receive item: %s."
+    LOOT_ITEM_PUSHED_SELF_MULTIPLE = "You receive item: %sx%d."
 
     -- Quests
     C_QuestLog = { GetTitleForQuestID = function(id) return env.questTitles and env.questTitles[id] end }
@@ -216,7 +242,8 @@ function W.setup(dir, opts)
             if r then return r.prof + 1000, r.line or "Child", r.prof end
         end,
     }
-    C_Item = { GetItemNameByID = function(id) return env.items[id] end }
+    C_Item = { GetItemNameByID = function(id) return env.items[id] end,
+        GetItemQualityByID = function(link) local id = tonumber(tostring(link):match("item:(%d+)")); return env.itemQuality and env.itemQuality[id] end }
     C_Spell = { GetSpellName = function() return nil end }
 
     -- Maps: map 1 "Elwynn Forest" = 1000x1000 yd at world 0..1000; map 2 = continent 0..4000
