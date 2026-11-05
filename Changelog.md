@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-05
+
+A new look: the window is styled after the night elves, and the chronicle is written on a parchment scroll, with every event keeping its colour. Telemetry stays switched off.
+
 ### Changed
 - **New look: night elf style.** The main window has a moonlit sky (violet to deep teal), stars, a crescent moon, moon-silver borders and a Morpheus title. Tabs and buttons in the window (Goals, Journey, Professions) are restyled to match, and the active tab glows teal (new `src/ui/Theme.lua`).
 - **The chronicle is written on a parchment scroll**, with aged edges and wooden rollers. Every event keeps its colour: bright colours made for dark backgrounds are shown as darker ink of the same hue (dates, levels and notes as brown ink), so they're readable on the paper. Saved entries and chat output are unchanged.
