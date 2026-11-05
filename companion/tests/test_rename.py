@@ -41,8 +41,8 @@ class RenameTests(unittest.TestCase):
         (self.sv_dir("Alt") / f"{fc.LEGACY_ADDON}.lua").write_text(OLD_SV)
         (self.sv_dir("Alt") / f"{fc.ADDON}.lua").write_text("ForeverChroniclerDB = {}\n")  # already migrated
 
-        zip_path = self.root / "ForeverChronicler-0.5.1.zip"
-        zip_path.write_bytes(make_zip("0.5.1"))
+        zip_path = self.root / "ForeverChronicler-0.6.0.zip"
+        zip_path.write_bytes(make_zip("0.6.0"))
         logs = []
         fc.install_zip(zip_path, str(self.wow), logs.append)
 

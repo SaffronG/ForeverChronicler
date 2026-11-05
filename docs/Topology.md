@@ -197,7 +197,7 @@ sequenceDiagram
 
 All data for each character lives in one SavedVariables table, `ForeverChroniclerDB`, declared in the `.toc` (`SavedVariablesPerCharacter`). Defaults are merged into older saves on load, so new fields never break old data.
 
-**Rename (0.5.1):** the addon used to be spelled `ForeverChronicaller`. The `.toc` also declares the old table `ForeverChronicallerDB`. If it's loaded (the companion's `migrate_legacy` copies each old `SavedVariables/ForeverChronicaller.lua` to the new file name on install) and the new table is fresh (at most the opening entry and no goals), Core adopts it and drops the old name. Otherwise the old table is left as it is, so nothing is lost. The companion also moves the old addon folder to its backups, copies the old `forever-chronicaller` config folder, and reads either table name.
+**Rename (0.6.0):** the addon used to be spelled `ForeverChronicaller`. The `.toc` also declares the old table `ForeverChronicallerDB`. If it's loaded (the companion's `migrate_legacy` copies each old `SavedVariables/ForeverChronicaller.lua` to the new file name on install) and the new table is fresh (at most the opening entry and no goals), Core adopts it and drops the old name. Otherwise the old table is left as it is, so nothing is lost. The companion also moves the old addon folder to its backups, copies the old `forever-chronicaller` config folder, and reads either table name.
 
 ```mermaid
 classDiagram

@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-05
+
+Daily letters: each day of play becomes a letter home in your race and class voice, with that day's stats in the new Letters tab. The addon's name is fixed to **Forever Chronicler** (it was misspelled "Forever Chronicaller"), and your chronicle is carried over. Coming from 0.5.0 or older: download the new installer once (see the README). Telemetry stays switched off.
+
 ### Added
 - **Daily letters** (new `src/chronicle/Letters.lua`, **Letters** tab, `/chron letters`). Each day of play becomes a letter home: where you went, what was new, levels, quests, deaths, goals, crafting, gold and your own notes. It's written in a voice that fits your **race** (who you write to and how you sign off, e.g. a night elf writes to her sister in Darnassus "under Elune's light"; allied races use their faction's voice) and **class** (how the day is told, e.g. a druid's "the cycle took me…", a warrior's "a warrior always gets back up"). A day runs from 04:00 to 04:00.
 - **Stats per day:** pick any day on the left of the Letters tab to read its letter and that day's stats: time played, level from/to, gold from/to, zones visited, first visits, quests, deaths, achievements, goals, recipes, crafting and profession milestones, notes and entries. Today's letter is marked as still being written. `/chron letter [YYYY-MM-DD]` prints a letter to chat.

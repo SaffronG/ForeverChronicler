@@ -47,7 +47,7 @@ ADDON = "ForeverChronicler"
 LEGACY_ADDON = "ForeverChronicaller"
 LEGACY_REPO = "SaffronG/ForeverChronicaller"
 LEGACY_CONFIG_DIR = "forever-chronicaller"
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 USER_AGENT = f"ForeverChroniclerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicler"
 
@@ -118,7 +118,7 @@ def config_dir() -> Path:
     old = base / LEGACY_CONFIG_DIR
     if old.is_dir() and not new.exists():
         try:
-            shutil.copytree(str(old), str(new))  # settings from before the 0.5.1 rename
+            shutil.copytree(str(old), str(new))  # settings from before the 0.6.0 rename
         except OSError:
             return old
     return new
@@ -157,7 +157,7 @@ def load_config(path: Optional[Path] = None) -> Dict[str, Any]:
         kinds.update(stored.get("post_kinds", {}))
         cfg["post_kinds"] = kinds
     if cfg.get("github_repo") == LEGACY_REPO:
-        cfg["github_repo"] = DEFAULT_REPO  # the repository was renamed for 0.5.1
+        cfg["github_repo"] = DEFAULT_REPO  # the repository was renamed for 0.6.0
     return cfg
 
 
@@ -321,7 +321,7 @@ def saved_variable_files(wow_path: str) -> List[Path]:
     """Per-character SavedVariables files for this addon (any account/realm/character)."""
     pattern = os.path.join(wow_path, "WTF", "Account", "*", "*", "*", "SavedVariables", f"{ADDON}.lua")
     files = [Path(p) for p in glob.glob(pattern)]
-    # characters that still only have the file from before the 0.5.1 rename
+    # characters that still only have the file from before the 0.6.0 rename
     legacy = os.path.join(wow_path, "WTF", "Account", "*", "*", "*", "SavedVariables", f"{LEGACY_ADDON}.lua")
     for p in glob.glob(legacy):
         if not Path(p).with_name(f"{ADDON}.lua").exists():
@@ -662,7 +662,7 @@ def install_zip(zip_path: Path, wow_path: str, log: Callable[[str], None] = prin
 
 
 def migrate_legacy(wow_path: str, log: Callable[[str], None] = print) -> int:
-    """Carry over an install from before the 0.5.1 rename (ForeverChronicaller -> ForeverChronicler).
+    """Carry over an install from before the 0.6.0 rename (ForeverChronicaller -> ForeverChronicler).
 
     The old addon folder is moved to the backups (otherwise both would load), and each
     character's old saved file is copied to the new name, unless that character already has

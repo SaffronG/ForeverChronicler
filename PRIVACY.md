@@ -33,7 +33,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 |---|---|---|
 | **Read** files | The addon's SavedVariables files under your WoW folder's `WTF` folder | `watch` and `telemetry send` (telemetry only reads the error log and diagnostics, if you opt in) |
 | **Write** files | `Interface/AddOns/ForeverChronicler/` (installing and updating the addon). Its own folder: `%APPDATA%\forever-chronicler\` on Windows, `~/.config/forever-chronicler/` on Linux (config, state, backups, telemetry spool) | `install`, `update`, `setup`, `watch` |
-| **Copy** files (once, after the 0.5.1 rename) | If you used the old **ForeverChronicaller** version: its addon folder is moved into the companion's backups, and each character's `SavedVariables/ForeverChronicaller.lua` is copied to `ForeverChronicler.lua` (only if that file doesn't exist yet). Originals are kept. An old `forever-chronicaller` config folder is copied to the new name | `install`, `update` |
+| **Copy** files (once, after the 0.6.0 rename) | If you used the old **ForeverChronicaller** version: its addon folder is moved into the companion's backups, and each character's `SavedVariables/ForeverChronicaller.lua` is copied to `ForeverChronicler.lua` (only if that file doesn't exist yet). Originals are kept. An old `forever-chronicaller` config folder is copied to the new name | `install`, `update` |
 | **List running programs** | Process **names** only (`tasklist` / `ps`), to check whether WoW is running before replacing files | `install`, `update` |
 | **Network** | `api.github.com` and `github.com` (update checks and downloads); your Discord webhook; your ntfy server | Only for the features you use |
 
