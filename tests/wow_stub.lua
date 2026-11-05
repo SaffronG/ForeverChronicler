@@ -36,7 +36,7 @@ local function newObject(name)
         if k == "GetHeight" then return function(s) return s.height or 10 end end
         if k == "GetStringHeight" or k == "GetWidth" then return function() return 10 end end
         if k == "GetStringWidth" then return function(s) return #tostring(s.text) * 6 end end
-        if k == "CreateFontString" or k == "CreateTexture" or k == "CreateLine" then
+        if k == "CreateFontString" or k == "CreateTexture" or k == "CreateLine" or k == "CreateMaskTexture" then
             return function(s) local c = newObject(); c.shown = true; table.insert(s.children, c); return c end
         end
         if k == "GetPoint" then return function() return "CENTER", nil, "CENTER", 0, 0 end end

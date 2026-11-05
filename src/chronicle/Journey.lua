@@ -219,10 +219,8 @@ local function build(parent)
     view:Hide()
 
     for i, s in ipairs(SERIES) do
-        local b = CreateFrame("Button", nil, view, "UIPanelButtonTemplate")
-        b:SetSize(76, 20)
+        local b = FC:NightButton(view, 76, 20, s.label)
         b:SetPoint("TOPLEFT", (i - 1) * 79, 0)
-        b:SetText(s.label)
         b.series = s
         b:SetScript("OnClick", function() current = s; FC:SafeCall(refreshView) end)
         buttons[#buttons + 1] = b

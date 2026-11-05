@@ -61,6 +61,7 @@ Anything else is a free-form goal you tick off yourself.
 
 Location goals: **Ctrl + right-click** a spot on a zone map, or use `/chron goal here` or `/chron goal 45.2 63.1`.
 The game's waypoint arrow guides you there, and the goal completes when you arrive (open world only).
+The window has a night elf look (moonlit sky, stars and silver borders), and the **Chronicle** tab is written on a parchment scroll. Every event keeps its own colour, shown as a darker ink so it reads well on the paper.
 The **Goals** tab works like the quest log: pick a goal on the left to see its details and progress, write notes for it, or point the arrow, complete or delete it.
 The **Journey** tab (`/chron journey`) graphs your level, gold, quests, zones, deaths, known recipes and crafts over time, and sums up your path through the world and how long each level took.
 The **Professions** tab (`/chron professions`) shows a bar per profession for skill and **recipe completion in %**, plus how many items you crafted. Recipes are counted when you open that profession's window, so open each one once to fill in its percentage.
@@ -82,6 +83,7 @@ Addon code is in `src/`, grouped by feature. Developer docs are in `docs/`.
 - `src/sharing/SharedGoals.lua` – together goals: invites, per-member progress, offline-safe syncing
 - `src/sharing/Export.lua` – export/import strings and their window
 - `src/ui/Settings.lua` – options page (Settings API)
+- `src/ui/Theme.lua` – night elf window style, parchment scroll and ink colours
 - `src/chronicle/Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)
 - `src/chronicle/Professions.lua` – profession, recipe and crafting entries, recipe completion (Professions tab)
 - `src/ui/UI.lua` – window and slash commands

@@ -92,10 +92,12 @@ flowchart TB
         Tracker["Tracker.lua<br/>on-screen goal list"]
         UI["UI.lua<br/>main window (tabs)"]
         Settings["Settings.lua<br/>options page"]
+        Theme["Theme.lua<br/>night elf style · parchment · ink colours"]
         Export["Export.lua<br/>export / import / sync"]
     end
 
     Core --> Chronicle & Goals & Comms & Settings & UI
+    Theme --> UI & Journey
     Goals --> MapGoals --> MapPins
     Goals --> Tracker
     Comms --> Sharing & Shared & Version
@@ -107,7 +109,7 @@ flowchart TB
     Goals --> Export
 ```
 
-`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → UI → Journey → Professions`
+`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → Theme → UI → Journey → Professions`
 
 Modules rarely call each other directly. They communicate through **Core's three hubs**:
 
@@ -506,6 +508,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `src/core/Core.lua` (diagnostics) | Opt-in handler timing (off by default), version-linked error log | `FC:Dispatch(label, fn, ...)`, `FC.DIAG_BOUNDS`; `/chron diagnostics` | – | – |
 | `src/core/VersionCheck.lua` | Tell players about newer versions in their group | `FC.version`, `FC.CompareVersions`; `/chron version` | `READY`, `GROUP_ROSTER_UPDATE`; comm `VER` | comm `VER` |
 | `src/ui/Settings.lua` | Options page (Settings API) | `FC:OpenSettings`; `/chron config` | `READY` | `SETTINGS_CHANGED` |
+| `src/ui/Theme.lua` | Look: night elf window, parchment scroll, themed buttons, ink colours for the chronicle | `FC.Theme`, `FC:StyleNightElfFrame`, `FC:StylePanel`, `FC:NightButton`, `FC:CreateParchment`, `FC:StyleFont`, `FC.Ink`, `FC.InkColor` | – | – |
 | `src/ui/UI.lua` | Main window: Chronicle tab, quest-log-style Goals tab, extra tabs | `FC:Toggle`, `FC.Refresh`, `FC:AddWindowTab`, `FC:DescribeGoalType`; `/chron`, `note`, `goal`, `goals`, `done`, `del`, `recent` | `ENTRY_ADDED`, `GOALS_CHANGED`, `GOAL_ADDED`, `LOCATIONS_UPDATED` | – |
 | `src/chronicle/Journey.lua` | Progress samples (incl. known recipes and crafts), statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
 | `src/chronicle/Professions.lua` | Profession, recipe and crafting entries; recipe % completion; Professions tab (bars) | `FC:ScanProfessions`, `FC:ScanRecipes`, `FC:RecordCraft`, `FC:RecipeCompletion`, `FC:ProfessionRows`, `FC:ProfessionBars`, `FC:KnownRecipes`; `/chron professions [list]` | `READY`, `PLAYER_ENTERING_WORLD`, `SKILL_LINES_CHANGED`, `TRADE_SKILL_SHOW`, `TRADE_SKILL_LIST_UPDATE`, `NEW_RECIPE_LEARNED`, `TRADE_SKILL_ITEM_CRAFTED_RESULT`, `PROFESSIONS_CHANGED` | `PROFESSIONS_CHANGED` |

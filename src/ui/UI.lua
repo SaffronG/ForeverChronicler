@@ -21,55 +21,65 @@ f:SetClampedToScreen(true)
 f:RegisterForDrag("LeftButton")
 f:SetScript("OnDragStart", f.StartMoving)
 f:SetScript("OnDragStop", f.StopMovingOrSizing)
-f:SetBackdrop({
-    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile = true, tileSize = 32, edgeSize = 32,
-    insets = { left = 11, right = 12, top = 12, bottom = 11 },
-})
+FC:StyleNightElfFrame(f) -- Theme.lua: night sky, stars, moon, silver border
 f:Hide()
 tinsert(UISpecialFrames, f:GetName()) -- Escape closes it
 FC.window = f
 
 local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-title:SetPoint("TOP", 0, -18)
+title:SetPoint("TOP", 0, -16)
+FC:StyleFont(title, 24, FC.Theme.title, "Fonts\\MORPHEUS.TTF")
+if title.SetShadowColor then title:SetShadowColor(0.2, 0.5, 0.6, 0.9); title:SetShadowOffset(1, -1) end
 title:SetText("Forever Chronicaller")
 
 local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 close:SetPoint("TOPRIGHT", -6, -6)
 
 local stats = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-stats:SetPoint("TOP", title, "BOTTOM", 0, -4)
+stats:SetPoint("TOP", title, "BOTTOM", 0, -2)
+FC:StyleFont(stats, nil, FC.Theme.dim)
 
 -- Tabs
 local tabs = {}
 local function makeTab(label, x)
-    local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    b:SetSize(110, 22)
-    b:SetPoint("TOPLEFT", x, -58)
-    b:SetText(label)
+    local b = FC:NightButton(f, 110, 22, label)
+    b:SetPoint("TOPLEFT", x, -60)
     return b
 end
 tabs.chronicle = makeTab("Chronicle", 20)
 tabs.goals = makeTab("Goals", 134)
 FC.windowTabs = tabs -- other modules (e.g. Journey) can add tabs here
 
--- Scroll area (shared; narrower in Goals mode to make room for details)
+-- Parchment scroll behind the chronicle page (Theme.lua)
+local CHRON_W = WIDTH - 110 -- text width on the parchment
+local paper = FC:CreateParchment(f)
+paper:SetPoint("TOPLEFT", 18, -88)
+paper:SetPoint("BOTTOMRIGHT", -18, 66)
+paper:Hide()
+FC.windowParchment = paper
+
+-- Scroll area (shared; on the parchment for the chronicle, narrower in Goals mode)
 local scroll = CreateFrame("ScrollFrame", "ForeverChronicallerScroll", f, "UIPanelScrollFrameTemplate")
-scroll:SetPoint("TOPLEFT", 20, -88)
-scroll:SetPoint("BOTTOMRIGHT", -38, 62)
+local function placeScroll(left, top, right, bottom)
+    scroll:ClearAllPoints()
+    scroll:SetPoint("TOPLEFT", left, top)
+    scroll:SetPoint("BOTTOMRIGHT", right, bottom)
+end
+placeScroll(20, -88, -38, 62)
 
 local content = CreateFrame("Frame", nil, scroll)
-content:SetSize(WIDTH - 60, 1)
+content:SetSize(CHRON_W, 1)
 scroll:SetScrollChild(content)
 
--- Chronicle view: one wrapped FontString
-local chronText = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-chronText:SetPoint("TOPLEFT")
-chronText:SetWidth(WIDTH - 60)
+-- Chronicle view: one wrapped FontString in dark ink (event colours via FC.Ink)
+local chronText = content:CreateFontString(nil, "OVERLAY", QuestFont and "QuestFont" or "GameFontHighlight")
+chronText:SetPoint("TOPLEFT", 4, -4)
+chronText:SetWidth(CHRON_W - 8)
 chronText:SetJustifyH("LEFT")
 chronText:SetJustifyV("TOP")
-if chronText.SetSpacing then chronText:SetSpacing(3) end
+chronText:SetTextColor(FC.Theme.ink[1], FC.Theme.ink[2], FC.Theme.ink[3])
+if chronText.SetShadowColor then chronText:SetShadowColor(0, 0, 0, 0) end
+if chronText.SetSpacing then chronText:SetSpacing(4) end
 
 -- Goals view: list rows -----------------------------------------------------------
 local selected -- index of the goal shown in the details panel
@@ -85,20 +95,18 @@ local function getRow(i)
 
     r.selectedBg = r:CreateTexture(nil, "BACKGROUND")
     r.selectedBg:SetAllPoints()
-    r.selectedBg:SetColorTexture(1, 0.82, 0, 0.15)
+    r.selectedBg:SetColorTexture(FC.Theme.accent[1], FC.Theme.accent[2], FC.Theme.accent[3], 0.18)
     r.hover = r:CreateTexture(nil, "HIGHLIGHT")
     r.hover:SetAllPoints()
-    r.hover:SetColorTexture(1, 1, 1, 0.06)
+    r.hover:SetColorTexture(0.7, 0.75, 1, 0.07)
 
     r.check = CreateFrame("CheckButton", nil, r, "UICheckButtonTemplate")
     r.check:SetSize(22, 22)
     r.check:SetPoint("LEFT")
     r.check:SetScript("OnClick", function() FC:SafeCall(FC.ToggleGoal, FC, r.index) end)
 
-    r.del = CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
-    r.del:SetSize(22, 20)
+    r.del = FC:NightButton(r, 22, 20, "x")
     r.del:SetPoint("RIGHT")
-    r.del:SetText("x")
     r.del:SetScript("OnClick", function() FC:SafeCall(FC.RemoveGoal, FC, r.index) end)
 
     r.text = r:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -120,13 +128,7 @@ local details = CreateFrame("Frame", nil, f, BackdropTemplateMixin and "Backdrop
 details:SetPoint("TOPRIGHT", -20, -88)
 details:SetPoint("BOTTOMRIGHT", -20, 62)
 details:SetWidth(DETAILS_W)
-details:SetBackdrop({
-    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 12,
-    insets = { left = 3, right = 3, top = 3, bottom = 3 },
-})
-if details.SetBackdropColor then details:SetBackdropColor(0, 0, 0, 0.5) end
+FC:StylePanel(details)
 details:Hide()
 
 local function detailText(font, anchor, y)
@@ -139,11 +141,13 @@ local function detailText(font, anchor, y)
 end
 
 local dTitle = detailText("GameFontNormalLarge")
+FC:StyleFont(dTitle, nil, FC.Theme.title)
 local dType = detailText("GameFontHighlightSmall", dTitle, -8)
 local dStatus = detailText("GameFontHighlightSmall", dType)
 local dProgress = detailText("GameFontHighlightSmall", dStatus)
 local dDescLabel = detailText("GameFontNormalSmall", dProgress, -12)
 dDescLabel:SetText("Notes:")
+FC:StyleFont(dDescLabel, nil, FC.Theme.accent)
 
 local desc = CreateFrame("EditBox", "ForeverChronicallerGoalNotes", details, BackdropTemplateMixin and "BackdropTemplate" or nil)
 desc:SetPoint("TOPLEFT", dDescLabel, "BOTTOMLEFT", 0, -4)
@@ -153,23 +157,15 @@ desc:SetAutoFocus(false)
 desc:SetMaxLetters(500)
 desc:SetFontObject(ChatFontNormal)
 desc:SetTextInsets(6, 6, 6, 6)
-desc:SetBackdrop({
-    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 12,
-    insets = { left = 3, right = 3, top = 3, bottom = 3 },
-})
-if desc.SetBackdropColor then desc:SetBackdropColor(0, 0, 0, 0.6) end
+FC:StylePanel(desc, 0.9)
 desc:SetScript("OnEscapePressed", desc.ClearFocus)
 desc:SetScript("OnTextChanged", function(self, userInput)
     if userInput and selected then FC:SafeCall(FC.SetGoalDescription, FC, selected, self:GetText()) end
 end)
 
 local function detailButton(label, x)
-    local b = CreateFrame("Button", nil, details, "UIPanelButtonTemplate")
-    b:SetSize(60, 22)
+    local b = FC:NightButton(details, 60, 22, label)
     b:SetPoint("BOTTOMLEFT", x, 10)
-    b:SetText(label)
     return b
 end
 local btnArrow = detailButton("Arrow", 10)
@@ -252,10 +248,8 @@ input:SetPoint("BOTTOMLEFT", 28, 20)
 input:SetAutoFocus(false)
 input:SetMaxLetters(200)
 
-local addBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-addBtn:SetSize(70, 22)
+local addBtn = FC:NightButton(f, 70, 22, "Add")
 addBtn:SetPoint("LEFT", input, "RIGHT", 8, 0)
-addBtn:SetText("Add")
 
 -- Rendering --------------------------------------------------------------------------
 local mode = "chronicle"
@@ -275,7 +269,7 @@ refresh = function()
         if name ~= mode then view.hide() end
     end
     if FC.windowViews[mode] then
-        scroll:Hide(); details:Hide(); chronText:Hide()
+        scroll:Hide(); details:Hide(); chronText:Hide(); paper:Hide()
         for _, r in ipairs(rows) do r:Hide() end
         hint:Hide(); input:Hide(); addBtn:Hide()
         FC.windowViews[mode].show()
@@ -285,12 +279,13 @@ refresh = function()
 
     if mode == "chronicle" then
         details:Hide()
-        scroll:SetPoint("BOTTOMRIGHT", -38, 62)
-        content:SetWidth(WIDTH - 60)
+        paper:Show()
+        placeScroll(42, -108, -60, 88) -- inside the parchment, between the rollers
+        content:SetWidth(CHRON_W)
         for _, r in ipairs(rows) do r:Hide() end
         local lines, n = {}, #db.entries
         for i = n, math.max(1, n - MAX_SHOWN + 1), -1 do
-            lines[#lines + 1] = FC:FormatEntry(db.entries[i])
+            lines[#lines + 1] = FC.Ink(FC:FormatEntry(db.entries[i]))
         end
         chronText:SetText(table.concat(lines, "\n"))
         chronText:Show()
@@ -298,8 +293,9 @@ refresh = function()
         hint:SetText("Write a note in your chronicle:")
     else
         chronText:Hide()
+        paper:Hide()
         details:Show()
-        scroll:SetPoint("BOTTOMRIGHT", -(DETAILS_W + 50), 62)
+        placeScroll(20, -88, -(DETAILS_W + 50), 62)
         content:SetWidth(WIDTH - DETAILS_W - 90)
         local goals = db.goals
         if selected and not goals[selected] then selected = #goals > 0 and #goals or nil end

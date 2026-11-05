@@ -18,6 +18,7 @@ src/sharing/SharedGoals.lua
 src/sharing/Export.lua
 src/core/VersionCheck.lua
 src/ui/Settings.lua
+src/ui/Theme.lua
 src/ui/UI.lua
 src/chronicle/Journey.lua
 src/chronicle/Professions.lua
