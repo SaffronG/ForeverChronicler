@@ -95,6 +95,8 @@ def prog() -> str:
 DEFAULT_KINDS = {
     "start": True, "level": True, "goal": True, "achievement": True, "death": True,
     "zone": True, "quest": False, "note": True,
+    # professions: off by default, so nothing new is posted unless you turn it on
+    "profession": False, "recipe": False, "craft": False,
 }
 
 
@@ -317,7 +319,8 @@ _LINKS = re.compile(r"\|H[^|]*\|h(.*?)\|h")
 _TEXTURES = re.compile(r"\|T[^|]*\|t")
 
 EMOJI = {"start": "📜", "level": "⬆️", "goal": "🏆", "achievement": "🏅", "death": "💀",
-         "zone": "🗺️", "quest": "❗", "note": "✏️"}
+         "zone": "🗺️", "quest": "❗", "note": "✏️",
+         "profession": "⚒️", "recipe": "📖", "craft": "🔨"}
 
 
 def clean_text(text: str) -> str:

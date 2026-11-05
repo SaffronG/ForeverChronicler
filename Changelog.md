@@ -4,6 +4,17 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Added
+- **Professions, crafting and recipes in the chronicle** (new `src/chronicle/Professions.lua`). Each type can be switched off in the options:
+  - *Profession milestones:* learning a profession, every 25 skill points, max skill reached, unlearning. The first scan on a character is silent, so you don't get entries for what you already have.
+  - *Recipes learned:* "Learned recipe: Silk Robe (Tailoring)" and recipe ranks. A burst of more than 3 (a trainer visit or a new profession) is summed up as "Learned 12 new Tailoring recipes".
+  - *Crafting:* the first time you craft each item, plus milestones (10, 50, 100, 250, 500, then every 1000 crafts). Repeat crafts are only counted.
+- **Recipe % completion** per profession. Recipes are counted while your own profession window is open (linked, guild and NPC-crafting windows are ignored), then kept up to date as you learn more.
+- **Professions tab** (`/chron professions`, or `/chron professions list` for chat): one row per profession, with a skill bar, a recipe-completion bar with %, and how many items you crafted.
+- **Recipes and Crafts graphs** in the Journey tab. Samples from before this version are skipped for these two series.
+- Export/import includes professions and crafted-item counts (validated on import). The companion knows the new entry types but **doesn't post them unless you turn them on** in `post_kinds`.
+- Still to test in game: that the profession events (`NEW_RECIPE_LEARNED`, `TRADE_SKILL_ITEM_CRAFTED_RESULT`, `SKILL_LINES_CHANGED`) fire on WoW: Forever, that recipe totals look right, and how the Professions tab looks. Events the client doesn't know are skipped instead of breaking the addon.
+
 ## [0.4.1] - 2026-11-04
 
 Fixes the "Incompatible" status in the AddOns list (correct Interface number for WoW: Forever 1.60.1) and reorganizes the code into `src/`. Telemetry stays switched off.

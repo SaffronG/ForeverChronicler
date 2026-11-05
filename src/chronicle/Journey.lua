@@ -29,10 +29,13 @@ function FC:TakeSample(levelOverride)
         quests = db.stats.quests,
         deaths = db.stats.deaths,
         zones = countZones(),
+        recipes = FC.KnownRecipes and FC:KnownRecipes() or nil, -- nil until a profession window was opened
+        crafts = db.stats.crafts or 0,
     }
     local last = db.samples[#db.samples]
     if last and last.level == s.level and last.money == s.money and last.quests == s.quests
-        and last.deaths == s.deaths and last.zones == s.zones then
+        and last.deaths == s.deaths and last.zones == s.zones
+        and last.recipes == s.recipes and last.crafts == s.crafts then
         return -- nothing changed
     end
     table.insert(db.samples, s)
@@ -54,7 +57,7 @@ FC:On("READY", function()
 end)
 FC:On("LEVEL", function(level) FC:TakeSample(level) end)
 FC:On("QUEST", function() FC:TakeSample() end)
-FC:On("ENTRY_ADDED", function(e) if e and (e.kind == "zone" or e.kind == "death") then FC:TakeSample() end end)
+FC:On("ENTRY_ADDED", function(e) if e and (e.kind == "zone" or e.kind == "death" or e.kind == "craft") then FC:TakeSample() end end)
 
 -- Statistics ----------------------------------------------------------------------------
 local function duration(seconds)
@@ -118,6 +121,9 @@ local SERIES = {
     { key = "quests", label = "Quests", color = { 1.0, 1.0, 0.3 }, fmt = function(v) return string.format("%d", v) end },
     { key = "zones",  label = "Zones",  color = { 0.4, 0.8, 1.0 }, fmt = function(v) return string.format("%d", v) end },
     { key = "deaths", label = "Deaths", color = { 1.0, 0.3, 0.3 }, fmt = function(v) return string.format("%d", v) end },
+    -- optional: samples from before professions were tracked don't have these, so they're skipped
+    { key = "recipes", label = "Recipes", color = { 0.3, 0.7, 1.0 }, optional = true, fmt = function(v) return string.format("%d", v) end },
+    { key = "crafts",  label = "Crafts",  color = { 0.8, 0.6, 1.0 }, optional = true, fmt = function(v) return string.format("%d", v) end },
 }
 
 local CHART_W, CHART_H = 560, 230
@@ -129,6 +135,11 @@ function FC:ChartPoints(seriesKey)
     local series
     for _, s in ipairs(SERIES) do if s.key == seriesKey then series = s end end
     local samples = self.db.samples or {}
+    if series and series.optional then
+        local with = {}
+        for _, smp in ipairs(samples) do if smp[seriesKey] ~= nil then with[#with + 1] = smp end end
+        samples = with
+    end
     if #samples < 2 or not series then return nil end
     local t0, t1 = samples[1].t, samples[#samples].t
     if t1 - t0 < 60 then return nil end -- need at least a minute of history
@@ -209,8 +220,8 @@ local function build(parent)
 
     for i, s in ipairs(SERIES) do
         local b = CreateFrame("Button", nil, view, "UIPanelButtonTemplate")
-        b:SetSize(80, 20)
-        b:SetPoint("TOPLEFT", (i - 1) * 84, 0)
+        b:SetSize(76, 20)
+        b:SetPoint("TOPLEFT", (i - 1) * 79, 0)
         b:SetText(s.label)
         b.series = s
         b:SetScript("OnClick", function() current = s; FC:SafeCall(refreshView) end)

@@ -173,6 +173,49 @@ function W.setup(dir, opts)
     -- Quests
     C_QuestLog = { GetTitleForQuestID = function(id) return env.questTitles and env.questTitles[id] end }
 
+    -- Professions: env.professions = { { name, rank, maxRank, skillLine }, ... } (5 slots; false = empty slot)
+    -- env.recipes[recipeID] = { name, learned, prof = skillLineID, line = childName }; env.openProf = skillLineID
+    -- of the profession window that is open (nil = closed), env.items[itemID] = name
+    env.professions, env.recipes, env.items = {}, {}, {}
+    GetProfessions = function()
+        local idx = {}
+        for i = 1, 5 do idx[i] = env.professions[i] and i or nil end -- empty slots are nil, like the client
+        return idx[1], idx[2], idx[3], idx[4], idx[5]
+    end
+    GetProfessionInfo = function(i)
+        local p = env.professions[i]
+        if p then return p.name, 0, p.rank, p.maxRank, 0, 0, p.skillLine end
+    end
+    local function profName(id)
+        for i = 1, 5 do local p = env.professions[i]; if p and p.skillLine == id then return p.name end end
+        return env.profNames and env.profNames[id]
+    end
+    C_TradeSkillUI = {
+        IsTradeSkillReady = function() return env.openProf ~= nil end,
+        IsTradeSkillLinked = function() return env.linked or false end,
+        IsTradeSkillGuild = function() return false end,
+        IsNPCCrafting = function() return false end,
+        GetBaseProfessionInfo = function()
+            if env.openProf then return { professionID = env.openProf, professionName = profName(env.openProf) } end
+        end,
+        GetAllRecipeIDs = function()
+            local ids = {}
+            for id, r in pairs(env.recipes) do if r.prof == env.openProf then ids[#ids + 1] = id end end
+            table.sort(ids)
+            return ids
+        end,
+        GetRecipeInfo = function(id)
+            local r = env.recipes[id]
+            if r then return { recipeID = id, name = r.name, learned = r.learned, isDummyRecipe = r.dummy } end
+        end,
+        GetTradeSkillLineForRecipe = function(id)
+            local r = env.recipes[id]
+            if r then return r.prof + 1000, r.line or "Child", r.prof end
+        end,
+    }
+    C_Item = { GetItemNameByID = function(id) return env.items[id] end }
+    C_Spell = { GetSpellName = function() return nil end }
+
     -- Maps: map 1 "Elwynn Forest" = 1000x1000 yd at world 0..1000; map 2 = continent 0..4000
     CreateVector2D = vec
     UiMapPoint = { CreateFromCoordinates = function(m, x, y) return { uiMapID = m, position = vec(x, y) } end }

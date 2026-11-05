@@ -20,3 +20,4 @@ src/core/VersionCheck.lua
 src/ui/Settings.lua
 src/ui/UI.lua
 src/chronicle/Journey.lua
+src/chronicle/Professions.lua

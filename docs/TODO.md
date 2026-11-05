@@ -33,6 +33,9 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 ## Next: 0.4.1
 - [x] **Reorganize the repository**: addon code into `src/<feature>/`, developer docs into `docs/`
 - [ ] Check in game that the addon still loads from the `src/` subfolders
+- [x] **Professions, crafting and recipes**: auto-entries (new profession, every 25 skill, max skill, recipes learned with trainer bursts summed up, first craft per item, craft milestones), recipe % completion per profession, Professions tab with bars, Recipes/Crafts graphs in the Journey tab, export/import
+- [ ] Check professions in game: that `GetProfessionInfo`'s skill line ID matches `C_TradeSkillUI.GetBaseProfessionInfo().professionID` (otherwise records are matched by name), that `NEW_RECIPE_LEARNED` and `TRADE_SKILL_ITEM_CRAFTED_RESULT` fire on WoW: Forever, and that recipe totals look right
+- [ ] Idea: profession goals (`/chron goal tailoring 300`, `/chron goal recipes tailoring 80%`)
 - [ ] **Grafana dashboard** (free tier): importable dashboard JSON (`grafana/`), with panels for errors by version, error locations, success rate, latency p50/p95 and traces. Waiting on Grafana access
 - [ ] Before switching telemetry on: drop `error.message` from metric labels (keep it on traces) to limit series on the free tier, add `service.instance.id` (= the random install ID), set the `OTEL_ENDPOINT` / `OTEL_HEADERS` secrets, then set `FEATURE_TELEMETRY = True` (+ `FC.FEATURES.diagnostics`), update PRIVACY.md §3 and the DISCLAIMER, and bump `TERMS_VERSION`
 

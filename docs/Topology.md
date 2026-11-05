@@ -80,6 +80,7 @@ flowchart TB
         MapGoals["MapGoals.lua<br/>location goals · arrow · map menu"]
         MapPins["MapPins.lua + .xml<br/>world map pins"]
         Journey["Journey.lua<br/>samples · stats · graphs"]
+        Professions["Professions.lua<br/>skill · recipes · crafting"]
     end
     subgraph Social["Social (player-to-player)"]
         Comms["Comms.lua<br/>addon message transport"]
@@ -101,10 +102,12 @@ flowchart TB
     Goals --> Sharing & Shared
     Chronicle --> Journey
     UI --> Journey
+    Chronicle --> Professions
+    Professions --> Journey
     Goals --> Export
 ```
 
-`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → UI → Journey`
+`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → UI → Journey → Professions`
 
 Modules rarely call each other directly. They communicate through **Core's three hubs**:
 
@@ -134,6 +137,10 @@ flowchart LR
 | `QUEST_TURNED_IN` | Chronicle | quest entry → fire `QUEST(title, id)` |
 | `PLAYER_DEAD` | Chronicle | death entry + counter |
 | `ACHIEVEMENT_EARNED` | Chronicle | achievement entry |
+| `PLAYER_ENTERING_WORLD`, `SKILL_LINES_CHANGED` | Professions | profession skill scan → new profession / every 25 points / max skill / unlearned entries (unlearning only on `SKILL_LINES_CHANGED`) |
+| `TRADE_SKILL_SHOW`, `TRADE_SKILL_LIST_UPDATE` | Professions | debounced recipe count of your own open profession → `PROFESSIONS_CHANGED`, sample |
+| `NEW_RECIPE_LEARNED` | Professions | recipe counter; entries batched for 2 s (more than 3 → one line per profession) |
+| `TRADE_SKILL_ITEM_CRAFTED_RESULT` | Professions | craft counters, first-craft and milestone entries |
 | `CHAT_MSG_ADDON` | Comms | reassemble chunks → `FC:OnComm` handlers |
 | `GROUP_ROSTER_UPDATE` | SharedGoals, VersionCheck | catch-up sync · announce version |
 | `FRIENDLIST_UPDATE` | SharedGoals | catch-up sync for friends who came online |
@@ -141,7 +148,7 @@ flowchart LR
 ### Internal messages (`FC:Fire` → `FC:On`)
 | Message | Fired by | Listened to by |
 |---|---|---|
-| `READY` | Core | Chronicle, Goals, MapGoals, Tracker, Comms, SharedGoals, Settings, VersionCheck, Journey |
+| `READY` | Core | Chronicle, Goals, MapGoals, Tracker, Comms, SharedGoals, Settings, VersionCheck, Journey, Professions |
 | `ENTRY_ADDED(entry)` | Chronicle, Export | UI, Journey |
 | `LEVEL(level)` / `ZONE(zone)` / `QUEST(title, id)` | Chronicle | Goals, SharedGoals, Journey (+ Tracker for LEVEL) |
 | `GOAL_ADDED(goal, index)` | Goals | MapGoals (place waypoint), UI (select it) |
@@ -150,6 +157,7 @@ flowchart LR
 | `SHARED_PART_DONE(goal)` | SharedGoals | MapGoals (clear your arrow) |
 | `LOCATIONS_UPDATED` | MapGoals (every 1 s while needed) | Tracker, UI (live distance) |
 | `SAMPLES_CHANGED` | Journey | Journey (redraw chart) |
+| `PROFESSIONS_CHANGED` | Professions, Export | Professions (redraw tab) |
 | `SETTINGS_CHANGED(var)` | Settings | Tracker |
 
 ### Example: one level-up, end to end
@@ -190,15 +198,17 @@ classDiagram
         entries : Entry[]
         goals : Goal[]
         zones : map zone → first-visit time
-        stats : deaths, quests
+        stats : deaths, quests, recipes, crafts
         samples : Sample[]
+        professions : map skillLineID → Profession
+        crafted : map itemID → times crafted
         settings : Settings
         errorLog : Error[]
         diagnostics : opt-in handler timings
     }
     class Entry {
         t : unix time
-        kind : start|level|zone|quest|death|achievement|goal|note
+        kind : start|level|zone|quest|death|achievement|goal|note|profession|recipe|craft
         text
         zone
         level
@@ -227,10 +237,21 @@ classDiagram
         t
         level : incl. XP fraction
         money, quests, deaths, zones
+        recipes : known recipes, optional
+        crafts : total crafts, optional
+    }
+    class Profession {
+        name
+        skill / maxSkill
+        learned / total : recipe counts
+        scanned : last recipe count time
+        crafts
+        first / gone
     }
     ForeverChronicallerDB "1" --> "*" Entry
     ForeverChronicallerDB "1" --> "*" Goal
     ForeverChronicallerDB "1" --> "*" Sample
+    ForeverChronicallerDB "1" --> "*" Profession
     Goal --> LocationTarget : kind = location
     Goal --> SharedTarget : kind = shared
     SharedTarget --> LocationTarget : inner kind = location
@@ -481,12 +502,13 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `src/core/Comms.lua` | Addon-message transport: encode, chunk, queue, reassemble | `FC:SendComm`, `FC:OnComm`, `FC:GroupChannel`, `FC.EncodeFields`, `FC.DecodeFields`, `FC.ShortName` | `CHAT_MSG_ADDON`, `READY` | comm handlers |
 | `src/sharing/Sharing.lua` | Send a goal copy to group/friend, accept popup | `FC:ShareGoal`, `FC.GoalToFields`, `FC.FieldsToGoal` (validation); `/chron share` | comm `GOAL`, `GOALACK` | comm `GOAL`, `GOALACK` |
 | `src/sharing/SharedGoals.lua` | Together goals: invites, per-member progress, offline-safe sync | `FC:CreateSharedGoal`, `FC:InviteToShared`, `FC:MarkSharedPartDone`, `FC:SharedProgressText`, `FC.CleanSharedTarget`, `FC:IsMemberOnline`; `/chron together`, `/chron invite` | `READY`, `LEVEL`, `ZONE`, `QUEST`, `GOAL_REMOVED`, `GROUP_ROSTER_UPDATE`, `FRIENDLIST_UPDATE`; comm `SG*` | `SHARED_PART_DONE`, `GOALS_CHANGED`; comm `SG*` |
-| `src/sharing/Export.lua` | Export/import strings (backup, other PC), `/chron sync` | `FC:ExportString`, `FC:ImportString(str, "merge"/"replace")`, `FC:UndoImport`; `/chron export`, `/chron import`, `/chron sync` | – | `GOALS_CHANGED`, `ENTRY_ADDED` |
+| `src/sharing/Export.lua` | Export/import strings (backup, other PC), `/chron sync` | `FC:ExportString`, `FC:ImportString(str, "merge"/"replace")`, `FC:UndoImport`; `/chron export`, `/chron import`, `/chron sync` | – | `GOALS_CHANGED`, `ENTRY_ADDED`, `PROFESSIONS_CHANGED` |
 | `src/core/Core.lua` (diagnostics) | Opt-in handler timing (off by default), version-linked error log | `FC:Dispatch(label, fn, ...)`, `FC.DIAG_BOUNDS`; `/chron diagnostics` | – | – |
 | `src/core/VersionCheck.lua` | Tell players about newer versions in their group | `FC.version`, `FC.CompareVersions`; `/chron version` | `READY`, `GROUP_ROSTER_UPDATE`; comm `VER` | comm `VER` |
 | `src/ui/Settings.lua` | Options page (Settings API) | `FC:OpenSettings`; `/chron config` | `READY` | `SETTINGS_CHANGED` |
 | `src/ui/UI.lua` | Main window: Chronicle tab, quest-log-style Goals tab, extra tabs | `FC:Toggle`, `FC.Refresh`, `FC:AddWindowTab`, `FC:DescribeGoalType`; `/chron`, `note`, `goal`, `goals`, `done`, `del`, `recent` | `ENTRY_ADDED`, `GOALS_CHANGED`, `GOAL_ADDED`, `LOCATIONS_UPDATED` | – |
-| `src/chronicle/Journey.lua` | Progress samples, statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
+| `src/chronicle/Journey.lua` | Progress samples (incl. known recipes and crafts), statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
+| `src/chronicle/Professions.lua` | Profession, recipe and crafting entries; recipe % completion; Professions tab (bars) | `FC:ScanProfessions`, `FC:ScanRecipes`, `FC:RecordCraft`, `FC:RecipeCompletion`, `FC:ProfessionRows`, `FC:ProfessionBars`, `FC:KnownRecipes`; `/chron professions [list]` | `READY`, `PLAYER_ENTERING_WORLD`, `SKILL_LINES_CHANGED`, `TRADE_SKILL_SHOW`, `TRADE_SKILL_LIST_UPDATE`, `NEW_RECIPE_LEARNED`, `TRADE_SKILL_ITEM_CRAFTED_RESULT`, `PROFESSIONS_CHANGED` | `PROFESSIONS_CHANGED` |
 
 ### Outside the game
 | Path | Responsibility |
@@ -510,7 +532,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `way` | MapGoals | | `export`, `import`, `sync` | Export |
 | `tracker` | Tracker | | `version` | VersionCheck |
 | `journey` | Journey | | `config` / `options` | Settings |
-| `help`, `errors`, `privacy`, `diagnostics` | Core | | | |
+| `help`, `errors`, `privacy`, `diagnostics` | Core | | `professions` / `prof` | Professions |
 
 ---
 

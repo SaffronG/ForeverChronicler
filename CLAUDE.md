@@ -25,7 +25,7 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 ## Layout
 Addon code lives in `src/`, grouped by feature: `core/` (framework, messaging, versions), `chronicle/` (log and journey), `goals/` (goals, map, tracker), `sharing/` (sharing, together goals, export) and `ui/` (window, settings). Put a new file in the folder of the feature it belongs to, and list it in the `.toc`. Developer docs (`Topology.md`, `TODO.md`) live in `docs/`; README, Changelog, PRIVACY, SECURITY and this file stay at the root.
 
-- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → UI → Journey.
+- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → UI → Journey → Professions.
 - `src/core/Core.lua`: saved data (`ForeverChronicallerDB`), error isolation (`FC:SafeCall`, `FC:Dispatch`, `/chron errors`), opt-in diagnostics, event dispatch, internal message system (`FC:On` / `FC:Fire`), slash command registry (`FC:Command(names, usage, fn, order)`).
 - `src/chronicle/Chronicle.lua`: automatic logging (`FC:AddEntry`).
 - `src/goals/Goals.lua`: goal parsing and auto-completion (`FC:CreateGoal`, `FC:AddGoal`). Fires `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED` and `GOALS_CHANGED`.
@@ -41,6 +41,7 @@ Addon code lives in `src/`, grouped by feature: `core/` (framework, messaging, v
 - Telemetry: the addon only records locally (`FC:Dispatch` timings when `settings.diagnostics` is on; `errorLog` entries carry `v` and `label`). `companion/fc_telemetry.py` turns those plus companion spans into OTLP. Use `TEL.span(...)` for new companion operations, and only pass fixed code names, numbers or values that went through `scrub()`. Extend the personal-data test in `companion/tests/test_telemetry.py` when adding fields.
 - `src/ui/Settings.lua`: options page (`FC.db.settings`, `FC:OpenSettings`).
 - `src/chronicle/Journey.lua`: progress samples (`FC.db.samples`, `FC:TakeSample`), stats (`FC:JourneyStats`) and the Journey tab charts. Loads after UI.lua and adds its tab on READY.
+- `src/chronicle/Professions.lua`: profession/recipe/craft entries (`FC.db.professions`, `FC.db.crafted`), recipe % completion (counted while your own profession window is open) and the Professions tab. Events that might not exist on the client are registered through `tryEvent`.
 - `src/ui/UI.lua`: main window (Chronicle tab, quest-log-style Goals tab, `FC:AddWindowTab` for extra tabs) and basic slash commands.
 - `scripts/package.sh` (release zips from the `.toc` file list), `scripts/release_notes.sh`.
 - `.github/workflows/ci.yml`: tests on every push to main and on PRs. It's also reusable (`workflow_call`).

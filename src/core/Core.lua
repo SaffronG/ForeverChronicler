@@ -15,11 +15,14 @@ local function defaults()
         entries = {},   -- chronicle: { t = time(), kind = "level", text = "...", zone = "..." }
         goals = {},     -- { text, kind = "free"|"level"|"zone"|"quest", target, done, created, completed }
         zones = {},     -- set of zone names already visited
-        stats = { deaths = 0, quests = 0 },
+        stats = { deaths = 0, quests = 0, recipes = 0, crafts = 0 },
+        professions = {}, -- [skillLineID] = { name, skill, maxSkill, learned, total, scanned, crafts, first, gone }
+        crafted = {},     -- [itemID] = times crafted (for "first time crafted" entries)
         errorLog = {},  -- recent Lua errors caught by FC:SafeCall, see /chron errors
         settings = {
             -- which automatic entry types get written (notes and the opening entry are always kept)
-            chronicle = { level = true, zone = true, quest = true, death = true, achievement = true, goal = true },
+            chronicle = { level = true, zone = true, quest = true, death = true, achievement = true, goal = true,
+                profession = true, recipe = true, craft = true },
             maxEntries = 0, -- 0 = unlimited; otherwise oldest entries are dropped as new ones arrive
             arrivalYards = 20, -- how close you must get to complete a location goal
             showTracker = true, -- on-screen goal tracker

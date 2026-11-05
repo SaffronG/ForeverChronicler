@@ -11,6 +11,9 @@ local TOGGLES = {
     { key = "death",       name = "Deaths",               tip = "Write an entry when you die. The death counter is kept either way." },
     { key = "achievement", name = "Achievements",         tip = "Write an entry when you earn an achievement." },
     { key = "goal",        name = "Goals achieved",       tip = "Write an entry when you complete a goal." },
+    { key = "profession",  name = "Profession milestones", tip = "Write an entry when you learn a profession and every 25 skill points." },
+    { key = "recipe",      name = "Recipes learned",      tip = "Write an entry when you learn a recipe (a trainer visit is summed up in one line)." },
+    { key = "craft",       name = "Crafting",             tip = "Write an entry the first time you craft each item, and at crafting milestones." },
 }
 
 local category

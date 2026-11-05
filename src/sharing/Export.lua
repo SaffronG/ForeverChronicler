@@ -124,6 +124,8 @@ function FC:ExportString()
         zones = self.db.zones,
         stats = self.db.stats,
         samples = self.db.samples,
+        professions = self.db.professions,
+        crafted = self.db.crafted,
     }
     local enc = E()
     if enc and enc.SerializeCBOR and enc.CompressString and enc.EncodeBase64 then
@@ -202,6 +204,36 @@ local function cleanGoals(list)
     return out
 end
 
+-- professions: [skillLineID] = { name, skill, maxSkill, learned, total, scanned, crafts, first, gone }
+local function cleanProfessions(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    local n = 0
+    for id, p in pairs(list) do
+        if type(id) == "number" and type(p) == "table" and type(p.name) == "string" and n < 20 then
+            local function num(v) v = tonumber(v); return (v and v >= 0 and v < 1e9) and math.floor(v) or nil end
+            local learned, total = num(p.learned), num(p.total)
+            if learned and total and learned > total then learned = total end
+            out[id] = { name = p.name:sub(1, 60), skill = num(p.skill), maxSkill = num(p.maxSkill),
+                learned = learned, total = total, scanned = num(p.scanned), crafts = num(p.crafts) or 0,
+                first = num(p.first), gone = num(p.gone) }
+            n = n + 1
+        end
+    end
+    return out
+end
+
+-- crafted: [itemID] = count
+local function cleanCrafted(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    for id, count in pairs(list) do
+        count = tonumber(count)
+        if type(id) == "number" and id > 0 and count and count > 0 then out[id] = math.floor(count) end
+    end
+    return out
+end
+
 local function deepCopy(v)
     if type(v) ~= "table" then return v end
     local t = {}
@@ -215,13 +247,16 @@ function FC:ImportString(str, mode)
     if not data then return false, err end
     local entries, goals = cleanEntries(data.entries), cleanGoals(data.goals)
     local db = self.db
-    self.lastImportBackup = deepCopy({ entries = db.entries, goals = db.goals, zones = db.zones, stats = db.stats, samples = db.samples })
+    self.lastImportBackup = deepCopy({ entries = db.entries, goals = db.goals, zones = db.zones, stats = db.stats, samples = db.samples,
+        professions = db.professions, crafted = db.crafted })
+    local professions, crafted = cleanProfessions(data.professions), cleanCrafted(data.crafted)
 
     if mode == "replace" then
         db.entries, db.goals = entries, goals
         db.zones = {}
-        db.stats = { deaths = 0, quests = 0 }
+        db.stats = { deaths = 0, quests = 0, recipes = 0, crafts = 0 }
         db.samples = {}
+        db.professions, db.crafted = {}, {}
     else
         local seen = {}
         for _, e in ipairs(db.entries) do seen[e.t .. "\1" .. e.kind .. "\1" .. e.text] = true end
@@ -243,10 +278,20 @@ function FC:ImportString(str, mode)
         end
     end
     if type(data.stats) == "table" then
-        for _, k in ipairs({ "deaths", "quests" }) do
+        for _, k in ipairs({ "deaths", "quests", "recipes", "crafts" }) do
             local v = tonumber(data.stats[k])
             if v and v > (db.stats[k] or 0) then db.stats[k] = v end
         end
+    end
+    -- professions: take the imported record if it's newer (scanned later) or unknown here
+    db.professions = db.professions or {}
+    for id, p in pairs(professions) do
+        local mine = db.professions[id]
+        if not mine or (p.scanned or 0) > (mine.scanned or 0) then db.professions[id] = p end
+    end
+    db.crafted = db.crafted or {}
+    for id, count in pairs(crafted) do
+        if count > (db.crafted[id] or 0) then db.crafted[id] = count end
     end
     if type(data.samples) == "table" then
         db.samples = db.samples or {}
@@ -259,6 +304,7 @@ function FC:ImportString(str, mode)
     end
     self:Fire("GOALS_CHANGED")
     self:Fire("ENTRY_ADDED")
+    self:Fire("PROFESSIONS_CHANGED")
     return true, string.format("Imported %d entries and %d goals from %s (%s).",
         #entries, #goals, tostring(data.character or "?"), mode == "replace" and "replaced your data" or "merged")
 end
