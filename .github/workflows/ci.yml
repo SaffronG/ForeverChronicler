@@ -23,11 +23,11 @@ jobs:
           luaVersion: ${{ matrix.lua }}
       - name: Syntax check
         run: |
-          for f in $(grep -E '\.lua$' ForeverChronicaller.toc | tr -d '\r') tests/*.lua; do
+          for f in $(grep -E '\.lua$' ForeverChronicler.toc | tr -d '\r') tests/*.lua; do
             luac -p "$f"
           done
       - name: XML is well-formed
-        run: python3 -c "import sys, xml.etree.ElementTree as ET; [ET.parse(f) for f in sys.argv[1:]]" $(grep -E '\.xml$' ForeverChronicaller.toc | tr -d '\r')
+        run: python3 -c "import sys, xml.etree.ElementTree as ET; [ET.parse(f) for f in sys.argv[1:]]" $(grep -E '\.xml$' ForeverChronicler.toc | tr -d '\r')
       - name: Tests
         run: lua tests/run.lua .
       - name: Package builds

@@ -22,10 +22,10 @@ end)
 
 test("settings register and open", function()
     local env = setup()
-    ok(env.settings["ForeverChronicaller_Log_death"], "death toggle registered")
-    ok(env.settings["ForeverChronicaller_MaxEntries"], "cap registered")
+    ok(env.settings["ForeverChronicler_Log_death"], "death toggle registered")
+    ok(env.settings["ForeverChronicler_MaxEntries"], "cap registered")
     env.slash("config")
-    eq(env.openedSettings, "Forever Chronicaller", "opened")
+    eq(env.openedSettings, "Forever Chronicler", "opened")
 end)
 
 test("disabled entry type is skipped but counted", function()

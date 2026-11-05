@@ -1,4 +1,4 @@
--- Forever Chronicaller: main window + basic slash commands
+-- Forever Chronicler: main window + basic slash commands
 --   Chronicle tab: the adventure log, newest first.
 --   Goals tab: quest-log style - goal list on the left, details on the right
 --   (type, status, dates, progress, editable description, actions).
@@ -10,7 +10,7 @@ local DETAILS_W = 270
 local MAX_SHOWN = 300 -- chronicle entries shown in the window (newest first)
 local ROW_H = 24
 
-local f = CreateFrame("Frame", "ForeverChronicallerFrame", UIParent,
+local f = CreateFrame("Frame", "ForeverChroniclerFrame", UIParent,
     BackdropTemplateMixin and "BackdropTemplate" or nil)
 f:SetSize(WIDTH, HEIGHT)
 f:SetPoint("CENTER")
@@ -30,7 +30,7 @@ local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 title:SetPoint("TOP", 0, -16)
 FC:StyleFont(title, 24, FC.Theme.title, "Fonts\\MORPHEUS.TTF")
 if title.SetShadowColor then title:SetShadowColor(0.2, 0.5, 0.6, 0.9); title:SetShadowOffset(1, -1) end
-title:SetText("Forever Chronicaller")
+title:SetText("Forever Chronicler")
 
 local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 close:SetPoint("TOPRIGHT", -6, -6)
@@ -59,7 +59,7 @@ paper:Hide()
 FC.windowParchment = paper
 
 -- Scroll area (shared; on the parchment for the chronicle, narrower in Goals mode)
-local scroll = CreateFrame("ScrollFrame", "ForeverChronicallerScroll", f, "UIPanelScrollFrameTemplate")
+local scroll = CreateFrame("ScrollFrame", "ForeverChroniclerScroll", f, "UIPanelScrollFrameTemplate")
 local function placeScroll(left, top, right, bottom)
     scroll:ClearAllPoints()
     scroll:SetPoint("TOPLEFT", left, top)
@@ -149,7 +149,7 @@ local dDescLabel = detailText("GameFontNormalSmall", dProgress, -12)
 dDescLabel:SetText("Notes:")
 FC:StyleFont(dDescLabel, nil, FC.Theme.accent)
 
-local desc = CreateFrame("EditBox", "ForeverChronicallerGoalNotes", details, BackdropTemplateMixin and "BackdropTemplate" or nil)
+local desc = CreateFrame("EditBox", "ForeverChroniclerGoalNotes", details, BackdropTemplateMixin and "BackdropTemplate" or nil)
 desc:SetPoint("TOPLEFT", dDescLabel, "BOTTOMLEFT", 0, -4)
 desc:SetSize(DETAILS_W - 20, 110)
 desc:SetMultiLine(true)
@@ -242,7 +242,7 @@ end
 local hint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 hint:SetPoint("BOTTOMLEFT", 24, 44)
 
-local input = CreateFrame("EditBox", "ForeverChronicallerInput", f, "InputBoxTemplate")
+local input = CreateFrame("EditBox", "ForeverChroniclerInput", f, "InputBoxTemplate")
 input:SetSize(WIDTH - 130, 20)
 input:SetPoint("BOTTOMLEFT", 28, 20)
 input:SetAutoFocus(false)

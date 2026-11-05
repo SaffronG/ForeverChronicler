@@ -1,4 +1,4 @@
--- Forever Chronicaller: location goals
+-- Forever Chronicler: location goals
 --   * Ctrl + right-click on the world map -> "Set as goal: travel here"
 --   * /chron goal here        -> goal at your current position
 --   * /chron goal 45.2 63.1   -> goal at those coordinates in your current zone

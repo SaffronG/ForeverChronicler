@@ -97,7 +97,7 @@ test("/chron sync asks before reloading", function()
     local reloaded = false
     ReloadUI = function() reloaded = true end
     env.slash("sync")
-    eq(env.popups[1].which, "FOREVERCHRONICALLER_SYNC", "confirmation popup")
+    eq(env.popups[1].which, "FOREVERCHRONICLER_SYNC", "confirmation popup")
     eq(reloaded, false, "not reloaded without confirmation")
     env.acceptPopup()
     eq(reloaded, true, "reloaded after confirming")

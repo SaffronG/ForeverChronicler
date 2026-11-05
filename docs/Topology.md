@@ -1,4 +1,4 @@
-# Forever Chronicaller: system topology
+# Forever Chronicler: system topology
 
 A high-level map of how the system fits together: what runs where, how the pieces talk to each other, where data lives, and which file does what.
 For *using* it, see [README.md](../README.md). For working rules, see [CLAUDE.md](../CLAUDE.md).
@@ -32,17 +32,17 @@ Three things run in three places:
 flowchart LR
     subgraph PC["Player's PC"]
         subgraph WoW["WoW: Forever client"]
-            Addon["Forever Chronicaller addon"]
+            Addon["Forever Chronicler addon"]
         end
-        SV[("SavedVariables file<br/>ForeverChronicaller.lua")]
+        SV[("SavedVariables file<br/>ForeverChronicler.lua")]
         Comp["Companion app<br/>fcompanion / Installer.exe"]
-        AddOns[("Interface/AddOns/<br/>ForeverChronicaller/")]
+        AddOns[("Interface/AddOns/<br/>ForeverChronicler/")]
     end
 
     Friend["Friend's WoW client<br/>(same addon)"]
     Discord["Discord channel<br/>(webhook)"]
     Phone["Phone<br/>(ntfy app)"]
-    GH["GitHub<br/>SaffronG/ForeverChronicaller"]
+    GH["GitHub<br/>SaffronG/ForeverChronicler"]
     OTel["OpenTelemetry endpoint<br/>(opt-in, off by default)"]
 
     Addon -- "writes on logout or /reload" --> SV
@@ -191,11 +191,13 @@ sequenceDiagram
 
 ## 4. Data model
 
-All data for each character lives in one SavedVariables table, `ForeverChronicallerDB`, declared in the `.toc` (`SavedVariablesPerCharacter`). Defaults are merged into older saves on load, so new fields never break old data.
+All data for each character lives in one SavedVariables table, `ForeverChroniclerDB`, declared in the `.toc` (`SavedVariablesPerCharacter`). Defaults are merged into older saves on load, so new fields never break old data.
+
+**Rename (0.5.0):** the addon used to be spelled `ForeverChronicaller`. The `.toc` also declares the old table `ForeverChronicallerDB`. If it's loaded (the companion's `migrate_legacy` copies each old `SavedVariables/ForeverChronicaller.lua` to the new file name on install) and the new table is fresh (at most the opening entry and no goals), Core adopts it and drops the old name. Otherwise the old table is left as it is, so nothing is lost. The companion also moves the old addon folder to its backups, copies the old `forever-chronicaller` config folder, and reads either table name.
 
 ```mermaid
 classDiagram
-    class ForeverChronicallerDB {
+    class ForeverChroniclerDB {
         version
         entries : Entry[]
         goals : Goal[]
@@ -250,10 +252,10 @@ classDiagram
         crafts
         first / gone
     }
-    ForeverChronicallerDB "1" --> "*" Entry
-    ForeverChronicallerDB "1" --> "*" Goal
-    ForeverChronicallerDB "1" --> "*" Sample
-    ForeverChronicallerDB "1" --> "*" Profession
+    ForeverChroniclerDB "1" --> "*" Entry
+    ForeverChroniclerDB "1" --> "*" Goal
+    ForeverChroniclerDB "1" --> "*" Sample
+    ForeverChroniclerDB "1" --> "*" Profession
     Goal --> LocationTarget : kind = location
     Goal --> SharedTarget : kind = shared
     SharedTarget --> LocationTarget : inner kind = location
@@ -409,7 +411,7 @@ flowchart TB
 | Nothing is installed or changed before the user agrees to the disclaimer (`PRIVACY.md`, once per terms version); `--yes` alone never agrees | `ensure_terms` |
 | SavedVariables are parsed, never executed (`X = os.execute(...)` is a parse error) | `parse_saved_variables` |
 | Webhook URL never appears in logs or errors | `Watcher.notify` |
-| Zip contents must all sit under `ForeverChronicaller/`, with no `..`, absolute paths or drive letters, a size limit, and a `.toc` | `check_zip` |
+| Zip contents must all sit under `ForeverChronicler/`, with no `..`, absolute paths or drive letters, a size limit, and a `.toc` | `check_zip` |
 | Downloads only from `https://github.com/`, release assets only | `latest_release` |
 | No install/update while WoW is running (process **names** only) | `game_running` |
 | Old version backed up, restored if the swap fails | `install_zip` |
@@ -494,12 +496,12 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 ### Addon
 | File | Responsibility | Key functions / API | Listens to | Emits |
 |---|---|---|---|---|
-| `ForeverChronicaller.toc` | Manifest: metadata, saved variable, load order | `## Version`, `## Interface`, `SavedVariablesPerCharacter` | – | – |
+| `ForeverChronicler.toc` | Manifest: metadata, saved variable, load order | `## Version`, `## Interface`, `SavedVariablesPerCharacter` | – | – |
 | `src/core/Core.lua` | Foundation: saved data, error isolation, event dispatch, message bus, slash commands | `FC:SafeCall`, `FC:RegisterEvent`, `FC:On`, `FC:Fire`, `FC:Command`, `FC:Print`, `FC:Zone`; `/chron help`, `/chron errors` | `ADDON_LOADED` | `READY` |
 | `src/chronicle/Chronicle.lua` | Automatic adventure log | `FC:AddEntry(kind, text)` (respects settings + cap), `FC:FormatEntry` | `PLAYER_LEVEL_UP`, `ZONE_CHANGED_NEW_AREA`, `PLAYER_ENTERING_WORLD`, `QUEST_TURNED_IN`, `PLAYER_DEAD`, `ACHIEVEMENT_EARNED`, `READY` | `ENTRY_ADDED`, `LEVEL`, `ZONE`, `QUEST` |
 | `src/goals/Goals.lua` | Goal model, text parsing, auto-completion | `FC:AddGoal`, `FC:CreateGoal`, `FC:CompleteGoal`, `FC:ToggleGoal`, `FC:RemoveGoal`, `FC:CheckGoals`, `FC:SetGoalDescription`, `FC.ParseGoalText` | `READY`, `LEVEL`, `ZONE`, `QUEST` | `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED`, `GOALS_CHANGED` |
 | `src/goals/MapGoals.lua` | Location goals, waypoint arrow, arrival check, world-map Ctrl + right-click menu | `FC:ParseLocation`, `FC:GoalLocation`, `FC:SetGoalWaypoint`, `FC:WhenWorldMap`, `FC.goalDistance`; `/chron way` | `READY`, `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED`, `SHARED_PART_DONE`, `GOALS_CHANGED`, `ADDON_LOADED` | `LOCATIONS_UPDATED` |
-| `src/goals/MapPins.lua` / `.xml` | Gold-star pins on the world map (projected onto parent maps) | `ForeverChronicallerGoalPinMixin`, map data provider | `GOALS_CHANGED` (+ map's own refresh) | – |
+| `src/goals/MapPins.lua` / `.xml` | Gold-star pins on the world map (projected onto parent maps) | `ForeverChroniclerGoalPinMixin`, map data provider | `GOALS_CHANGED` (+ map's own refresh) | – |
 | `src/goals/Tracker.lua` | On-screen open-goal list with progress | `FC:GoalProgressText`, `FC.RefreshTracker`; `/chron tracker` | `READY`, `GOALS_CHANGED`, `LOCATIONS_UPDATED`, `LEVEL`, `SETTINGS_CHANGED` | – |
 | `src/core/Comms.lua` | Addon-message transport: encode, chunk, queue, reassemble | `FC:SendComm`, `FC:OnComm`, `FC:GroupChannel`, `FC.EncodeFields`, `FC.DecodeFields`, `FC.ShortName` | `CHAT_MSG_ADDON`, `READY` | comm handlers |
 | `src/sharing/Sharing.lua` | Send a goal copy to group/friend, accept popup | `FC:ShareGoal`, `FC.GoalToFields`, `FC.FieldsToGoal` (validation); `/chron share` | comm `GOAL`, `GOALACK` | comm `GOAL`, `GOALACK` |
@@ -521,7 +523,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `companion/Install.bat`, `install.sh` | Launchers for the Python-based installer bundle |
 | `companion/tests/` | Companion tests (parser, watcher, update, install, standalone mode, version match) |
 | `tests/wow_stub.lua`, `tests/run.lua`, `tests/test_*.lua` | Fake WoW API (multi-player), test runner, addon tests |
-| `scripts/package.sh` | Builds `dist/ForeverChronicaller-<v>.zip` (from the `.toc` list) and `ForeverChronicaller-Installer-<v>.zip` |
+| `scripts/package.sh` | Builds `dist/ForeverChronicler-<v>.zip` (from the `.toc` list) and `ForeverChronicler-Installer-<v>.zip` |
 | `scripts/release_notes.sh` | Prints a version's Changelog section |
 | `.github/workflows/ci.yml` | Tests on push to main / PRs (also reused by release) |
 | `.github/workflows/release.yml` | Automatic versioned release with standalone installers |
@@ -556,7 +558,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 
 ## 11. Where to start reading
 
-1. `ForeverChronicaller.toc`: what loads, in what order.
+1. `ForeverChronicler.toc`: what loads, in what order.
 2. `src/core/Core.lua`: the four building blocks (`SafeCall`, events, message bus, commands). Everything else uses them.
 3. `src/chronicle/Chronicle.lua` → `src/goals/Goals.lua`: the core features, and how WoW events become internal messages.
 4. `tests/test_core.lua` and `tests/test_goals_settings.lua`: how to drive the addon without the game.

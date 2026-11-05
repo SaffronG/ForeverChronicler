@@ -1,7 +1,7 @@
 name: Release
 
 # Publishes a release automatically when a push to main carries a new version:
-# bump "## Version:" in ForeverChronicaller.toc (and VERSION in
+# bump "## Version:" in ForeverChronicler.toc (and VERSION in
 # companion/fcompanion.py), add a "## [x.y.z]" section to Changelog.md, push.
 # If tag v<version> already exists, nothing happens.
 on:
@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0   # includes tags
       - id: check
         run: |
-          V=$(sed -n 's/^## Version: *//p' ForeverChronicaller.toc | tr -d '\r')
+          V=$(sed -n 's/^## Version: *//p' ForeverChronicler.toc | tr -d '\r')
           echo "version=$V" >> "$GITHUB_OUTPUT"
           if git rev-parse -q --verify "refs/tags/v$V" >/dev/null; then
             echo "release=false" >> "$GITHUB_OUTPUT"
@@ -82,7 +82,7 @@ jobs:
             exe: ""
     env:
       V: ${{ needs.version.outputs.version }}
-      BIN: dist/ForeverChronicaller-Installer${{ matrix.exe }}
+      BIN: dist/ForeverChronicler-Installer${{ matrix.exe }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -116,8 +116,8 @@ jobs:
             EXTRA+=(--add-data "$GITHUB_WORKSPACE/companion/telemetry_build.json${SEP}.")
           fi
           # absolute paths: PyInstaller resolves relative data paths against the spec folder
-          pyinstaller --onefile --clean --noconfirm --name ForeverChronicaller-Installer \
-            --add-data "$GITHUB_WORKSPACE/dist/ForeverChronicaller-$V.zip${SEP}." \
+          pyinstaller --onefile --clean --noconfirm --name ForeverChronicler-Installer \
+            --add-data "$GITHUB_WORKSPACE/dist/ForeverChronicler-$V.zip${SEP}." \
             --add-data "$GITHUB_WORKSPACE/PRIVACY.md${SEP}." \
             "${EXTRA[@]}" \
             companion/fcompanion.py
@@ -137,21 +137,21 @@ jobs:
           fi
           "$BIN" privacy | grep -q "No telemetry"
           "$BIN" install --wow "$GITHUB_WORKSPACE/fake/WoW Forever" --yes --accept-terms
-          test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
-          grep -q "## Version: $V" "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
+          test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicler/ForeverChronicler.toc"
+          grep -q "## Version: $V" "fake/WoW Forever/Interface/AddOns/ForeverChronicler/ForeverChronicler.toc"
           # double-click mode with a fresh config: agree to the terms, answer the folder
           # prompt, then "Press Enter to close" (one spare Enter in case a question is added)
           rm -rf "fake/WoW Forever/Interface"
           printf 'yes\n%s\n\n\n' "$GITHUB_WORKSPACE/fake/WoW Forever" | APPDATA="$GITHUB_WORKSPACE/cfg2" XDG_CONFIG_HOME="$GITHUB_WORKSPACE/cfg2" "$BIN"
-          test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc"
+          test -f "fake/WoW Forever/Interface/AddOns/ForeverChronicler/ForeverChronicler.toc"
       - name: Name the download
         run: |
           mkdir -p out
           if [ "$RUNNER_OS" = "Windows" ]; then
-            cp "$BIN" "out/ForeverChronicaller-Installer-$V-windows.exe"
+            cp "$BIN" "out/ForeverChronicler-Installer-$V-windows.exe"
           else
             chmod +x "$BIN"
-            tar -czf "out/ForeverChronicaller-Installer-$V-linux.tar.gz" -C dist ForeverChronicaller-Installer
+            tar -czf "out/ForeverChronicler-Installer-$V-linux.tar.gz" -C dist ForeverChronicler-Installer
           fi
       - uses: actions/upload-artifact@v4
         with:
@@ -178,9 +178,9 @@ jobs:
             echo
             echo "| You have | Download | Then |"
             echo "|---|---|---|"
-            echo "| **Windows** | \`ForeverChronicaller-Installer-$V-windows.exe\` | Close WoW, double-click it. If Windows SmartScreen warns about an unknown publisher: *More info* then *Run anyway*. |"
-            echo "| **Linux** | \`ForeverChronicaller-Installer-$V-linux.tar.gz\` | \`tar xzf ForeverChronicaller-Installer-$V-linux.tar.gz && ./ForeverChronicaller-Installer\` |"
-            echo "| Any (manual) | \`ForeverChronicaller-$V.zip\` | Unzip into \`Interface/AddOns/\` |"
+            echo "| **Windows** | \`ForeverChronicler-Installer-$V-windows.exe\` | Close WoW, double-click it. If Windows SmartScreen warns about an unknown publisher: *More info* then *Run anyway*. |"
+            echo "| **Linux** | \`ForeverChronicler-Installer-$V-linux.tar.gz\` | \`tar xzf ForeverChronicler-Installer-$V-linux.tar.gz && ./ForeverChronicler-Installer\` |"
+            echo "| Any (manual) | \`ForeverChronicler-$V.zip\` | Unzip into \`Interface/AddOns/\` |"
             echo
             echo "No Python needed for the installers. They find your WoW: Forever folder (or ask for it) and install the addon. The same program also does Discord/phone notifications and updates: run it with \`setup\`, \`watch\` or \`update\`."
             echo
@@ -190,12 +190,12 @@ jobs:
         with:
           tag_name: v${{ env.V }}
           target_commitish: ${{ github.sha }}
-          name: Forever Chronicaller ${{ env.V }}
+          name: Forever Chronicler ${{ env.V }}
           body_path: release-notes.md
           make_latest: "true"
           fail_on_unmatched_files: true
           files: |
-            out/ForeverChronicaller-${{ env.V }}.zip
-            out/ForeverChronicaller-Installer-${{ env.V }}.zip
-            out/ForeverChronicaller-Installer-${{ env.V }}-windows.exe
-            out/ForeverChronicaller-Installer-${{ env.V }}-linux.tar.gz
+            out/ForeverChronicler-${{ env.V }}.zip
+            out/ForeverChronicler-Installer-${{ env.V }}.zip
+            out/ForeverChronicler-Installer-${{ env.V }}-windows.exe
+            out/ForeverChronicler-Installer-${{ env.V }}-linux.tar.gz

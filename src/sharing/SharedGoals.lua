@@ -1,4 +1,4 @@
--- Forever Chronicaller: goals you complete *together* with friends
+-- Forever Chronicler: goals you complete *together* with friends
 --   /chron together <name> <goal>   e.g. /chron together Buddy level 30
 --   /chron invite <n> <name>        invite another friend to shared goal n
 --
@@ -294,7 +294,7 @@ function FC:InviteToShared(g, friend)
         members[short] = { full = friend, pending = true }
     end
     self:SendComm("SGINV", stateFields(g), "WHISPER", friend)
-    self:Print(string.format("Invited %s to \"%s\". They need Forever Chronicaller and must be online to get the invite.", short, g.text))
+    self:Print(string.format("Invited %s to \"%s\". They need Forever Chronicler and must be online to get the invite.", short, g.text))
     self:Fire("GOALS_CHANGED")
 end
 
@@ -308,7 +308,7 @@ local function fieldsToShared(fields)
 end
 
 local invites = {}
-StaticPopupDialogs["FOREVERCHRONICALLER_SHARED_INVITE"] = {
+StaticPopupDialogs["FOREVERCHRONICLER_SHARED_INVITE"] = {
     text = "%s wants to complete a goal together with you:\n\n|cffffd100%s|r\n\nJoin?",
     button1 = "Join",
     button2 = "No thanks",
@@ -339,7 +339,7 @@ FC:OnComm("SGINV", function(fields, sender)
     target.members[me()] = nil
     local inv = { target = target, text = fields.text, from = from }
     invites[#invites + 1] = inv
-    StaticPopup_Show("FOREVERCHRONICALLER_SHARED_INVITE", from, fields.text, inv)
+    StaticPopup_Show("FOREVERCHRONICLER_SHARED_INVITE", from, fields.text, inv)
 end)
 
 local function onState(fields, sender)

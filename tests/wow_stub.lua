@@ -334,7 +334,7 @@ function W.setup(dir, opts)
     WorldMapFrame.AddDataProvider = function(m, p) p.owner = m; env.pinProvider = p; p:RefreshAllData() end
     WorldMapFrame.RemoveAllPinsByTemplate = function() env.pins = {} end
     WorldMapFrame.AcquirePin = function(_, _, ...)
-        local p = CreateFromMixins(ForeverChronicallerGoalPinMixin)
+        local p = CreateFromMixins(ForeverChroniclerGoalPinMixin)
         p.Icon = { SetTexture = function(_, t) p.texture = t end }
         p:OnLoad(); p:OnAcquired(...)
         table.insert(env.pins, p)
@@ -342,17 +342,18 @@ function W.setup(dir, opts)
     end
 
     -- Load the addon in .toc order (Lua files only)
-    _G.ForeverChronicallerDB = opts.savedDB
-    _G.ForeverChronicallerAccountDB = opts.savedAccountDB
+    _G.ForeverChroniclerDB = opts.savedDB
+    _G.ForeverChronicallerDB = opts.legacyDB -- saved data from before the 0.5.0 rename
+    _G.ForeverChroniclerAccountDB = opts.savedAccountDB
     env.FC = {}
-    local toc = assert(io.open(dir .. "/ForeverChronicaller.toc")):read("*a")
+    local toc = assert(io.open(dir .. "/ForeverChronicler.toc")):read("*a")
     for line in toc:gmatch("[^\r\n]+") do
         if line:match("%.lua$") and not line:match("^#") then
             local chunk = assert(loadfile(dir .. "/" .. line))
-            chunk("ForeverChronicaller", env.FC)
+            chunk("ForeverChronicler", env.FC)
         end
     end
-    env.fire("ADDON_LOADED", "ForeverChronicaller")
+    env.fire("ADDON_LOADED", "ForeverChronicler")
     env.fire("PLAYER_LOGIN")
     env.fire("PLAYER_ENTERING_WORLD")
 
@@ -377,9 +378,9 @@ function W.setup(dir, opts)
 
     env.globals = {}
     for k, v in pairs(_G) do if before[k] ~= v then env.globals[k] = v end end
-    env.globals.ForeverChronicallerDB = env.FC.db
+    env.globals.ForeverChroniclerDB = env.FC.db
 
-    function env.slash(msg) W.activate(env); SlashCmdList.FOREVERCHRONICALLER(msg) end
+    function env.slash(msg) W.activate(env); SlashCmdList.FOREVERCHRONICLER(msg) end
     function env.activate() W.activate(env) end
     function env.chatContains(s)
         for _, line in ipairs(env.chat) do if line:find(s, 1, true) then return true end end

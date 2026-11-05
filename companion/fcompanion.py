@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Forever Chronicaller companion app.
+"""Forever Chronicler companion app.
 
 Runs outside the game (Python 3.8+, standard library only).
 
@@ -42,20 +42,27 @@ FEATURE_TELEMETRY = False
 
 TEL: fc_telemetry.Telemetry = fc_telemetry.DISABLED  # replaced in main() if the user opted in
 
-ADDON = "ForeverChronicaller"
+ADDON = "ForeverChronicler"
+# Name before 0.5.0 (misspelled). Only used to carry old installs and data over.
+LEGACY_ADDON = "ForeverChronicaller"
+LEGACY_REPO = "SaffronG/ForeverChronicaller"
+LEGACY_CONFIG_DIR = "forever-chronicaller"
 VERSION = "0.5.0"
-USER_AGENT = f"ForeverChronicallerCompanion/{VERSION}"
-DEFAULT_REPO = "SaffronG/ForeverChronicaller"
+USER_AGENT = f"ForeverChroniclerCompanion/{VERSION}"
+DEFAULT_REPO = "SaffronG/ForeverChronicler"
 
-TERMS_VERSION = 1  # bump when PRIVACY.md changes in a way users must agree to again
-PRIVACY_URL = "https://github.com/SaffronG/ForeverChronicaller/blob/main/PRIVACY.md"
+TERMS_VERSION = 2  # bump when PRIVACY.md changes in a way users must agree to again
+PRIVACY_URL = "https://github.com/SaffronG/ForeverChronicler/blob/main/PRIVACY.md"
 
 DISCLAIMER = f"""\
 ==============================================================================
- Forever Chronicaller - before you install (terms version {TERMS_VERSION})
+ Forever Chronicler - before you install (terms version {TERMS_VERSION})
 ==============================================================================
  PERMISSIONS - this program will:
-   * write the addon into <WoW folder>/Interface/AddOns/ForeverChronicaller
+   * write the addon into <WoW folder>/Interface/AddOns/ForeverChronicler
+   * once, if you used the old "ForeverChronicaller" version: move that old
+     addon folder to the backups and copy its saved files to the new name
+     (the originals are kept)
    * keep its settings, state and backups in its own folder
    * list running program NAMES to check WoW is closed before changing files
    * read the addon's saved files (only if you use Discord/phone posting)
@@ -107,7 +114,14 @@ def config_dir() -> Path:
         base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
     else:
         base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / "forever-chronicaller"
+    new = base / "forever-chronicler"
+    old = base / LEGACY_CONFIG_DIR
+    if old.is_dir() and not new.exists():
+        try:
+            shutil.copytree(str(old), str(new))  # settings from before the 0.5.0 rename
+        except OSError:
+            return old
+    return new
 
 
 def default_config() -> Dict[str, Any]:
@@ -142,6 +156,8 @@ def load_config(path: Optional[Path] = None) -> Dict[str, Any]:
         kinds = dict(DEFAULT_KINDS)
         kinds.update(stored.get("post_kinds", {}))
         cfg["post_kinds"] = kinds
+    if cfg.get("github_repo") == LEGACY_REPO:
+        cfg["github_repo"] = DEFAULT_REPO  # the repository was renamed in 0.5.0
     return cfg
 
 
@@ -304,11 +320,23 @@ def parse_saved_variables(text: str) -> Dict[str, Any]:
 def saved_variable_files(wow_path: str) -> List[Path]:
     """Per-character SavedVariables files for this addon (any account/realm/character)."""
     pattern = os.path.join(wow_path, "WTF", "Account", "*", "*", "*", "SavedVariables", f"{ADDON}.lua")
-    return [Path(p) for p in sorted(glob.glob(pattern))]
+    files = [Path(p) for p in glob.glob(pattern)]
+    # characters that still only have the file from before the 0.5.0 rename
+    legacy = os.path.join(wow_path, "WTF", "Account", "*", "*", "*", "SavedVariables", f"{LEGACY_ADDON}.lua")
+    for p in glob.glob(legacy):
+        if not Path(p).with_name(f"{ADDON}.lua").exists():
+            files.append(Path(p))
+    return sorted(files)
+
+
+def addon_data(parsed: Dict[str, Any]) -> Any:
+    """The addon's saved table, under its current or its pre-0.5.0 name."""
+    data = parsed.get("ForeverChroniclerDB")
+    return data if data is not None else parsed.get("ForeverChronicallerDB")
 
 
 def character_of(path: Path) -> str:
-    # .../WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicaller.lua
+    # .../WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicler.lua
     return f"{path.parent.parent.name}-{path.parent.parent.parent.name}"
 
 
@@ -389,7 +417,7 @@ def post_discord(webhook: str, character: str, lines: List[str], send: Optional[
     count = 0
     for chunk in batch_lines(lines, 1900):
         body = json.dumps({
-            "username": "Forever Chronicaller",
+            "username": "Forever Chronicler",
             "content": f"**{character}**\n{chunk}",
             "allowed_mentions": {"parse": []},  # never ping anyone from game text
         }).encode()
@@ -406,7 +434,7 @@ def post_ntfy(server: str, topic: str, character: str, lines: List[str], send: O
     url = f"{server.rstrip('/')}/{urllib.request.quote(topic)}"
     for chunk in batch_lines(lines, 3500):
         req = urllib.request.Request(url, data=chunk.encode("utf-8"), method="POST", headers={
-            "Title": f"Forever Chronicaller - {character}".encode("ascii", "replace").decode(),
+            "Title": f"Forever Chronicler - {character}".encode("ascii", "replace").decode(),
             "Tags": "scroll",
             "User-Agent": USER_AGENT,
         })
@@ -479,7 +507,7 @@ class Watcher:
         """Post new entries from one SavedVariables file. Returns the number posted."""
         with TEL.span("watch.read"):
             text = path.read_text(encoding="utf-8", errors="replace")
-            data = parse_saved_variables(text).get("ForeverChronicallerDB")
+            data = addon_data(parse_saved_variables(text))
         if not isinstance(data, dict):
             return 0
         if TEL.enabled:
@@ -629,7 +657,35 @@ def install_zip(zip_path: Path, wow_path: str, log: Callable[[str], None] = prin
             raise
     if backup:
         log(f"Previous version backed up to {backup}")
+    migrate_legacy(wow_path, log)
     return version
+
+
+def migrate_legacy(wow_path: str, log: Callable[[str], None] = print) -> int:
+    """Carry over an install from before the 0.5.0 rename (ForeverChronicaller -> ForeverChronicler).
+
+    The old addon folder is moved to the backups (otherwise both would load), and each
+    character's old saved file is copied to the new name, unless that character already has
+    one. The addon adopts the old table on its next login. Originals are never deleted.
+    Returns the number of characters whose data was copied."""
+    old_dir = Path(wow_path) / "Interface" / "AddOns" / LEGACY_ADDON
+    if old_dir.is_dir():
+        backups = config_dir() / "backups"
+        backups.mkdir(parents=True, exist_ok=True)
+        dest = backups / f"{LEGACY_ADDON}-old-name-{int(time.time())}"
+        shutil.move(str(old_dir), str(dest))
+        log(f"Moved the old {LEGACY_ADDON} addon folder to {dest}")
+    copied = 0
+    pattern = os.path.join(wow_path, "WTF", "Account", "*", "*", "*", "SavedVariables", f"{LEGACY_ADDON}.lua")
+    for p in sorted(glob.glob(pattern)):
+        old = Path(p)
+        new = old.with_name(f"{ADDON}.lua")
+        if not new.exists():
+            shutil.copy2(str(old), str(new))
+            copied += 1
+    if copied:
+        log(f"Carried over the saved chronicle of {copied} character(s) from the old addon name.")
+    return copied
 
 
 def looks_like_wow(path: Path) -> bool:
@@ -763,7 +819,7 @@ def update(cfg: Dict[str, Any], fetch: Optional[Fetch] = None, check_only: bool 
         latest = latest_release(cfg.get("github_repo", ""), fetch)
         sp.set(**{"fc.update_available": not current or version_tuple(latest["version"]) > version_tuple(current)})
     if current and version_tuple(latest["version"]) <= version_tuple(current):
-        log(f"Forever Chronicaller {current} is up to date.")
+        log(f"Forever Chronicler {current} is up to date.")
         return False
     log(f"New version available: {latest['version']} (installed: {current or 'none'}).")
     if check_only:
@@ -780,7 +836,7 @@ def update(cfg: Dict[str, Any], fetch: Optional[Fetch] = None, check_only: bool 
             sp.set(**{"fc.bytes": len(data)})
         zip_path.write_bytes(data)
         version = install_zip(zip_path, cfg["wow_path"], log)
-    log(f"Installed Forever Chronicaller {version}.")
+    log(f"Installed Forever Chronicler {version}.")
     return True
 
 
@@ -804,7 +860,7 @@ def ask(prompt: str, current: str = "") -> str:
 def cmd_setup(cfg: Dict[str, Any], args) -> int:
     if not ensure_terms(cfg, getattr(args, "accept_terms", False)):
         return 1
-    print("Forever Chronicaller companion setup. Press Enter to keep the value in [brackets].\n")
+    print("Forever Chronicler companion setup. Press Enter to keep the value in [brackets].\n")
     cfg["wow_path"] = ask("WoW: Forever folder (the one containing Interface and WTF)", cfg["wow_path"])
     if cfg["wow_path"] and not Path(cfg["wow_path"], "WTF").is_dir():
         print("  Note: no WTF folder there yet. It appears after you've logged in once.")
@@ -830,7 +886,7 @@ def cmd_test(cfg: Dict[str, Any], args) -> int:
         print("Nothing to test: set a Discord webhook or ntfy topic with `setup` first.")
         return 1
     w = Watcher(cfg)
-    w.notify("Test", ["📜 Forever Chronicaller companion is connected!"])
+    w.notify("Test", ["📜 Forever Chronicler companion is connected!"])
     print("Test notification sent (check Discord / your phone).")
     return 0
 
@@ -875,7 +931,7 @@ def cmd_update(cfg: Dict[str, Any], args) -> int:
                 print("WoW seems to be running. Close it first, or use --force.")
                 return 1
             version = install_zip(Path(args.zip), cfg["wow_path"])
-            print(f"Installed Forever Chronicaller {version}.")
+            print(f"Installed Forever Chronicler {version}.")
         else:
             update(cfg, check_only=args.check, force=args.force)
     except UpdateError as e:
@@ -934,7 +990,7 @@ def cmd_install(cfg: Dict[str, Any], args) -> int:
     except UpdateError as e:
         print(f"Install failed: {e}")
         return 1
-    print(f"\nForever Chronicaller {version} is installed in {addon_dir(wow)}")
+    print(f"\nForever Chronicler {version} is installed in {addon_dir(wow)}")
     t = telemetry_cfg(cfg)
     if FEATURE_TELEMETRY and not t.get("enabled") and (args.telemetry or not t.get("asked")):
         ask_telemetry(cfg, flag=args.telemetry, interactive=not args.yes)
@@ -945,7 +1001,7 @@ def cmd_install(cfg: Dict[str, Any], args) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="fcompanion", description="Forever Chronicaller companion app")
+    p = argparse.ArgumentParser(prog="fcompanion", description="Forever Chronicler companion app")
     p.add_argument("--version", action="version", version=VERSION)
     sub = p.add_subparsers(dest="command", required=True)
     st = sub.add_parser("setup", help="configure the WoW folder, Discord and ntfy")
@@ -1101,7 +1157,7 @@ def cmd_telemetry(cfg: Dict[str, Any], args) -> int:
             return 0
         for path in saved_variable_files(cfg.get("wow_path", "")):
             try:
-                data = parse_saved_variables(path.read_text(encoding="utf-8", errors="replace")).get("ForeverChronicallerDB")
+                data = addon_data(parse_saved_variables(path.read_text(encoding="utf-8", errors="replace")))
             except (LuaParseError, OSError):
                 continue
             if isinstance(data, dict):
@@ -1135,7 +1191,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     double_clicked = FROZEN and not argv
     if double_clicked:
         argv = ["install"]
-        print(f"Forever Chronicaller installer {VERSION}\n")
+        print(f"Forever Chronicler installer {VERSION}\n")
     global TEL
     try:
         args = build_parser().parse_args(argv)

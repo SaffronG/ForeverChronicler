@@ -18,8 +18,8 @@ def make_zip(version="0.3.0", extra=None, toc=True):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         if toc:
-            zf.writestr("ForeverChronicaller/ForeverChronicaller.toc", f"## Interface: 16001\n## Version: {version}\n\nCore.lua\n")
-        zf.writestr("ForeverChronicaller/Core.lua", f"-- core {version}\n")
+            zf.writestr("ForeverChronicler/ForeverChronicler.toc", f"## Interface: 16001\n## Version: {version}\n\nCore.lua\n")
+        zf.writestr("ForeverChronicler/Core.lua", f"-- core {version}\n")
         for name, data in (extra or {}).items():
             zf.writestr(name, data)
     return buf.getvalue()
@@ -32,7 +32,7 @@ class UpdateTests(unittest.TestCase):
         self.wow = self.root / "WoW"
         (self.wow / "Interface" / "AddOns").mkdir(parents=True)
         self.cfg = fc.default_config()
-        self.cfg.update(wow_path=str(self.wow), github_repo="chase/ForeverChronicaller")
+        self.cfg.update(wow_path=str(self.wow), github_repo="chase/ForeverChronicler")
         self.logs = []
         # keep backups out of the real config folder
         patcher = mock.patch.object(fc, "config_dir", return_value=self.root / "cfg")
@@ -50,8 +50,8 @@ class UpdateTests(unittest.TestCase):
     def fake_github(self, version="0.3.0", zip_bytes=None, assets=None):
         zip_bytes = zip_bytes or make_zip(version)
         release = {"tag_name": f"v{version}", "assets": assets if assets is not None else [
-            {"name": f"ForeverChronicaller-Companion-{version}.zip", "browser_download_url": "https://github.com/x/companion.zip"},
-            {"name": f"ForeverChronicaller-{version}.zip", "browser_download_url": "https://github.com/x/addon.zip"},
+            {"name": f"ForeverChronicler-Companion-{version}.zip", "browser_download_url": "https://github.com/x/companion.zip"},
+            {"name": f"ForeverChronicler-{version}.zip", "browser_download_url": "https://github.com/x/addon.zip"},
         ]}
 
         def fetch(url):
@@ -75,7 +75,7 @@ class UpdateTests(unittest.TestCase):
         backups = list((self.root / "cfg" / "backups").iterdir())
         self.assertEqual(len(backups), 1)
         self.assertIn("0.2.0", backups[0].name)
-        self.assertTrue((backups[0] / "ForeverChronicaller.toc").exists())
+        self.assertTrue((backups[0] / "ForeverChronicler.toc").exists())
 
     def test_up_to_date_and_check_only(self):
         fc.install_zip(self.write_zip(make_zip("0.3.0")), str(self.wow), self.logs.append)
@@ -91,7 +91,7 @@ class UpdateTests(unittest.TestCase):
 
     def test_rejects_dangerous_or_wrong_zips(self):
         cases = {
-            "zip slip": make_zip(extra={"ForeverChronicaller/../../evil.lua": "x"}),
+            "zip slip": make_zip(extra={"ForeverChronicler/../../evil.lua": "x"}),
             "absolute": make_zip(extra={"/etc/evil": "x"}),
             "other folder": make_zip(extra={"OtherAddon/x.lua": "x"}),
             "no toc": make_zip(toc=False),
@@ -109,7 +109,7 @@ class UpdateTests(unittest.TestCase):
             fc.latest_release("", self.fake_github())
         with self.assertRaises(fc.UpdateError):
             fc.latest_release("a/b", self.fake_github(assets=[]))
-        bad = [{"name": "ForeverChronicaller-0.3.0.zip", "browser_download_url": "https://evil.example/addon.zip"}]
+        bad = [{"name": "ForeverChronicler-0.3.0.zip", "browser_download_url": "https://evil.example/addon.zip"}]
         with self.assertRaises(fc.UpdateError):
             fc.latest_release("a/b", self.fake_github(assets=bad))
 
@@ -134,7 +134,7 @@ class PackagedZipTest(unittest.TestCase):
 
     def test_real_package(self):
         repo = Path(__file__).resolve().parents[2]
-        dist = sorted((repo / "dist").glob("ForeverChronicaller-[0-9]*.zip"))
+        dist = sorted((repo / "dist").glob("ForeverChronicler-[0-9]*.zip"))
         if not dist:
             self.skipTest("run scripts/package.sh first")
         version = fc.check_zip(dist[-1])

@@ -1,4 +1,4 @@
--- Forever Chronicaller: professions, crafting and recipes
+-- Forever Chronicler: professions, crafting and recipes
 -- Records profession milestones in the chronicle (new profession, skill-ups in
 -- steps of 25, max skill reached), recipes you learn and your first craft of each
 -- item. Counts known recipes per profession when you open its window, so the

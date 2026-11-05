@@ -16,7 +16,7 @@ from test_update import make_zip  # noqa: E402
 
 # A SavedVariables file full of personal data that must never reach telemetry.
 PERSONAL_SV = r'''
-ForeverChronicallerDB = {
+ForeverChroniclerDB = {
 ["entries"] = {
 { ["t"] = 1762200000, ["kind"] = "note", ["text"] = "my secret goal with Buddy", ["zone"] = "Elwynn Forest", ["level"] = 5, },
 },
@@ -24,8 +24,8 @@ ForeverChronicallerDB = {
 ["errorLog"] = {
 {
 ["t"] = 1762200500, ["first"] = 1762200400, ["count"] = 3, ["v"] = "0.3.1", ["label"] = "msg:GOALS_CHANGED",
-["msg"] = "Interface/AddOns/ForeverChronicaller/Goals.lua:42: attempt to index field 'Buddy' (a nil value) at C:\\Users\\ChaseSecret\\x.txt 1762200400",
-["stack"] = "[string \"@Interface/AddOns/ForeverChronicaller/Goals.lua\"]:42: in function <...>\n[string \"@Interface/AddOns/ForeverChronicaller/Core.lua\"]:70: in function",
+["msg"] = "Interface/AddOns/ForeverChronicler/Goals.lua:42: attempt to index field 'Buddy' (a nil value) at C:\\Users\\ChaseSecret\\x.txt 1762200400",
+["stack"] = "[string \"@Interface/AddOns/ForeverChronicler/Goals.lua\"]:42: in function <...>\n[string \"@Interface/AddOns/ForeverChronicler/Core.lua\"]:70: in function",
 },
 },
 ["diagnostics"] = {
@@ -77,7 +77,7 @@ class Base(unittest.TestCase):
         wow = self.root / "wow-folder"
         (wow / "Interface" / "AddOns").mkdir(parents=True, exist_ok=True)
         (wow / "Wow.exe").write_bytes(b"")
-        sv = wow / "WTF" / "Account" / account / realm / char / "SavedVariables" / "ForeverChronicaller.lua"
+        sv = wow / "WTF" / "Account" / account / realm / char / "SavedVariables" / "ForeverChronicler.lua"
         sv.parent.mkdir(parents=True, exist_ok=True)
         sv.write_text(PERSONAL_SV, encoding="utf-8")
         return wow
@@ -123,7 +123,7 @@ class OffByDefault(Base):
         self.assertFalse((self.cfgdir / "telemetry-spool.jsonl").exists())
 
     def test_install_question_defaults_to_no_and_is_not_repeated(self):
-        zipf = self.root / "ForeverChronicaller-0.3.1.zip"
+        zipf = self.root / "ForeverChronicler-0.3.1.zip"
         zipf.write_bytes(make_zip("0.3.1"))
         wow = self.root / "w"
         wow.mkdir()
@@ -138,7 +138,7 @@ class OffByDefault(Base):
         self.assertNotIn("Share anonymous diagnostics", out)
 
     def test_yes_flag_never_opts_in(self):
-        zipf = self.root / "ForeverChronicaller-0.3.1.zip"
+        zipf = self.root / "ForeverChronicler-0.3.1.zip"
         zipf.write_bytes(make_zip("0.3.1"))
         wow = self.root / "w"
         wow.mkdir()
@@ -174,9 +174,9 @@ class OptInOut(Base):
 class Scrubbing(unittest.TestCase):
     def test_scrub(self):
         cases = {
-            "Interface/AddOns/ForeverChronicaller/Goals.lua:42: attempt to index field 'Buddy'": "Goals.lua:42: attempt to index field <str>",
-            "Interface/AddOns/ForeverChronicaller/src/goals/Goals.lua:42: attempt to call nil": "Goals.lua:42: attempt to call nil",
-            "C:\\WoW\\Interface\\AddOns\\ForeverChronicaller\\src\\core\\Core.lua:7: boom": "Core.lua:7: boom",
+            "Interface/AddOns/ForeverChronicler/Goals.lua:42: attempt to index field 'Buddy'": "Goals.lua:42: attempt to index field <str>",
+            "Interface/AddOns/ForeverChronicler/src/goals/Goals.lua:42: attempt to call nil": "Goals.lua:42: attempt to call nil",
+            "C:\\WoW\\Interface\\AddOns\\ForeverChronicler\\src\\core\\Core.lua:7: boom": "Core.lua:7: boom",
             'C:\\Users\\Chase\\file.txt failed': "<path> failed",
             "/home/chase/.config/x.json missing": "<path> missing",
             "see https://discord.com/api/webhooks/1/x now": "see <url> now",
@@ -188,7 +188,7 @@ class Scrubbing(unittest.TestCase):
             self.assertEqual(ft.scrub(raw), expected, raw)
 
     def test_stack_keeps_only_locations(self):
-        stack = '[string "@Interface/AddOns/ForeverChronicaller/Goals.lua"]:42: in function <x>\n/home/me/fcompanion.py:10'
+        stack = '[string "@Interface/AddOns/ForeverChronicler/Goals.lua"]:42: in function <x>\n/home/me/fcompanion.py:10'
         self.assertEqual(ft.scrub_stack(stack), "Goals.lua:42 < fcompanion.py:10")
         self.assertNotIn("home", ft.scrub_stack(stack))
 
@@ -277,7 +277,7 @@ class Payloads(Base):
         self.assertLessEqual({"fc.operations", "fc.operation.duration"}, names)
         res = {a["key"]: list(a["value"].values())[0] for a in items[0]["payload"][
             "resourceSpans" if items[0]["signal"] == "traces" else "resourceMetrics"][0]["resource"]["attributes"]}
-        self.assertEqual(res["service.name"], "forever-chronicaller-companion")
+        self.assertEqual(res["service.name"], "forever-chronicler-companion")
         self.assertEqual(res["service.version"], fc.VERSION)
         self.assertRegex(res["fc.install.id"], r"^[0-9a-f]{32}$")
 
@@ -309,7 +309,7 @@ class FlagOff(Base):
         self.assertRegex(source, r"(?m)^FEATURE_TELEMETRY = False$", "telemetry must ship switched off")
 
     def test_no_question_no_command_no_flag(self):
-        zipf = self.root / "ForeverChronicaller-0.4.0.zip"
+        zipf = self.root / "ForeverChronicler-0.4.0.zip"
         zipf.write_bytes(make_zip("0.4.0"))
         wow = self.root / "w"
         wow.mkdir()

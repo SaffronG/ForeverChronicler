@@ -1,4 +1,4 @@
-# Forever Chronicaller companion app
+# Forever Chronicler companion app
 
 **Installing the addon:** double-click `Install.bat` (Windows) or run `./install.sh`, or use `python fcompanion.py install`. It finds your WoW: Forever folder (or asks for it) and installs the addon zip that comes with it.
 
@@ -28,12 +28,12 @@ The first time it sees a character, it only remembers where that character is up
 3. `python fcompanion.py test` sends a test message.
 4. `python fcompanion.py watch` runs while you play. Leave it open, and stop it with Ctrl+C.
 
-The settings are stored in `%APPDATA%\forever-chronicaller\config.json` (Windows) or `~/.config/forever-chronicaller/config.json`. There you can also choose which entry types are posted (`post_kinds`; quests and the profession, recipe and craft entries are off by default) and limit it to certain characters (`characters`).
+The settings are stored in `%APPDATA%\forever-chronicler\config.json` (Windows) or `~/.config/forever-chronicler/config.json`. There you can also choose which entry types are posted (`post_kinds`; quests and the profession, recipe and craft entries are off by default) and limit it to certain characters (`characters`).
 
 ## Updating the addon
 - `python fcompanion.py update --check` shows whether a newer release exists (`watch` also checks when it starts). This needs `github_repo` (owner/repo) to be set in `setup`.
 - `python fcompanion.py update` installs it. **Close WoW first.** Your previous version is kept in the `backups` folder next to the config.
-- `python fcompanion.py update --zip ForeverChronicaller-0.2.0.zip` installs a zip someone gave you.
+- `python fcompanion.py update --zip ForeverChronicler-0.2.0.zip` installs a zip someone gave you.
 
 ## Anonymous diagnostics (telemetry): switched off
 Telemetry is built and tested (`fc_telemetry.py`) but **disabled by a feature flag** (`FEATURE_TELEMETRY = False` in `fcompanion.py`). This version doesn't offer it, has no `telemetry` command, and collects nothing. It's planned to be switched on (opt-in, off by default) together with the Grafana dashboard. The planned contents are listed in [PRIVACY.md](../PRIVACY.md#3-telemetry-not-active-in-this-version).

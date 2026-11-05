@@ -53,7 +53,7 @@ class InstallCommandTests(unittest.TestCase):
         self.wow = self.root / "WoW Forever"
         self.wow.mkdir()
         (self.wow / "Wow.exe").write_bytes(b"")
-        self.zip = self.root / "ForeverChronicaller-0.2.0.zip"
+        self.zip = self.root / "ForeverChronicler-0.2.0.zip"
         self.zip.write_bytes(make_zip("0.2.0"))
         for target, value in ((fc, "config_dir"),):
             p = mock.patch.object(target, value, return_value=self.root / "cfg")
@@ -147,13 +147,13 @@ class TermsTests(InstallCommandTests):
 class BundleTest(unittest.TestCase):
     def test_installer_bundle_contents(self):
         repo = Path(__file__).resolve().parents[2]
-        bundles = sorted((repo / "dist").glob("ForeverChronicaller-Installer-*.zip"))
+        bundles = sorted((repo / "dist").glob("ForeverChronicler-Installer-*.zip"))
         if not bundles:
             self.skipTest("run scripts/package.sh first")
         names = set(zipfile.ZipFile(bundles[-1]).namelist())
         for f in ("fcompanion.py", "Install.bat", "install.sh", "README.md"):
-            self.assertIn(f"ForeverChronicaller-Installer/{f}", names)
-        self.assertTrue(any(n.startswith("ForeverChronicaller-Installer/ForeverChronicaller-") and n.endswith(".zip")
+            self.assertIn(f"ForeverChronicler-Installer/{f}", names)
+        self.assertTrue(any(n.startswith("ForeverChronicler-Installer/ForeverChronicler-") and n.endswith(".zip")
                             and "Installer-" not in n.split("/")[-1] for n in names))
 
 

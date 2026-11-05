@@ -1,4 +1,4 @@
--- Forever Chronicaller: world map pins for open location goals
+-- Forever Chronicler: world map pins for open location goals
 -- A MapCanvas data provider places one pin per open location goal on whatever
 -- map is being viewed, including parent maps (continent view), by converting
 -- through world coordinates. Hover shows the goal, left-click points the
@@ -6,46 +6,46 @@
 
 local _, FC = ...
 
-local TEMPLATE = "ForeverChronicallerGoalPinTemplate"
+local TEMPLATE = "ForeverChroniclerGoalPinTemplate"
 local ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1" -- gold star
 
 -- Pin ------------------------------------------------------------------------
 
-ForeverChronicallerGoalPinMixin = CreateFromMixins(MapCanvasPinMixin)
+ForeverChroniclerGoalPinMixin = CreateFromMixins(MapCanvasPinMixin)
 
-function ForeverChronicallerGoalPinMixin:OnLoad()
+function ForeverChroniclerGoalPinMixin:OnLoad()
     self.Icon:SetTexture(ICON)
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI")
     self:SetScalingLimits(1, 1.0, 1.2) -- don't shrink to nothing when zoomed out
 end
 
-function ForeverChronicallerGoalPinMixin:OnAcquired(index, goal, x, y)
+function ForeverChroniclerGoalPinMixin:OnAcquired(index, goal, x, y)
     self.index = index
     self.goal = goal
     self:SetPosition(x, y)
 end
 
-function ForeverChronicallerGoalPinMixin:OnMouseEnter()
+function ForeverChroniclerGoalPinMixin:OnMouseEnter()
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetText("Goal: " .. self.goal.text, 1, 0.82, 0)
     GameTooltip:AddLine("Click to point the arrow here.", 1, 1, 1)
     GameTooltip:Show()
 end
 
-function ForeverChronicallerGoalPinMixin:OnMouseLeave()
+function ForeverChroniclerGoalPinMixin:OnMouseLeave()
     GameTooltip:Hide()
 end
 
 -- The map canvas has routed pin clicks through different methods over the
 -- years, so handle all of them. Setting the waypoint twice is harmless.
-function ForeverChronicallerGoalPinMixin:HandleClick(button)
+function ForeverChroniclerGoalPinMixin:HandleClick(button)
     if button == "LeftButton" and self.index then
         FC:SetGoalWaypoint(self.index)
     end
 end
-function ForeverChronicallerGoalPinMixin:OnMouseClickAction(button) self:HandleClick(button) end
-function ForeverChronicallerGoalPinMixin:OnClick(button) self:HandleClick(button) end
-function ForeverChronicallerGoalPinMixin:OnMouseUp(button, upInside)
+function ForeverChroniclerGoalPinMixin:OnMouseClickAction(button) self:HandleClick(button) end
+function ForeverChroniclerGoalPinMixin:OnClick(button) self:HandleClick(button) end
+function ForeverChroniclerGoalPinMixin:OnMouseUp(button, upInside)
     if upInside ~= false then self:HandleClick(button) end
 end
 

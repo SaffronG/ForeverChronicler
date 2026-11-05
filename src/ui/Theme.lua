@@ -1,4 +1,4 @@
--- Forever Chronicaller: look and feel
+-- Forever Chronicler: look and feel
 -- Night elf style for the main window (midnight-blue to deep-teal sky, stars,
 -- a crescent moon, moon-silver borders, Morpheus title font) and a parchment
 -- scroll for the chronicle page. Everything is built from textures the client

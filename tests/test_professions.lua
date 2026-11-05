@@ -137,7 +137,7 @@ end)
 test("profession entry types can be switched off", function()
     local env = settled()
     local FC = env.FC
-    ok(env.settings["ForeverChronicaller_Log_craft"], "craft toggle registered")
+    ok(env.settings["ForeverChronicler_Log_craft"], "craft toggle registered")
     FC.db.settings.chronicle.craft = false
     env.fire("TRADE_SKILL_ITEM_CRAFTED_RESULT", { itemID = 1 })
     eq(#entriesOf(FC, "craft"), 0, "no entry")

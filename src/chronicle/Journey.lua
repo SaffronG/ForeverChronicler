@@ -1,4 +1,4 @@
--- Forever Chronicaller: journey statistics and graphs ("Journey" tab)
+-- Forever Chronicler: journey statistics and graphs ("Journey" tab)
 -- Records small snapshots ("samples") of your progress over time and draws them
 -- as line charts with the client's line API, plus a written summary:
 -- zones in the order you found them, time per level, totals.

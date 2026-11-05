@@ -1,4 +1,4 @@
-# Forever Chronicaller
+# Forever Chronicler
 
 Automatically chronicles your adventure and tracks personal goals.
 
@@ -7,20 +7,24 @@ Automatically chronicles your adventure and tracks personal goals.
 How it all fits together (diagrams, data flow, component map): [docs/Topology.md](docs/Topology.md).
 
 ## Install
-**Easiest:** from the [latest release](https://github.com/SaffronG/ForeverChronicaller/releases/latest), close WoW and then:
-- **Windows:** download `ForeverChronicaller-Installer-<version>-windows.exe` and double-click it. If SmartScreen warns about an unknown publisher, click *More info* → *Run anyway*.
-- **Linux:** download `ForeverChronicaller-Installer-<version>-linux.tar.gz`, then `tar xzf` it and run `./ForeverChronicaller-Installer`.
+**Easiest:** from the [latest release](https://github.com/SaffronG/ForeverChronicler/releases/latest), close WoW and then:
+- **Windows:** download `ForeverChronicler-Installer-<version>-windows.exe` and double-click it. If SmartScreen warns about an unknown publisher, click *More info* → *Run anyway*.
+- **Linux:** download `ForeverChronicler-Installer-<version>-linux.tar.gz`, then `tar xzf` it and run `./ForeverChronicler-Installer`.
 
 No Python needed. It finds your WoW: Forever folder (or asks you for it) and installs the addon.
 
-(The `ForeverChronicaller-Installer-<version>.zip` bundle does the same with your own Python: `Install.bat` / `install.sh`.)
+(The `ForeverChronicler-Installer-<version>.zip` bundle does the same with your own Python: `Install.bat` / `install.sh`.)
 
 **Manually:**
-1. Unzip `ForeverChronicaller-<version>.zip` (from `scripts/package.sh` or a GitHub release) into your WoW: Forever folder's `Interface/AddOns/`, so you end up with `Interface/AddOns/ForeverChronicaller/ForeverChronicaller.toc`.
-2. Start the game, check that **Forever Chronicaller** is enabled in the AddOns list on the character screen, and log in.
+1. Unzip `ForeverChronicler-<version>.zip` (from `scripts/package.sh` or a GitHub release) into your WoW: Forever folder's `Interface/AddOns/`, so you end up with `Interface/AddOns/ForeverChronicler/ForeverChronicler.toc`.
+2. Start the game, check that **Forever Chronicler** is enabled in the AddOns list on the character screen, and log in.
 3. Type `/chron` to open it, or `/chron help` for all commands.
 
-(Developers: you can also copy or symlink this repo folder into `Interface/AddOns/ForeverChronicaller/`.)
+(Developers: you can also copy or symlink this repo folder into `Interface/AddOns/ForeverChronicler/`.)
+
+**Upgrading from 0.4.x (spelled "Forever Chronicaller"):** the addon was renamed in 0.5.0, and WoW keeps saved data under the addon's folder name.
+- **With the installer (recommended):** download the 0.5.0 installer once and run it. The updater built into 0.4.x looks for the old name and can't find 0.5.0. The installer moves the old `ForeverChronicaller` folder to its backups, so the two don't load side by side, and copies each character's saved chronicle to the new name. The originals are kept. On your next login the addon says "Your chronicle from the old "Forever Chronicaller" was carried over."
+- **Manually:** with WoW closed, delete `Interface/AddOns/ForeverChronicaller/`. Then, in each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/` folder, copy `ForeverChronicaller.lua` to `ForeverChronicler.lua` and keep the original. Do this before logging in with 0.5.0.
 
 If the addon shows as "out of date", either tick "Load out of date AddOns" on the
 character select AddOns screen or change `## Interface:` in the .toc to your client's
@@ -29,7 +33,7 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 ## What gets chronicled automatically
 - Level ups, first visit to each zone, quest turn-ins, deaths, achievements, goals achieved
 - Professions: learning a profession, every 25 skill points, max skill. Recipes you learn (a trainer visit is summed up in one line). The first time you craft each item, and crafting milestones (10, 50, 100, 250, 500, then every 1000 items)
-- Each type can be switched off, and the chronicle size can be limited, in Options → AddOns → Forever Chronicaller (`/chron config`)
+- Each type can be switched off, and the chronicle size can be limited, in Options → AddOns → Forever Chronicler (`/chron config`)
 
 ## Commands (`/chron` or `/fc`)
 | Command | Effect |
@@ -90,28 +94,28 @@ Addon code is in `src/`, grouped by feature. Developer docs are in `docs/`.
 
 ## Backup / moving to another computer
 - **In game:** `/chron export` and copy the text (Ctrl+C). On the other computer, `/chron import`, paste (Ctrl+V), then **Merge** or **Replace**. `/chron import undo` reverts the last import until you log out.
-- **By file:** your data lives in `WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicaller.lua`. Copy that file (with the game closed) to the same place on the other computer.
+- **By file:** your data lives in `WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicler.lua`. Copy that file (with the game closed) to the same place on the other computer.
 
 ## Companion app (optional)
 `companion/fcompanion.py` posts your new chronicle entries to **Discord** or your **phone** (ntfy), and can install addon updates from GitHub releases. It runs outside the game and only reads the addon's saved files. See [companion/README.md](companion/README.md).
 
 ## Development / releasing
-- Build an installable zip: `scripts/package.sh` → `dist/ForeverChronicaller-<version>.zip`. Unzip it into `Interface/AddOns/`.
+- Build an installable zip: `scripts/package.sh` → `dist/ForeverChronicler-<version>.zip`. Unzip it into `Interface/AddOns/`.
 - Every push to `main` runs the tests (Lua 5.1 and 5.4, plus the companion on Linux and Windows).
 - **Release (automatic):**
   1. Bump `## Version:` in the `.toc` and `VERSION` in `companion/fcompanion.py`.
   2. Rename `## [Unreleased]` in `Changelog.md` to `## [x.y.z] - date`, and add a fresh `## [Unreleased]` above it.
   3. Commit and push to `main`.
   4. The **Release** workflow notices the new version, runs all checks, and builds standalone installers on real Windows and Linux machines (Python bundled in, no install needed). It test-installs each one into a fake WoW folder, then publishes release `vx.y.z` with:
-     - `ForeverChronicaller-Installer-x.y.z-windows.exe`
-     - `ForeverChronicaller-Installer-x.y.z-linux.tar.gz`
-     - `ForeverChronicaller-x.y.z.zip` (manual install)
-     - `ForeverChronicaller-Installer-x.y.z.zip` (the Python version, for macOS or anyone else)
+     - `ForeverChronicler-Installer-x.y.z-windows.exe`
+     - `ForeverChronicler-Installer-x.y.z-linux.tar.gz`
+     - `ForeverChronicler-x.y.z.zip` (manual install)
+     - `ForeverChronicler-Installer-x.y.z.zip` (the Python version, for macOS or anyone else)
 - Pushes that don't change the version publish nothing. You can also start the Release workflow by hand from the Actions tab.
 
 Run the tests with `lua tests/run.lua .` from the repo root (Lua 5.1+). They use a fake WoW API, so in-game testing is still needed for frames, the options page and the world map.
 
-Data is saved per character in `WTF/Account/<acct>/<realm>/<char>/SavedVariables/ForeverChronicaller.lua`.
+Data is saved per character in `WTF/Account/<acct>/<realm>/<char>/SavedVariables/ForeverChronicler.lua`.
 
 ## Proposed Features
 - Create shared goals that require you and a friend to do something
@@ -120,7 +124,7 @@ Data is saved per character in `WTF/Account/<acct>/<realm>/<char>/SavedVariables
 - Add a seperate quest-style menu for your goals
 - Backup chronicles and load from another computer
 - Add graphs/visualizers for your progress and journey
-- Configure auto-chronicaller
+- Configure auto-chronicler
 - Discord webhhooks and a push-notif config
 - Create a simple installer
 - Add CI/CD pipeline for auto-deploy

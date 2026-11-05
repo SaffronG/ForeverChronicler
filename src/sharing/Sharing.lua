@@ -1,4 +1,4 @@
--- Forever Chronicaller: share goals with your group (or whisper them to a friend)
+-- Forever Chronicler: share goals with your group (or whisper them to a friend)
 --   * "Share" button in the goal log, or /chron share <n> [name]
 --   * Receivers get a popup: "<name> shared a goal with you: ... Add it?"
 --   * Accepting adds a copy of the goal and tells the sender.
@@ -74,7 +74,7 @@ local function accept(offer)
     FC:SendComm("GOALACK", { text = offer.text }, "WHISPER", offer.sender)
 end
 
-StaticPopupDialogs["FOREVERCHRONICALLER_GOAL_OFFER"] = {
+StaticPopupDialogs["FOREVERCHRONICLER_GOAL_OFFER"] = {
     text = "%s shared a goal with you:\n\n|cffffd100%s|r\n\nAdd it to your goals?",
     button1 = "Accept",
     button2 = "Decline",
@@ -90,7 +90,7 @@ showNext = function()
     if showing or not pending[1] then return end
     local offer = table.remove(pending, 1)
     showing = true
-    StaticPopup_Show("FOREVERCHRONICALLER_GOAL_OFFER", offer.from, offer.text, offer)
+    StaticPopup_Show("FOREVERCHRONICLER_GOAL_OFFER", offer.from, offer.text, offer)
 end
 
 FC:OnComm("GOAL", function(fields, sender)

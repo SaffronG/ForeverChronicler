@@ -2,9 +2,9 @@
 
 **Terms version 1.** The installer shows a summary of this page and asks you to agree before it installs anything.
 
-Forever Chronicaller has two parts:
+Forever Chronicler has two parts:
 - **The addon** runs inside WoW: Forever.
-- **The companion app** (`ForeverChronicaller-Installer` / `fcompanion.py`) runs on your computer. It installs and updates the addon, and can optionally post to Discord or your phone.
+- **The companion app** (`ForeverChronicler-Installer` / `fcompanion.py`) runs on your computer. It installs and updates the addon, and can optionally post to Discord or your phone.
 
 You can use the addon without the companion.
 
@@ -23,7 +23,7 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 | Accesses | Why |
 |---|---|
 | Your character's level, XP, zone, money, quests turned in, deaths, achievements, map position | To write the chronicle, check goals and draw graphs |
-| Its own saved data (`WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicaller.lua`) | To remember your chronicle, goals and settings. WoW writes this file on logout or `/reload` |
+| Its own saved data (`WTF/Account/<account>/<realm>/<character>/SavedVariables/ForeverChronicler.lua`) | To remember your chronicle, goals and settings. WoW writes this file on logout or `/reload`. It also loads data saved under the old name (`ForeverChronicallerDB`, before 0.5.0) once, to carry it over |
 | Your friend list's online status and group roster | To know when friends can receive together-goal updates |
 | **Hidden addon messages** to your group, or whispers to players you choose | Only when you share a goal, use together goals, or are in a group (version check). See [section 2](#2-what-data-exists-and-where-it-goes) |
 | The world map and the game's waypoint arrow | Location goals |
@@ -32,7 +32,8 @@ WoW gives addons a sandbox. They **cannot** use the internet, read or write your
 | Permission | What exactly | When |
 |---|---|---|
 | **Read** files | The addon's SavedVariables files under your WoW folder's `WTF` folder | `watch` and `telemetry send` (telemetry only reads the error log and diagnostics, if you opt in) |
-| **Write** files | `Interface/AddOns/ForeverChronicaller/` (installing and updating the addon). Its own folder: `%APPDATA%\forever-chronicaller\` on Windows, `~/.config/forever-chronicaller/` on Linux (config, state, backups, telemetry spool) | `install`, `update`, `setup`, `watch` |
+| **Write** files | `Interface/AddOns/ForeverChronicler/` (installing and updating the addon). Its own folder: `%APPDATA%\forever-chronicler\` on Windows, `~/.config/forever-chronicler/` on Linux (config, state, backups, telemetry spool) | `install`, `update`, `setup`, `watch` |
+| **Copy** files (once, after the 0.5.0 rename) | If you used the old **ForeverChronicaller** version: its addon folder is moved into the companion's backups, and each character's `SavedVariables/ForeverChronicaller.lua` is copied to `ForeverChronicler.lua` (only if that file doesn't exist yet). Originals are kept. An old `forever-chronicaller` config folder is copied to the new name | `install`, `update` |
 | **List running programs** | Process **names** only (`tasklist` / `ps`), to check whether WoW is running before replacing files | `install`, `update` |
 | **Network** | `api.github.com` and `github.com` (update checks and downloads); your Discord webhook; your ntfy server | Only for the features you use |
 
@@ -70,7 +71,7 @@ If a future version switches it on, these terms will change, and you'll be **ask
 Telemetry would help fix bugs: which version failed where, and how long things take. It would be:
 
 - **Off by default.** The installer asks once, and the default answer is **No**. `--yes` never turns it on; only answering *yes* or passing `--telemetry` does. If you said no, you're not asked again.
-- **Under your control:** `ForeverChronicaller-Installer telemetry status | on | off | show | send`. `off` deletes the random ID and any locally stored diagnostics.
+- **Under your control:** `ForeverChronicler-Installer telemetry status | on | off | show | send`. `off` deletes the random ID and any locally stored diagnostics.
 - **Anonymous.** Identified only by a random ID created when you opt in. It isn't linked to your WoW account, characters or computer.
 
 **Exactly what would be sent (OpenTelemetry format), only when opted in:**
@@ -104,7 +105,7 @@ Please read these before installing.
 | **A bad release** | A new version could have a bug that breaks a feature | Each feature is isolated, so an error in one doesn't stop the chronicle. `/chron errors` shows what failed. Releases are only published after automated tests pass | Reinstall the previous version from `backups/` or from the GitHub releases page |
 | **Untested in the real game** | This is a new project. Many parts have been tested against a simulated game, not WoW: Forever itself | Error isolation and logging, as above | Report problems with the output of `/chron errors` |
 | **Data loss in game** | The chronicle size limit (if you set one) deletes the oldest entries. *Import → Replace* overwrites your data | The limit is off by default. Replace asks first, and `/chron import undo` works until you log out | Keep `/chron export` backups, or copy your SavedVariables file |
-| **Unsigned program** | Windows SmartScreen shows "unknown publisher", and some antivirus tools wrongly flag programs built with PyInstaller | The `.exe` is built by GitHub Actions from the public source code; the build log and release are public | Download only from the official [releases page](https://github.com/SaffronG/ForeverChronicaller/releases) |
+| **Unsigned program** | Windows SmartScreen shows "unknown publisher", and some antivirus tools wrongly flag programs built with PyInstaller | The `.exe` is built by GitHub Actions from the public source code; the build log and release are public | Download only from the official [releases page](https://github.com/SaffronG/ForeverChronicler/releases) |
 | **Third-party services** | Discord, ntfy, GitHub and the telemetry provider have their own privacy policies. A leaked webhook URL lets others post to your channel | All optional. The webhook is stored locally and never logged | Use a hard-to-guess ntfy topic. Delete and recreate the webhook if it leaks |
 | **Shared/together goals are trust-based** | Another player could fake their progress on a goal you share with them | Only members can update a goal, nobody can mark *your* part done, and all messages are validated | Only do together goals with people you trust |
 | **Server rules** | WoW: Forever may have its own rules about addons or outside programs | The companion only reads and writes files. It never touches the game client, its memory or network traffic | Check the server's rules |
@@ -115,7 +116,7 @@ Please read these before installing.
 
 - **See what's stored:** `/chron export` (in game), or open the SavedVariables file and the companion's `config.json` in a text editor.
 - **Delete everything:**
-  - Delete `Interface/AddOns/ForeverChronicaller/`, the addon's SavedVariables files, and the companion folder (`%APPDATA%\forever-chronicaller` or `~/.config/forever-chronicaller`).
+  - Delete `Interface/AddOns/ForeverChronicler/`, the addon's SavedVariables files, and the companion folder (`%APPDATA%\forever-chronicler` or `~/.config/forever-chronicler`).
   - Remove the Discord webhook in Discord.
 - **Stop sharing:** don't use share or together goals, or turn off *Allow shared goals* in the options.
 
@@ -125,4 +126,4 @@ Please read these before installing.
 
 This is a free, hobby project provided **as is**, without warranty of any kind. Use it at your own risk. The maintainer is not responsible for lost data, account actions by the server, or damage from using it.
 
-Questions or problems: [open an issue](https://github.com/SaffronG/ForeverChronicaller/issues).
+Questions or problems: [open an issue](https://github.com/SaffronG/ForeverChronicler/issues).

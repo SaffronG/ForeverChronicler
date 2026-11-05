@@ -1,4 +1,4 @@
--- Forever Chronicaller: on-screen goal tracker
+-- Forever Chronicler: on-screen goal tracker
 -- A small movable box listing open goals, like the quest objective tracker.
 --   * Drag the title to move it (position is saved); click the title to collapse.
 --   * Location goals show live distance; click them to point the arrow there.
@@ -11,7 +11,7 @@ local WIDTH = 240
 local LINE_H = 16
 local MAX_LINES = 8
 
-local tracker = CreateFrame("Frame", "ForeverChronicallerTracker", UIParent)
+local tracker = CreateFrame("Frame", "ForeverChroniclerTracker", UIParent)
 tracker:SetSize(WIDTH, 24)
 tracker:SetPoint("RIGHT", UIParent, "RIGHT", -80, 120)
 tracker:SetClampedToScreen(true)

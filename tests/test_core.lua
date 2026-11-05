@@ -141,7 +141,7 @@ test("diagnostics feature flag off: hidden, no timing, no option", function()
     local env = setup()
     local FC = env.FC
     eq(FC.FEATURES.diagnostics, false, "flag is off in this version")
-    eq(env.settings["ForeverChronicaller_Diagnostics"], nil, "no options checkbox")
+    eq(env.settings["ForeverChronicler_Diagnostics"], nil, "no options checkbox")
     env.slash("help")
     ok(not env.chatContains("/chron diagnostics"), "not listed in help")
     env.slash("diagnostics on")
@@ -150,4 +150,34 @@ test("diagnostics feature flag off: hidden, no timing, no option", function()
     FC.db.settings.diagnostics = true -- even if a saved setting says on...
     env.slash("note hi")
     eq(FC.db.diagnostics, nil, "...nothing is timed")
+end)
+
+test("saved data from the old ForeverChronicaller name is carried over", function()
+    local old = { version = 1, entries = { { t = 1, kind = "note", text = "from before the rename", level = 3 } },
+        goals = { { kind = "free", text = "Old goal", created = 1, done = false } }, zones = {}, stats = { deaths = 4, quests = 2 } }
+    local env = setup({ legacyDB = old })
+    local FC = env.FC
+    eq(FC.db.entries[1].text, "from before the rename", "entries adopted")
+    eq(FC.db.goals[1].text, "Old goal", "goals adopted")
+    eq(FC.db.stats.deaths, 4, "stats adopted")
+    eq(FC.db.stats.crafts, 0, "new fields merged in")
+    eq(rawget(_G, "ForeverChronicallerDB"), nil, "old name dropped so it isn't saved twice")
+    ok(env.chatContains("carried over"), "player told")
+end)
+
+test("old data replaces a fresh chronicle, but never a used one", function()
+    local function db(texts, goals)
+        local e = {}
+        for i, t in ipairs(texts) do e[i] = { t = i, kind = "note", text = t, level = 1 } end
+        return { entries = e, goals = goals or {}, zones = {}, stats = { deaths = 0, quests = 0 } }
+    end
+    -- logged in once with the new version before migrating: only the opening entry
+    local env = setup({ savedDB = db({ "The chronicle begins" }), legacyDB = db({ "old 1", "old 2" }) })
+    eq(env.FC.db.entries[1].text, "old 1", "fresh chronicle replaced by the old one")
+
+    -- both have real data: keep the new one, and keep the old one saved too
+    local old = db({ "old 1", "old 2" })
+    local env2 = setup({ savedDB = db({ "new 1", "new 2" }), legacyDB = old })
+    eq(env2.FC.db.entries[1].text, "new 1", "used chronicle kept")
+    eq(rawget(_G, "ForeverChronicallerDB"), old, "old data left in place, not lost")
 end)

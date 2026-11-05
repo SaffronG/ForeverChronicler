@@ -1,4 +1,4 @@
--- Forever Chronicaller: addon-to-addon messaging
+-- Forever Chronicler: addon-to-addon messaging
 --   FC:SendComm(type, fields, channel, target)  -- fields: table of string -> string/number/boolean
 --   FC:OnComm(type, function(fields, sender, channel) ... end)
 --

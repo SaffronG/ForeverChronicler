@@ -11,7 +11,7 @@ import fcompanion as fc  # noqa: E402
 
 # Written the way WoW writes SavedVariables (comments, escapes, nested tables).
 SAMPLE = r'''
-ForeverChronicallerDB = {
+ForeverChroniclerDB = {
 ["version"] = 1,
 ["entries"] = {
 {
@@ -71,7 +71,7 @@ class FakeSender:
 class ParserTests(unittest.TestCase):
     def test_parses_wow_saved_variables(self):
         data = fc.parse_saved_variables(SAMPLE)
-        db = data["ForeverChronicallerDB"]
+        db = data["ForeverChroniclerDB"]
         self.assertIsNone(data["OtherGlobal"])
         self.assertEqual(len(db["entries"]), 3)
         self.assertEqual(db["entries"][0]["t"], 1762200000)
@@ -110,7 +110,7 @@ class WatcherTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         root = Path(self.tmp.name)
-        self.sv = root / "WTF" / "Account" / "ACC" / "Forever" / "Chase" / "SavedVariables" / "ForeverChronicaller.lua"
+        self.sv = root / "WTF" / "Account" / "ACC" / "Forever" / "Chase" / "SavedVariables" / "ForeverChronicler.lua"
         self.sv.parent.mkdir(parents=True)
         self.sv.write_text(SAMPLE, encoding="utf-8")
         self.cfg = fc.default_config()
@@ -166,7 +166,7 @@ class WatcherTests(unittest.TestCase):
 
     def test_half_written_file_is_retried(self):
         self.watcher.poll_once()
-        self.sv.write_text("ForeverChronicallerDB = {", encoding="utf-8")
+        self.sv.write_text("ForeverChroniclerDB = {", encoding="utf-8")
         self.watcher.mtimes.clear()
         self.assertEqual(self.watcher.poll_once(), 0)
         self.assertTrue(any("Couldn't read" in l for l in self.logs))

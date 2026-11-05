@@ -1,5 +1,5 @@
 @echo off
-rem Forever Chronicaller installer: finds WoW: Forever and installs the addon.
+rem Forever Chronicler installer: finds WoW: Forever and installs the addon.
 cd /d "%~dp0"
 set "PY="
 where py >nul 2>nul && set "PY=py -3"

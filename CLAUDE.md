@@ -1,4 +1,4 @@
-# Forever Chronicaller: rules for contributors (Claude and humans)
+# Forever Chronicler: rules for contributors (Claude and humans)
 
 A World of Warcraft addon that chronicles adventures and tracks goals. Read `README.md` for features, `docs/Topology.md` for the architecture (diagrams, event/message flow, component map), `docs/TODO.md` for what's next and `Changelog.md` for history.
 
@@ -25,12 +25,13 @@ A World of Warcraft addon that chronicles adventures and tracks goals. Read `REA
 ## Layout
 Addon code lives in `src/`, grouped by feature: `core/` (framework, messaging, versions), `chronicle/` (log and journey), `goals/` (goals, map, tracker), `sharing/` (sharing, together goals, export) and `ui/` (window, settings). Put a new file in the folder of the feature it belongs to, and list it in the `.toc`. Developer docs (`Topology.md`, `TODO.md`) live in `docs/`; README, Changelog, PRIVACY, SECURITY and this file stay at the root.
 
-- `ForeverChronicaller.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → Theme → UI → Journey → Professions.
-- `src/core/Core.lua`: saved data (`ForeverChronicallerDB`), error isolation (`FC:SafeCall`, `FC:Dispatch`, `/chron errors`), opt-in diagnostics, event dispatch, internal message system (`FC:On` / `FC:Fire`), slash command registry (`FC:Command(names, usage, fn, order)`).
+- `ForeverChronicler.toc`: manifest. Load order: Core → Chronicle → Goals → MapGoals → MapPins (.lua then .xml) → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → Theme → UI → Journey → Professions.
+- **Name:** the addon is **ForeverChronicler** ("Forever Chronicler"). Before 0.5.0 it was misspelled `ForeverChronicaller`. Keep the old name only where it carries old installs over: `ForeverChronicallerDB` in the `.toc` and Core's migration, and `LEGACY_*` plus `migrate_legacy` in the companion. Don't add it anywhere else.
+- `src/core/Core.lua`: saved data (`ForeverChroniclerDB`), error isolation (`FC:SafeCall`, `FC:Dispatch`, `/chron errors`), opt-in diagnostics, event dispatch, internal message system (`FC:On` / `FC:Fire`), slash command registry (`FC:Command(names, usage, fn, order)`).
 - `src/chronicle/Chronicle.lua`: automatic logging (`FC:AddEntry`).
 - `src/goals/Goals.lua`: goal parsing and auto-completion (`FC:CreateGoal`, `FC:AddGoal`). Fires `GOAL_ADDED`, `GOAL_COMPLETED`, `GOAL_REMOVED` and `GOALS_CHANGED`.
 - `src/goals/MapGoals.lua`: location goals (`kind = "location"`), world map Ctrl + right-click menu, waypoint/super-track, arrival polling.
-- `src/goals/MapPins.lua` / `MapPins.xml`: world map data provider and pin template. The pin mixin global (`ForeverChronicallerGoalPinMixin`) must be defined in the `.lua`, which loads before the `.xml`.
+- `src/goals/MapPins.lua` / `MapPins.xml`: world map data provider and pin template. The pin mixin global (`ForeverChroniclerGoalPinMixin`) must be defined in the `.lua`, which loads before the `.xml`.
 - `src/goals/Tracker.lua`: on-screen goal tracker (`FC:GoalProgressText`, `FC.RefreshTracker`). Distances come from `FC.goalDistance` (set by `MapGoals.lua`, which fires `LOCATIONS_UPDATED`).
 - `src/core/Comms.lua`: addon messages (`FC:SendComm(type, fields, channel, target)`, `FC:OnComm(type, fn)`), prefix `FChron`. Incoming data is untrusted, so always validate it.
 - `src/sharing/Sharing.lua`: goal sharing (`FC.GoalToFields` / `FC.FieldsToGoal` validate and convert goals for messages).

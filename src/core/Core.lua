@@ -1,11 +1,11 @@
--- Forever Chronicaller: core / persistence
+-- Forever Chronicler: core / persistence
 local ADDON, FC = ...
 
 -- Feature flags. Diagnostics (handler timing for telemetry) are built and tested
 -- but switched off in this version: no option, no command, no timing.
 FC.FEATURES = { diagnostics = false }
 FC.name = ADDON
-_G.ForeverChronicaller = FC -- handy for /dump and debugging
+_G.ForeverChronicler = FC -- handy for /dump and debugging
 
 local DB_VERSION = 1
 
@@ -46,7 +46,7 @@ local function merge(dst, src)
 end
 
 function FC:Print(msg)
-    DEFAULT_CHAT_FRAME:AddMessage("|cffd4af37[Chronicaller]|r " .. tostring(msg))
+    DEFAULT_CHAT_FRAME:AddMessage("|cffd4af37[Chronicler]|r " .. tostring(msg))
 end
 
 function FC:Zone()
@@ -170,10 +170,25 @@ end)
 
 FC:RegisterEvent("ADDON_LOADED", function(name)
     if name ~= ADDON then return end
-    ForeverChronicallerDB = ForeverChronicallerDB or defaults()
-    merge(ForeverChronicallerDB, defaults())
-    FC.db = ForeverChronicallerDB
+    -- Until 0.5.0 the addon was spelled "ForeverChronicaller". If the old saved
+    -- table was loaded (the companion copies the old saved file across on
+    -- install), adopt it once and drop the old name so it isn't saved again.
+    local legacy = rawget(_G, "ForeverChronicallerDB")
+    -- "Fresh" = nothing yet, or only the opening entry and no goals.
+    -- If both have real data, the old table is left alone (still saved, never lost).
+    local current = ForeverChroniclerDB
+    local fresh = type(current) ~= "table"
+        or (#(current.entries or {}) <= 1 and #(current.goals or {}) == 0)
+    if type(legacy) == "table" and fresh then
+        ForeverChroniclerDB = legacy
+        _G.ForeverChronicallerDB = nil
+        FC.migratedFromLegacy = true
+    end
+    ForeverChroniclerDB = ForeverChroniclerDB or defaults()
+    merge(ForeverChroniclerDB, defaults())
+    FC.db = ForeverChroniclerDB
     FC:Fire("READY")
+    if FC.migratedFromLegacy then FC:Print("Your chronicle from the old \"Forever Chronicaller\" was carried over.") end
 end)
 -- Slash commands -----------------------------------------------------------------
 -- Modules register their own sub-commands: FC:Command("name", "usage text", fn).
@@ -212,7 +227,7 @@ FC:Command("errors", "/chron errors [clear] - show or clear errors logged by the
     for i, e in ipairs(log) do
         FC:Print(string.format("%d. %s (x%d) %s", i, date("%m-%d %H:%M", e.t), e.count or 1, e.msg))
     end
-    FC:Print("Full details incl. stack traces are saved in WTF/.../SavedVariables/ForeverChronicaller.lua (errorLog).")
+    FC:Print("Full details incl. stack traces are saved in WTF/.../SavedVariables/ForeverChronicler.lua (errorLog).")
 end, 95)
 
 -- Privacy summary (full text: PRIVACY.md, shipped with the addon) -------------------
@@ -259,9 +274,9 @@ FC:On("READY", function()
     end
 end)
 
-SLASH_FOREVERCHRONICALLER1 = "/chron"
-SLASH_FOREVERCHRONICALLER2 = "/fc"
-SlashCmdList["FOREVERCHRONICALLER"] = function(msg)
+SLASH_FOREVERCHRONICLER1 = "/chron"
+SLASH_FOREVERCHRONICLER2 = "/fc"
+SlashCmdList["FOREVERCHRONICLER"] = function(msg)
     if not FC.db then return end
     local name, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
     local cmd = FC.commands[(name or ""):lower()]

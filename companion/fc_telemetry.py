@@ -1,4 +1,4 @@
-"""Opt-in, anonymous telemetry for Forever Chronicaller (OpenTelemetry, OTLP/HTTP JSON).
+"""Opt-in, anonymous telemetry for Forever Chronicler (OpenTelemetry, OTLP/HTTP JSON).
 
 OFF by default. Nothing in this module does anything unless the user has
 opted in (config "telemetry.enabled" plus a random install id). See PRIVACY.md.
@@ -36,7 +36,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
-SERVICE = "forever-chronicaller-companion"
+SERVICE = "forever-chronicler-companion"
 DURATION_BOUNDS_MS = [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000]
 SPOOL_MAX_BYTES = 1_000_000
 SEND_TIMEOUT = 5
@@ -45,7 +45,7 @@ SEND_TIMEOUT = 5
 
 _COLOR = re.compile(r"\|c[0-9a-fA-F]{8}|\|r")
 _URL = re.compile(r"\b[a-z][a-z0-9+.-]*://\S+", re.I)
-_ADDON_PATH = re.compile(r"[^\s'\"]*?[\\/]AddOns[\\/](?:ForeverChronicaller[\\/](?:src[\\/][\w-]+[\\/])?)?", re.I)
+_ADDON_PATH = re.compile(r"[^\s'\"]*?[\\/]AddOns[\\/](?:ForeverChronic(?:al)?ler[\\/](?:src[\\/][\w-]+[\\/])?)?", re.I)
 _WIN_PATH = re.compile(r"\b[A-Za-z]:[\\/][^\s'\"]*")
 _POSIX_PATH = re.compile(r"(?<![\w.])/(?:[\w.~-]+/)+[\w.~-]*")
 _QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"|\[\[.*?\]\]", re.S)
@@ -57,7 +57,7 @@ def scrub(text: Any, limit: int = 200) -> str:
     """Remove anything that could identify the user from an error message or stack."""
     s = _COLOR.sub("", str(text))
     s = _URL.sub("<url>", s)
-    s = _ADDON_PATH.sub("", s)          # ".../AddOns/ForeverChronicaller/src/goals/Goals.lua:42" -> "Goals.lua:42"
+    s = _ADDON_PATH.sub("", s)          # ".../AddOns/ForeverChronicler/src/goals/Goals.lua:42" -> "Goals.lua:42"
     s = _WIN_PATH.sub("<path>", s)
     s = _POSIX_PATH.sub("<path>", s)
     s = _QUOTED.sub("<str>", s)

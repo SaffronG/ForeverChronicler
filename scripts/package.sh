@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Build dist/ForeverChronicaller-<version>.zip containing only what the game needs
-# (plus dist/ForeverChronicaller-Installer-<version>.zip, see the end of this script):
-# the .toc, every file it lists, README and Changelog, inside a ForeverChronicaller/ folder.
+# Build dist/ForeverChronicler-<version>.zip containing only what the game needs
+# (plus dist/ForeverChronicler-Installer-<version>.zip, see the end of this script):
+# the .toc, every file it lists, README and Changelog, inside a ForeverChronicler/ folder.
 # Unzip it into World of Warcraft/<client>/Interface/AddOns/.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-NAME=ForeverChronicaller
+NAME=ForeverChronicler
 VERSION=$(sed -n 's/^## Version: *//p' "$NAME.toc" | tr -d '\r')
 [ -n "$VERSION" ] || { echo "No '## Version:' in $NAME.toc" >&2; exit 1; }
 

@@ -1,4 +1,4 @@
--- Forever Chronicaller: goal setting
+-- Forever Chronicler: goal setting
 -- Goal text is parsed for auto-completing goal types:
 --   "level 30"            -> completes when you reach level 30
 --   "zone Stranglethorn Vale" -> completes when you enter that zone

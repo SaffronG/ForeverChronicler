@@ -1,4 +1,4 @@
--- Forever Chronicaller: the chronicle (automatic adventure log)
+-- Forever Chronicler: the chronicle (automatic adventure log)
 
 local _, FC = ...
 

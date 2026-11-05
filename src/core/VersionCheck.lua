@@ -1,4 +1,4 @@
--- Forever Chronicaller: tell players when a group member has a newer version
+-- Forever Chronicler: tell players when a group member has a newer version
 -- Your version is announced to your group when it changes (at most once a
 -- minute). Anyone with an older version is told once per session that a newer
 -- one exists; if you receive an older announcement, you answer by whisper so
@@ -55,5 +55,5 @@ FC:RegisterEvent("GROUP_ROSTER_UPDATE", announce)
 FC:On("READY", function() C_Timer.After(10, function() FC:SafeCall(announce) end) end)
 
 FC:Command("version", "/chron version - show the addon version", function()
-    FC:Print("Forever Chronicaller " .. FC.version)
+    FC:Print("Forever Chronicler " .. FC.version)
 end, 96)

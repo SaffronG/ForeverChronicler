@@ -1,4 +1,4 @@
--- Forever Chronicaller: options page (Options -> AddOns -> Forever Chronicaller)
+-- Forever Chronicler: options page (Options -> AddOns -> Forever Chronicler)
 -- Built with the retail Settings API (vertical layout). Settings are stored in
 -- FC.db.settings, so they're saved for each character with the rest of the data.
 
@@ -33,7 +33,7 @@ local function register()
         return -- Settings API missing; /chron config will say so
     end
 
-    category = Settings.RegisterVerticalLayoutCategory("Forever Chronicaller")
+    category = Settings.RegisterVerticalLayoutCategory("Forever Chronicler")
     local createCheckbox = Settings.CreateCheckbox or Settings.CreateCheckBox -- renamed in 11.0
 
     local chronicle = FC.db.settings.chronicle

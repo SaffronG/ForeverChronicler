@@ -1,4 +1,4 @@
--- Forever Chronicaller: export / import (backup, or move to another computer)
+-- Forever Chronicler: export / import (backup, or move to another computer)
 --   /chron export  -> window with a text string; Ctrl+C to copy it.
 --   /chron import  -> paste a string, then "Merge" (adds what's missing) or "Replace".
 --   /chron import undo -> put back the data from before the last import (this session).
@@ -141,7 +141,7 @@ end
 local function decode(str)
     str = str:gsub("^%s+", ""):gsub("%s+$", "")
     local kind, body = str:match("^FC1([CT]):(.+)$")
-    if not kind then return nil, "That doesn't look like a Forever Chronicaller export." end
+    if not kind then return nil, "That doesn't look like a Forever Chronicler export." end
     local ok, data = pcall(function()
         if kind == "C" then
             local enc = E()
@@ -322,7 +322,7 @@ end
 -- Window -------------------------------------------------------------------------------
 local win
 local function buildWindow()
-    win = CreateFrame("Frame", "ForeverChronicallerExport", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    win = CreateFrame("Frame", "ForeverChroniclerExport", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
     win:SetSize(520, 360)
     win:SetPoint("CENTER")
     win:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -348,7 +348,7 @@ local function buildWindow()
     local close = CreateFrame("Button", nil, win, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", -6, -6)
 
-    local sf = CreateFrame("ScrollFrame", "ForeverChronicallerExportScroll", win, "UIPanelScrollFrameTemplate")
+    local sf = CreateFrame("ScrollFrame", "ForeverChroniclerExportScroll", win, "UIPanelScrollFrameTemplate")
     sf:SetPoint("TOPLEFT", 24, -70)
     sf:SetPoint("BOTTOMRIGHT", -42, 50)
     local box = CreateFrame("EditBox", nil, sf)
@@ -378,11 +378,11 @@ local function buildWindow()
         end)
     end)
     win.replace:SetScript("OnClick", function()
-        StaticPopup_Show("FOREVERCHRONICALLER_IMPORT_REPLACE", nil, nil, box:GetText())
+        StaticPopup_Show("FOREVERCHRONICLER_IMPORT_REPLACE", nil, nil, box:GetText())
     end)
 end
 
-StaticPopupDialogs["FOREVERCHRONICALLER_IMPORT_REPLACE"] = {
+StaticPopupDialogs["FOREVERCHRONICLER_IMPORT_REPLACE"] = {
     text = "Replace this character's whole chronicle and goal list with the imported data?\n\n(You can undo with /chron import undo until you log out.)",
     button1 = "Replace",
     button2 = "Cancel",
@@ -433,7 +433,7 @@ end, 41)
 
 -- /chron sync: the game only writes saved data on logout or reload. Reloading
 -- lets the companion app (companion/fcompanion.py) post your latest entries now.
-StaticPopupDialogs["FOREVERCHRONICALLER_SYNC"] = {
+StaticPopupDialogs["FOREVERCHRONICLER_SYNC"] = {
     text = "Reload your UI now to save your chronicle?\n\n(The companion app posts new entries as soon as they're saved.)",
     button1 = "Reload",
     button2 = "Cancel",
@@ -443,5 +443,5 @@ StaticPopupDialogs["FOREVERCHRONICALLER_SYNC"] = {
 
 FC:Command("sync", "/chron sync - save now (reloads the UI) so the companion app can post your latest entries", function()
     if InCombatLockdown() then FC:Print("Not during combat.") return end
-    StaticPopup_Show("FOREVERCHRONICALLER_SYNC")
+    StaticPopup_Show("FOREVERCHRONICLER_SYNC")
 end, 42)

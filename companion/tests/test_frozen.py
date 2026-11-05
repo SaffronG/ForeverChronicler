@@ -21,7 +21,7 @@ class FrozenTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.embedded = self.root / "_MEI123"
         self.embedded.mkdir()
-        (self.embedded / "ForeverChronicaller-0.3.1.zip").write_bytes(make_zip("0.3.1"))
+        (self.embedded / "ForeverChronicler-0.3.1.zip").write_bytes(make_zip("0.3.1"))
         self.wow = self.root / "WoW Forever"
         self.wow.mkdir()
         (self.wow / "Wow.exe").write_bytes(b"")
@@ -30,7 +30,7 @@ class FrozenTests(unittest.TestCase):
             p = mock.patch.object(fc, name, value)
             p.start()
             self.addCleanup(p.stop)
-        for name, value in (("_MEIPASS", str(self.embedded)), ("executable", str(self.root / "ForeverChronicaller-Installer.exe"))):
+        for name, value in (("_MEIPASS", str(self.embedded)), ("executable", str(self.root / "ForeverChronicler-Installer.exe"))):
             p = mock.patch.object(fc.sys, name, value, create=True)
             p.start()
             self.addCleanup(p.stop)
@@ -39,7 +39,7 @@ class FrozenTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_embedded_zip_is_found(self):
-        self.assertEqual(fc.bundled_zip().name, "ForeverChronicaller-0.3.1.zip")
+        self.assertEqual(fc.bundled_zip().name, "ForeverChronicler-0.3.1.zip")
 
     def test_double_click_installs_and_waits_for_enter(self):
         answers = iter(["yes", str(self.wow), "", ""])  # terms, folder, telemetry (Enter = no), close
@@ -56,7 +56,7 @@ class FrozenTests(unittest.TestCase):
         self.assertIn("Type 'yes' to agree", prompts[0])
         self.assertFalse(any("diagnostics" in p for p in prompts), "telemetry isn't offered (feature flag off)")
         self.assertIn("Press Enter to close", prompts[-1])
-        self.assertIn("ForeverChronicaller-Installer.exe setup", out.getvalue().replace("./", ""))
+        self.assertIn("ForeverChronicler-Installer.exe setup", out.getvalue().replace("./", ""))
 
     def test_double_click_error_is_shown_not_raised(self):
         out = io.StringIO()
@@ -77,12 +77,12 @@ class FrozenTests(unittest.TestCase):
 
 class VersionTest(unittest.TestCase):
     def test_companion_version_matches_toc(self):
-        toc = (REPO / "ForeverChronicaller.toc").read_text(encoding="utf-8")
+        toc = (REPO / "ForeverChronicler.toc").read_text(encoding="utf-8")
         toc_version = re.search(r"^## Version:\s*(\S+)", toc, re.M).group(1)
         self.assertEqual(fc.VERSION, toc_version, "bump VERSION in companion/fcompanion.py together with the .toc")
 
     def test_default_repo(self):
-        self.assertEqual(fc.default_config()["github_repo"], "SaffronG/ForeverChronicaller")
+        self.assertEqual(fc.default_config()["github_repo"], "SaffronG/ForeverChronicler")
 
 
 if __name__ == "__main__":
