@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-11-04
+
+Adds professions, crafting and recipes to the chronicle, with recipe % completion, a Professions tab and Recipes/Crafts graphs. Telemetry stays switched off.
+
 ### Changed
 - Confirmed in game on WoW: Forever 1.60.1: version 0.4.1 loads (Interface `16001`, files in `src/` subfolders), and goals, notes and saved data work across `/reload`.
 
