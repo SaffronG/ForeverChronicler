@@ -4,6 +4,10 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-04
+
+Fixes the "Incompatible" status in the AddOns list (correct Interface number for WoW: Forever 1.60.1) and reorganizes the code into `src/`. Telemetry stays switched off.
+
 ### Fixed
 - **Addon showed as "Incompatible".** The `.toc` `## Interface:` number was a guess (`120105`). WoW: Forever 1.60.1 actually reports `16001` (`select(4, GetBuildInfo())`), so the `.toc` now uses `16001`.
 

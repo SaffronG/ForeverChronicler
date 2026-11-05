@@ -43,7 +43,7 @@ FEATURE_TELEMETRY = False
 TEL: fc_telemetry.Telemetry = fc_telemetry.DISABLED  # replaced in main() if the user opted in
 
 ADDON = "ForeverChronicaller"
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 USER_AGENT = f"ForeverChronicallerCompanion/{VERSION}"
 DEFAULT_REPO = "SaffronG/ForeverChronicaller"
 
