@@ -4,6 +4,9 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Fixed
+- **CI no longer fails when lua.org is slow.** The addon tests installed Lua by downloading its source from lua.org, which sometimes timed out (`Failed to install Lua: read ECONNRESET`). CI now installs Lua 5.1 / 5.4 from Ubuntu's packages, served by GitHub's mirrors, with retries. The release workflow uses the same checks.
+
 ## [0.6.0] - 2026-11-05
 
 Daily letters: each day of play becomes a letter home in your race and class voice, with that day's stats in the new Letters tab. The addon's name is fixed to **Forever Chronicler** (it was misspelled "Forever Chronicaller"), and your chronicle is carried over. Coming from 0.5.0 or older: download the new installer once (see the README). Telemetry stays switched off.
