@@ -47,7 +47,7 @@ Administrator rights are not required. If WoW is installed in a protected folder
 
 | Data | Stored | Leaves your computer? |
 |---|---|---|
-| Chronicle entries, goals, notes, stats, progress samples, professions (skill, recipe counts, crafted item IDs and counts) | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
+| Chronicle entries, goals, notes, stats, progress samples, professions (skill, recipe counts, crafted item IDs and counts), a daily ledger for the letters (time played, level, gold and zones visited per day) | Your SavedVariables file (local) | **No**, unless you set up Discord/ntfy (below) or export it yourself |
 | Settings, error log | SavedVariables (local) | No |
 | Companion config: WoW folder, Discord webhook URL, ntfy topic | `config.json` (local; readable only by you on Linux/macOS) | No. The webhook URL is never printed or logged |
 | **Shared goals** (`/chron share`) | Sent as an addon message | **Yes, to the players you share with**: goal text, notes and type, and your character name, which the game attaches to every message |

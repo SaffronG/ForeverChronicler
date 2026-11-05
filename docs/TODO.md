@@ -43,6 +43,17 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 - [ ] **Grafana dashboard** (free tier): importable dashboard JSON (`grafana/`), with panels for errors by version, error locations, success rate, latency p50/p95 and traces. Waiting on Grafana access
 - [ ] Before switching telemetry on: drop `error.message` from metric labels (keep it on traces) to limit series on the free tier, add `service.instance.id` (= the random install ID), set the `OTEL_ENDPOINT` / `OTEL_HEADERS` secrets, then set `FEATURE_TELEMETRY = True` (+ `FC.FEATURES.diagnostics`), update PRIVACY.md §3 and the DISCLAIMER, and bump `TERMS_VERSION`
 
+## Journey journal (epistolary record, 0.6.0+)
+One letter per day (04:00 to 04:00) in a race/class voice, with that day's stats. Each step below adds data to the day's stats and, where it fits, a sentence to the letter. Combat-log and combat data stay off limits (Midnight rules).
+- [x] **Step 1: daily letters + day viewer**: daily ledger (time played, level, gold, zones), per-day stats from the chronicle, letter composer with race (greeting, sign-off, faction fallback) and class (tone) voices, Letters tab (day list, letter, stats), `/chron letter [date]`, export/import
+- [ ] **Step 2: travel**: subzones discovered (`ZONE_CHANGED`), hearthstone home (`HEARTHSTONE_BOUND`, `GetBindLocation`), flight paths learned/taken (`C_TaxiMap`), inns rested at (`PLAYER_UPDATE_RESTING`), distance walked (open world, from position samples)
+- [ ] **Step 3: growth**: gear changes and item level milestones (`PLAYER_EQUIPMENT_CHANGED`, `GetAverageItemLevel`), first rare/epic loot, reputation standings (`UPDATE_FACTION`), new mounts/pets/toys/titles, gold earned vs spent
+- [ ] **Step 4: atmosphere**: in-game time of day in the letter (`GetGameTime`), holidays (`C_Calendar`), screenshots taken (`SCREENSHOT_SUCCEEDED`), chapter headings at new zones/level bands
+- [ ] **Step 5: dungeons and bosses**: instances entered (`GetInstanceInfo`), bosses defeated (`ENCOUNTER_END` success; check it's allowed on WoW: Forever)
+- [ ] **Step 6: companions**: who you grouped with and for how long (local only; never posted by the companion by default)
+- [ ] **Step 7: companion**: post each finished day's letter to Discord/ntfy (off by default; needs the letter stored when the day ends)
+- [ ] Check in game: Letters tab layout, race/class tokens from `UnitRace`/`UnitClass`, active-time ticker
+
 ## Separate project: companion app (outside the game)
 - [x] **#10 Discord webhooks / push notifications** – done by watching the SavedVariables files (reliable) instead of the chat log (unclear whether addon output is logged). Posts on logout or `/chron sync`. Still to do: check WoW: Forever rules on external tools (it only reads files)
 - [x] **#11 Auto-update / auto-reload**: in-game version check (0.2.0), plus `fcompanion.py update` (GitHub releases, validated zip, backup and rollback). Auto-*reload* isn't possible safely: the game must restart for new files, so the companion refuses while WoW runs – app pulls GitHub Releases; in-game "reload now?" popup; in-game version check over addon messages

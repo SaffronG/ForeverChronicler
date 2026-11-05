@@ -18,6 +18,7 @@ local function defaults()
         stats = { deaths = 0, quests = 0, recipes = 0, crafts = 0 },
         professions = {}, -- [skillLineID] = { name, skill, maxSkill, learned, total, scanned, crafts, first, gone }
         crafted = {},     -- [itemID] = times crafted (for "first time crafted" entries)
+        days = {},        -- ["YYYY-MM-DD"] = daily ledger for the letters (see Letters.lua)
         errorLog = {},  -- recent Lua errors caught by FC:SafeCall, see /chron errors
         settings = {
             -- which automatic entry types get written (notes and the opening entry are always kept)

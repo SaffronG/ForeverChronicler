@@ -126,6 +126,7 @@ function FC:ExportString()
         samples = self.db.samples,
         professions = self.db.professions,
         crafted = self.db.crafted,
+        days = self.db.days,
     }
     local enc = E()
     if enc and enc.SerializeCBOR and enc.CompressString and enc.EncodeBase64 then
@@ -234,6 +235,29 @@ local function cleanCrafted(list)
     return out
 end
 
+-- days: ["YYYY-MM-DD"] = { first, last, active, level0, level1, money0, money1, visited = { zone, ... } }
+local function cleanDays(list)
+    local out = {}
+    if type(list) ~= "table" then return out end
+    local n = 0
+    for key, d in pairs(list) do
+        if type(key) == "string" and key:match("^%d%d%d%d%-%d%d%-%d%d$") and type(d) == "table" and n < 5000 then
+            local function num(v) v = tonumber(v); return (v and v >= 0 and v < 1e12) and math.floor(v) or nil end
+            local visited = {}
+            if type(d.visited) == "table" then
+                for _, z in ipairs(d.visited) do
+                    if type(z) == "string" and #visited < 40 then visited[#visited + 1] = z:sub(1, 100) end
+                end
+            end
+            out[key] = { first = num(d.first), last = num(d.last), active = num(d.active) or 0,
+                level0 = num(d.level0), level1 = num(d.level1), money0 = num(d.money0), money1 = num(d.money1),
+                visited = visited }
+            n = n + 1
+        end
+    end
+    return out
+end
+
 local function deepCopy(v)
     if type(v) ~= "table" then return v end
     local t = {}
@@ -248,7 +272,8 @@ function FC:ImportString(str, mode)
     local entries, goals = cleanEntries(data.entries), cleanGoals(data.goals)
     local db = self.db
     self.lastImportBackup = deepCopy({ entries = db.entries, goals = db.goals, zones = db.zones, stats = db.stats, samples = db.samples,
-        professions = db.professions, crafted = db.crafted })
+        professions = db.professions, crafted = db.crafted, days = db.days })
+    local importedDays = cleanDays(data.days)
     local professions, crafted = cleanProfessions(data.professions), cleanCrafted(data.crafted)
 
     if mode == "replace" then
@@ -256,7 +281,7 @@ function FC:ImportString(str, mode)
         db.zones = {}
         db.stats = { deaths = 0, quests = 0, recipes = 0, crafts = 0 }
         db.samples = {}
-        db.professions, db.crafted = {}, {}
+        db.professions, db.crafted, db.days = {}, {}, {}
     else
         local seen = {}
         for _, e in ipairs(db.entries) do seen[e.t .. "\1" .. e.kind .. "\1" .. e.text] = true end
@@ -288,6 +313,12 @@ function FC:ImportString(str, mode)
     for id, p in pairs(professions) do
         local mine = db.professions[id]
         if not mine or (p.scanned or 0) > (mine.scanned or 0) then db.professions[id] = p end
+    end
+    -- days: add the ones we don't have; for shared days keep the one with more time played
+    db.days = db.days or {}
+    for key, d in pairs(importedDays) do
+        local mine = db.days[key]
+        if not mine or (d.active or 0) > (mine.active or 0) then db.days[key] = d end
     end
     db.crafted = db.crafted or {}
     for id, count in pairs(crafted) do

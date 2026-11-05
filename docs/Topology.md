@@ -81,6 +81,7 @@ flowchart TB
         MapPins["MapPins.lua + .xml<br/>world map pins"]
         Journey["Journey.lua<br/>samples · stats · graphs"]
         Professions["Professions.lua<br/>skill · recipes · crafting"]
+        Letters["Letters.lua<br/>daily ledger · letters · day viewer"]
     end
     subgraph Social["Social (player-to-player)"]
         Comms["Comms.lua<br/>addon message transport"]
@@ -106,10 +107,12 @@ flowchart TB
     UI --> Journey
     Chronicle --> Professions
     Professions --> Journey
+    Chronicle --> Letters
+    Theme --> Letters
     Goals --> Export
 ```
 
-`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → Theme → UI → Journey → Professions`
+`.toc` order: `Core → Chronicle → Goals → MapGoals → MapPins.lua → MapPins.xml → Tracker → Comms → Sharing → SharedGoals → Export → VersionCheck → Settings → Theme → UI → Journey → Professions → Letters`
 
 Modules rarely call each other directly. They communicate through **Core's three hubs**:
 
@@ -142,6 +145,7 @@ flowchart LR
 | `PLAYER_ENTERING_WORLD`, `SKILL_LINES_CHANGED` | Professions | profession skill scan → new profession / every 25 points / max skill / unlearned entries (unlearning only on `SKILL_LINES_CHANGED`) |
 | `TRADE_SKILL_SHOW`, `TRADE_SKILL_LIST_UPDATE` | Professions | debounced recipe count of your own open profession → `PROFESSIONS_CHANGED`, sample |
 | `NEW_RECIPE_LEARNED` | Professions | recipe counter; entries batched for 2 s (more than 3 → one line per profession) |
+| `PLAYER_MONEY`, `PLAYER_LOGOUT` (+ messages `ZONE`, `LEVEL`, a 60 s ticker) | Letters | update today's ledger: gold, level, zones visited, time played |
 | `TRADE_SKILL_ITEM_CRAFTED_RESULT` | Professions | craft counters, first-craft and milestone entries |
 | `CHAT_MSG_ADDON` | Comms | reassemble chunks → `FC:OnComm` handlers |
 | `GROUP_ROSTER_UPDATE` | SharedGoals, VersionCheck | catch-up sync · announce version |
@@ -244,6 +248,13 @@ classDiagram
         recipes : known recipes, optional
         crafts : total crafts, optional
     }
+    class Day {
+        first / last : times
+        active : seconds played
+        level0 / level1
+        money0 / money1
+        visited : zones in order
+    }
     class Profession {
         name
         skill / maxSkill
@@ -256,6 +267,7 @@ classDiagram
     ForeverChroniclerDB "1" --> "*" Goal
     ForeverChroniclerDB "1" --> "*" Sample
     ForeverChroniclerDB "1" --> "*" Profession
+    ForeverChroniclerDB "1" --> "*" Day : days, keyed YYYY-MM-DD
     Goal --> LocationTarget : kind = location
     Goal --> SharedTarget : kind = shared
     SharedTarget --> LocationTarget : inner kind = location
@@ -513,6 +525,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `src/ui/Theme.lua` | Look: night elf window, parchment scroll, themed buttons, ink colours for the chronicle | `FC.Theme`, `FC:StyleNightElfFrame`, `FC:StylePanel`, `FC:NightButton`, `FC:CreateParchment`, `FC:StyleFont`, `FC.Ink`, `FC.InkColor` | – | – |
 | `src/ui/UI.lua` | Main window: Chronicle tab, quest-log-style Goals tab, extra tabs | `FC:Toggle`, `FC.Refresh`, `FC:AddWindowTab`, `FC:DescribeGoalType`; `/chron`, `note`, `goal`, `goals`, `done`, `del`, `recent` | `ENTRY_ADDED`, `GOALS_CHANGED`, `GOAL_ADDED`, `LOCATIONS_UPDATED` | – |
 | `src/chronicle/Journey.lua` | Progress samples (incl. known recipes and crafts), statistics, line charts (Journey tab) | `FC:TakeSample`, `FC:JourneyStats`, `FC:JourneySummary`, `FC:ChartPoints`; `/chron journey` | `READY`, `LEVEL`, `QUEST`, `ENTRY_ADDED`, `SAMPLES_CHANGED` | `SAMPLES_CHANGED` |
+| `src/chronicle/Letters.lua` | Daily ledger (day = 04:00 to 04:00), per-day stats from entries + ledger, a letter per day in a race/class voice, Letters tab (day list + letter + stats) | `FC.DayKey`, `FC:Today`, `FC:JourneyDays`, `FC:DayStats`, `FC:DayStatsLines`, `FC:ComposeLetter`, `FC:ShowLetter`, `FC.FormatMoney`; `/chron letters`, `/chron letter [date]` | `READY`, `ZONE`, `LEVEL`, `ENTRY_ADDED`, `PLAYER_MONEY`, `PLAYER_LOGOUT` | – |
 | `src/chronicle/Professions.lua` | Profession, recipe and crafting entries; recipe % completion; Professions tab (bars) | `FC:ScanProfessions`, `FC:ScanRecipes`, `FC:RecordCraft`, `FC:RecipeCompletion`, `FC:ProfessionRows`, `FC:ProfessionBars`, `FC:KnownRecipes`; `/chron professions [list]` | `READY`, `PLAYER_ENTERING_WORLD`, `SKILL_LINES_CHANGED`, `TRADE_SKILL_SHOW`, `TRADE_SKILL_LIST_UPDATE`, `NEW_RECIPE_LEARNED`, `TRADE_SKILL_ITEM_CRAFTED_RESULT`, `PROFESSIONS_CHANGED` | `PROFESSIONS_CHANGED` |
 
 ### Outside the game
@@ -538,6 +551,7 @@ The addon tests run against **`tests/wow_stub.lua`**, a fake WoW API. It can sim
 | `tracker` | Tracker | | `version` | VersionCheck |
 | `journey` | Journey | | `config` / `options` | Settings |
 | `help`, `errors`, `privacy`, `diagnostics` | Core | | `professions` / `prof` | Professions |
+| `letters`, `letter` | Letters | | | |
 
 ---
 

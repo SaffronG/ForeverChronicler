@@ -149,6 +149,9 @@ function W.setup(dir, opts)
     local P = env.player
     UnitName = function(unit) if unit == "player" then return P.name end return unit end
     UnitLevel = function() return P.level end
+    UnitRace = function() return P.raceName or "Night Elf", P.race or "NightElf", 4 end
+    UnitClass = function() return P.className or "Druid", P.class or "DRUID", 11 end
+    UnitFactionGroup = function() return P.faction or "Alliance" end
     UnitXP = function() return P.xp or 0 end
     UnitXPMax = function() return 1000 end
     GetMoney = function() return P.money end

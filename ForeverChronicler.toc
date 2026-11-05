@@ -22,3 +22,4 @@ src/ui/Theme.lua
 src/ui/UI.lua
 src/chronicle/Journey.lua
 src/chronicle/Professions.lua
+src/chronicle/Letters.lua

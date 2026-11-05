@@ -50,6 +50,8 @@ number (in game: `/run print((select(4, GetBuildInfo())))`).
 | `/chron export` / `/chron import [undo]` | back up / restore your chronicle as a text string |
 | `/chron journey` | open the Journey graphs and statistics |
 | `/chron professions [list]` | open the Professions tab (or print it to chat with `list`) |
+| `/chron letters` | read your daily letters and each day's stats |
+| `/chron letter [YYYY-MM-DD]` | print a day's letter to chat (today if no date) |
 | `/chron together <name> <goal>` | a goal you complete together with a friend |
 | `/chron invite <n> <name>` | invite another friend to together goal n |
 | `/chron sync` | save now (reloads the UI) so the companion app posts your latest entries |
@@ -68,6 +70,7 @@ The game's waypoint arrow guides you there, and the goal completes when you arri
 The window has a night elf look (moonlit sky, stars and silver borders), and the **Chronicle** tab is written on a parchment scroll. Every event keeps its own colour, shown as a darker ink so it reads well on the paper.
 The **Goals** tab works like the quest log: pick a goal on the left to see its details and progress, write notes for it, or point the arrow, complete or delete it.
 The **Journey** tab (`/chron journey`) graphs your level, gold, quests, zones, deaths, known recipes and crafts over time, and sums up your path through the world and how long each level took.
+The **Letters** tab (`/chron letters`) turns each day of play into a letter home, written in a voice that fits your race (who you write to and how you sign off) and class (how you tell it). For example, a night elf druid writes "Beloved sister in Darnassus, … Under Elune's light, ever yours". Pick any day on the left to read its letter and that day's stats: time played, levels, gold, zones, quests, deaths and more. A day runs from 04:00 to 04:00, so a late night still counts as the day it started. Days from before this feature get letters too, built from the chronicle.
 The **Professions** tab (`/chron professions`) shows a bar per profession for skill and **recipe completion in %**, plus how many items you crafted. Recipes are counted when you open that profession's window, so open each one once to fill in its percentage.
 **Together goals:** `/chron together Buddy level 30` (or `/chron together Buddy here` to meet up) creates a goal you and a friend complete together. Each of you does your part, and it's achieved when everyone has. Add each other as friends so progress syncs automatically, even if one of you was offline.
 Open goals are listed in a small on-screen tracker (drag the title to move it, click to collapse, `/chron tracker` to hide it).
@@ -89,6 +92,7 @@ Addon code is in `src/`, grouped by feature. Developer docs are in `docs/`.
 - `src/ui/Settings.lua` – options page (Settings API)
 - `src/ui/Theme.lua` – night elf window style, parchment scroll and ink colours
 - `src/chronicle/Journey.lua` – progress snapshots, graphs and journey statistics (Journey tab)
+- `src/chronicle/Letters.lua` – daily ledger, letters in your race/class voice, Letters tab
 - `src/chronicle/Professions.lua` – profession, recipe and crafting entries, recipe completion (Professions tab)
 - `src/ui/UI.lua` – window and slash commands
 
