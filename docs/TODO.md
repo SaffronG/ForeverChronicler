@@ -9,7 +9,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
   - [x] Replace the `GetQuestReward` hook in `Chronicle.lua` with the `QUEST_TURNED_IN` event (quest ID → title via `C_QuestLog`); make quest goals match on ID where possible
 
 - [x] Confirm the Interface number in game: WoW: Forever 1.60.1 reports `16001` (not `120105`)
-- [ ] Do a first in-game test (`/chron goal level 2`, `/chron note hello`, `/reload`, check persistence)
+- [x] Do a first in-game test (`/chron goal level 2`, `/chron note hello`, `/reload`, check persistence)
 
 ## Next (planned for the build day)
 - [x] **#1 Configure auto-chronicaller** – Settings API options page; on/off per event type (level, zone, quest, death, achievement), optional entry cap
@@ -32,7 +32,7 @@ Target client: WoW: Forever 1.60.1 (retail 12.1.5-style API, Midnight-style addo
 
 ## Next: 0.4.1
 - [x] **Reorganize the repository**: addon code into `src/<feature>/`, developer docs into `docs/`
-- [ ] Check in game that the addon still loads from the `src/` subfolders
+- [x] Check in game that the addon still loads from the `src/` subfolders
 - [x] **Professions, crafting and recipes**: auto-entries (new profession, every 25 skill, max skill, recipes learned with trainer bursts summed up, first craft per item, craft milestones), recipe % completion per profession, Professions tab with bars, Recipes/Crafts graphs in the Journey tab, export/import
 - [ ] Check professions in game: that `GetProfessionInfo`'s skill line ID matches `C_TradeSkillUI.GetBaseProfessionInfo().professionID` (otherwise records are matched by name), that `NEW_RECIPE_LEARNED` and `TRADE_SKILL_ITEM_CRAFTED_RESULT` fire on WoW: Forever, and that recipe totals look right
 - [ ] Idea: profession goals (`/chron goal tailoring 300`, `/chron goal recipes tailoring 80%`)

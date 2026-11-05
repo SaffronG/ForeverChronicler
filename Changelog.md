@@ -4,6 +4,9 @@ Newest first. Every change gets an entry here and its own commit (see `CLAUDE.md
 
 ## [Unreleased]
 
+### Changed
+- Confirmed in game on WoW: Forever 1.60.1: version 0.4.1 loads (Interface `16001`, files in `src/` subfolders), and goals, notes and saved data work across `/reload`.
+
 ### Added
 - **Professions, crafting and recipes in the chronicle** (new `src/chronicle/Professions.lua`). Each type can be switched off in the options:
   - *Profession milestones:* learning a profession, every 25 skill points, max skill reached, unlearning. The first scan on a character is silent, so you don't get entries for what you already have.
